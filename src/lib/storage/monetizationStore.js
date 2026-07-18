@@ -1,8 +1,9 @@
-import { getPricingConfig, getSubscriptionConfig, getTelegramConfig } from '../../config/env.js';
+import { getContactPolicyConfig, getPricingConfig, getSubscriptionConfig, getTelegramConfig } from '../../config/env.js';
 import { isDatabaseConfigured, withDbTransaction } from '../../db/pool.js';
-import { createConfirmedPurchaseReceipt, activateOrExtendProSubscription, getMemberPricingStateByUserId, listRecentPurchaseReceipts } from '../../db/monetizationRepo.js';
+import { acquirePaymentChargeLock, createConfirmedPurchaseReceipt, activateOrExtendProSubscription, findPurchaseReceiptByPaymentCharge, getMemberPricingStateByUserId, getProOutreachAllowance, listRecentPurchaseReceipts } from '../../db/monetizationRepo.js';
 import { getProfileSnapshotByUserId } from '../../db/profileRepo.js';
 import { upsertTelegramUser } from '../../db/usersRepo.js';
+import { getTelegramStarsPaymentMismatchReason, TELEGRAM_STARS_CURRENCY } from '../contact/contract.js';
 
 export function buildProInvoicePayload(planCode = 'pro_monthly') {
   return `sub:${planCode}`;
@@ -20,6 +21,7 @@ export function parseProInvoicePayload(payload) {
 export async function loadPricingSurfaceState({ telegramUserId, telegramUsername = null }) {
   const pricing = getPricingConfig();
   const subscriptionConfig = getSubscriptionConfig();
+  const contactPolicy = getContactPolicyConfig();
   if (!isDatabaseConfigured()) {
     return {
       persistenceEnabled: false,
@@ -28,15 +30,18 @@ export async function loadPricingSurfaceState({ telegramUserId, telegramUsername
       recentReceipts: [],
       pricing,
       subscriptionConfig,
+      contactPolicy,
+      proOutreachAllowance: { supported: false, allowed: false, used: 0, remaining: 0, limit: contactPolicy.proOutreachDailyLimit, reason: 'DATABASE_URL is not configured' },
       reason: 'DATABASE_URL is not configured'
     };
   }
 
   return withDbTransaction(async (client) => {
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
-    const [profile, pricingState] = await Promise.all([
+    const [profile, pricingState, proOutreachAllowance] = await Promise.all([
       getProfileSnapshotByUserId(client, user.id),
-      getMemberPricingStateByUserId(client, { userId: user.id })
+      getMemberPricingStateByUserId(client, { userId: user.id }),
+      getProOutreachAllowance(client, { userId: user.id, dailyLimit: contactPolicy.proOutreachDailyLimit })
     ]);
     return {
       persistenceEnabled: true,
@@ -45,6 +50,8 @@ export async function loadPricingSurfaceState({ telegramUserId, telegramUsername
       recentReceipts: pricingState.recentReceipts,
       pricing,
       subscriptionConfig,
+      contactPolicy,
+      proOutreachAllowance,
       reason: 'pricing_state_loaded'
     };
   });
@@ -53,6 +60,7 @@ export async function loadPricingSurfaceState({ telegramUserId, telegramUsername
 export async function getProSubscriptionInvoiceForTelegramUser({ telegramUserId, telegramUsername = null }) {
   const pricing = getPricingConfig();
   const subscriptionConfig = getSubscriptionConfig();
+  const contactPolicy = getContactPolicyConfig();
   if (!isDatabaseConfigured()) {
     return {
       persistenceEnabled: false,
@@ -88,10 +96,40 @@ export async function getProSubscriptionInvoiceForTelegramUser({ telegramUserId,
         payload: buildProInvoicePayload('pro_monthly'),
         amountStars: pricing.proMonthlyPriceStars,
         title: 'Intro Deck Pro',
-        description: `Unlock Pro for ${subscriptionConfig.proMonthlyDurationDays} days. Active Pro includes direct-contact requests and DM request opens without per-action Stars fees.`
+        description: `Unlock Pro for ${subscriptionConfig.proMonthlyDurationDays} days. Includes up to ${contactPolicy.proOutreachDailyLimit} combined direct-contact and DM permission-request deliveries per rolling 24 hours. Recipient approval is still required.`
       }
     };
   });
+}
+
+export async function authorizeProCheckoutForTelegramUser({
+  telegramUserId,
+  telegramUsername = null,
+  planCode,
+  currency,
+  totalAmount
+}) {
+  if (planCode !== 'pro_monthly') {
+    return { persistenceEnabled: true, authorized: false, blocked: true, reason: 'unsupported_subscription_plan' };
+  }
+  const invoiceState = await getProSubscriptionInvoiceForTelegramUser({ telegramUserId, telegramUsername });
+  if (!invoiceState.persistenceEnabled || invoiceState.blocked || !invoiceState.invoice) {
+    return {
+      persistenceEnabled: invoiceState.persistenceEnabled,
+      authorized: false,
+      blocked: true,
+      reason: invoiceState.reason || 'pro_checkout_unavailable'
+    };
+  }
+  const paymentMismatch = getTelegramStarsPaymentMismatchReason({
+    currency,
+    totalAmount,
+    expectedAmount: invoiceState.invoice.amountStars
+  });
+  if (paymentMismatch) {
+    return { persistenceEnabled: true, authorized: false, blocked: true, reason: paymentMismatch };
+  }
+  return { persistenceEnabled: true, authorized: true, blocked: false, reason: 'pro_checkout_authorized' };
 }
 
 export async function confirmProSubscriptionPaymentForTelegramUser({
@@ -99,7 +137,9 @@ export async function confirmProSubscriptionPaymentForTelegramUser({
   telegramUsername = null,
   telegramPaymentChargeId,
   providerPaymentChargeId = null,
-  payload = null
+  payload = null,
+  currency,
+  totalAmount
 }) {
   const pricing = getPricingConfig();
   const subscriptionConfig = getSubscriptionConfig();
@@ -114,33 +154,55 @@ export async function confirmProSubscriptionPaymentForTelegramUser({
       reason: 'DATABASE_URL is not configured'
     };
   }
+  if (String(currency || '').trim().toUpperCase() !== TELEGRAM_STARS_CURRENCY) {
+    return { persistenceEnabled: true, changed: false, duplicate: false, blocked: true, subscription: null, receipt: null, reason: 'payment_currency_mismatch' };
+  }
+  const actualAmountStars = Number.parseInt(String(totalAmount), 10);
+  if (!Number.isFinite(actualAmountStars) || actualAmountStars <= 0) {
+    return { persistenceEnabled: true, changed: false, duplicate: false, blocked: true, subscription: null, receipt: null, reason: 'payment_amount_mismatch' };
+  }
 
   return withDbTransaction(async (client) => {
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
-    const receiptResult = await createConfirmedPurchaseReceipt(client, {
-      userId: user.id,
-      receiptType: 'subscription',
-      productCode: 'pro_monthly',
-      amountStars: pricing.proMonthlyPriceStars,
-      relatedEntityType: 'subscription',
-      relatedEntityId: user.id,
+    await acquirePaymentChargeLock(client, telegramPaymentChargeId);
+    const existingReceipt = await findPurchaseReceiptByPaymentCharge(client, {
       telegramPaymentChargeId,
-      providerPaymentChargeId,
-      rawPayloadSnapshot: { payload }
+      providerPaymentChargeId
     });
-
-    if (!receiptResult.created && receiptResult.duplicate) {
+    if (existingReceipt) {
+      const sameSubscription = existingReceipt.receiptType === 'subscription' && existingReceipt.productCode === 'pro_monthly' && String(existingReceipt.userId) === String(user.id);
       const pricingState = await getMemberPricingStateByUserId(client, { userId: user.id });
       return {
         persistenceEnabled: true,
         changed: false,
-        duplicate: true,
-        blocked: false,
+        duplicate: sameSubscription,
+        blocked: !sameSubscription,
         subscription: pricingState.subscription,
-        receipt: receiptResult.receipt,
-        reason: 'pro_subscription_payment_already_confirmed'
+        receipt: existingReceipt,
+        reason: sameSubscription ? 'pro_subscription_payment_already_confirmed' : 'payment_charge_replay_detected'
       };
     }
+
+    const receiptResult = await createConfirmedPurchaseReceipt(client, {
+      userId: user.id,
+      receiptType: 'subscription',
+      productCode: 'pro_monthly',
+      amountStars: actualAmountStars,
+      relatedEntityType: 'subscription',
+      relatedEntityId: user.id,
+      telegramPaymentChargeId,
+      providerPaymentChargeId,
+      rawPayloadSnapshot: {
+        payload,
+        paidAmountStars: actualAmountStars,
+        configuredAmountStarsAtConfirmation: pricing.proMonthlyPriceStars,
+        amountMatchesCurrentConfig: actualAmountStars === pricing.proMonthlyPriceStars,
+        currency: TELEGRAM_STARS_CURRENCY,
+        proOutreachDailyLimit: getContactPolicyConfig().proOutreachDailyLimit,
+        recipientApprovalRequired: true,
+        unlimitedOutreach: false
+      }
+    });
 
     const subscription = await activateOrExtendProSubscription(client, {
       userId: user.id,

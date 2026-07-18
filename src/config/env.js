@@ -14,6 +14,10 @@ const DEFAULT_CONTACT_UNLOCK_PRICE_STARS = 75;
 const DEFAULT_DM_OPEN_PRICE_STARS = 100;
 const DEFAULT_PRO_MONTHLY_PRICE_STARS = 149;
 const DEFAULT_PRO_MONTHLY_DURATION_DAYS = 30;
+const DEFAULT_PRO_OUTREACH_DAILY_LIMIT = 10;
+const DEFAULT_CONTACT_REQUEST_RETRY_COOLDOWN_DAYS = 30;
+const DEFAULT_PAYMENT_CHECKOUT_AUTH_TTL_MINUTES = 30;
+const DEFAULT_PAYMENT_CHECKOUT_RETRY_LOCK_SECONDS = 1800;
 
 function readEnv(name, fallback = undefined) {
   const value = process.env[name] ?? fallback;
@@ -35,6 +39,15 @@ function readIntegerEnv(name, fallback) {
     throw new Error(`Invalid positive integer for ${name}: ${raw}`);
   }
   return parsed;
+}
+
+
+function readBoundedIntegerEnv(name, fallback, { min = 1, max }) {
+  const value = readIntegerEnv(name, fallback);
+  if (value < min || value > max) {
+    throw new Error(`${name} must be between ${min} and ${max}: ${value}`);
+  }
+  return value;
 }
 
 function readTelegramUserIdEnv(name) {
@@ -147,6 +160,25 @@ export function getPricingConfig() {
 export function getSubscriptionConfig() {
   return {
     proMonthlyDurationDays: readIntegerEnv('PRO_MONTHLY_DURATION_DAYS', DEFAULT_PRO_MONTHLY_DURATION_DAYS)
+  };
+}
+
+export function getContactPolicyConfig() {
+  const checkoutAuthorizationTtlMinutes = readBoundedIntegerEnv(
+    'PAYMENT_CHECKOUT_AUTH_TTL_MINUTES',
+    DEFAULT_PAYMENT_CHECKOUT_AUTH_TTL_MINUTES,
+    { min: 5, max: 1440 }
+  );
+  const configuredCheckoutRetryLockSeconds = readBoundedIntegerEnv(
+    'PAYMENT_CHECKOUT_RETRY_LOCK_SECONDS',
+    DEFAULT_PAYMENT_CHECKOUT_RETRY_LOCK_SECONDS,
+    { min: 300, max: 86400 }
+  );
+  return {
+    proOutreachDailyLimit: readBoundedIntegerEnv('PRO_OUTREACH_DAILY_LIMIT', DEFAULT_PRO_OUTREACH_DAILY_LIMIT, { min: 1, max: 100 }),
+    retryCooldownDays: readBoundedIntegerEnv('CONTACT_REQUEST_RETRY_COOLDOWN_DAYS', DEFAULT_CONTACT_REQUEST_RETRY_COOLDOWN_DAYS, { min: 1, max: 365 }),
+    checkoutAuthorizationTtlMinutes,
+    checkoutRetryLockSeconds: Math.max(configuredCheckoutRetryLockSeconds, checkoutAuthorizationTtlMinutes * 60)
   };
 }
 

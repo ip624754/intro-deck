@@ -1,6 +1,7 @@
 import { Composer } from 'grammy';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
 import {
+  authorizeProCheckoutForTelegramUser,
   confirmProSubscriptionPaymentForTelegramUser,
   getProSubscriptionInvoiceForTelegramUser,
   parseProInvoicePayload
@@ -81,10 +82,18 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
       return next();
     }
 
+    const authorization = await authorizeProCheckoutForTelegramUser({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      planCode: parsed.planCode,
+      currency: ctx.preCheckoutQuery.currency,
+      totalAmount: ctx.preCheckoutQuery.total_amount
+    }).catch(() => ({ authorized: false, reason: 'pro_checkout_unavailable' }));
+    const ok = Boolean(authorization.authorized);
     await ctx.api.raw.answerPreCheckoutQuery({
       pre_checkout_query_id: ctx.preCheckoutQuery.id,
-      ok: parsed.planCode === 'pro_monthly',
-      ...(parsed.planCode === 'pro_monthly' ? {} : { error_message: 'Unsupported subscription plan.' })
+      ok,
+      ...(ok ? {} : { error_message: formatUserFacingError(authorization.reason, 'Could not authorize this Pro checkout. Reopen Plans and try again.') })
     });
   });
 
@@ -100,7 +109,9 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
       telegramUsername: ctx.from.username || null,
       telegramPaymentChargeId: payment.telegram_payment_charge_id,
       providerPaymentChargeId: payment.provider_payment_charge_id || null,
-      payload: payment.invoice_payload
+      payload: payment.invoice_payload,
+      currency: payment.currency,
+      totalAmount: payment.total_amount
     }).catch((error) => ({
       persistenceEnabled: true,
       changed: false,
@@ -111,7 +122,7 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
     }));
 
     if (result.changed) {
-      await ctx.reply('✅ Intro Deck Pro is active now. Direct contact requests and DM request opens are included while your subscription is active.', {
+      await ctx.reply('✅ Intro Deck Pro is active. It includes a bounded rolling 24-hour fair-use allowance for delivering contact permission requests. Recipient approval is still required.', {
         reply_markup: {
           inline_keyboard: [
             [{ text: '⭐ Open plans', callback_data: 'plans:root' }],
@@ -124,6 +135,11 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
 
     if (result.duplicate) {
       await ctx.reply('ℹ️ This Pro payment was already confirmed.');
+      return;
+    }
+
+    if (result.reason === 'payment_charge_replay_detected') {
+      await ctx.reply('⚠️ This payment charge is already linked to another purchase. Contact support before retrying.');
       return;
     }
 

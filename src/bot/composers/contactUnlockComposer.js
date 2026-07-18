@@ -1,6 +1,7 @@
 import { Composer } from 'grammy';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
 import {
+  authorizeContactUnlockCheckoutForTelegramUser,
   beginContactUnlockPaymentForTelegramUser,
   confirmContactUnlockPaymentForTelegramUser,
   loadContactUnlockRequestDetailForTelegramUser,
@@ -17,7 +18,7 @@ async function sendContactUnlockInvoice(ctx, invoice) {
     payload: invoice.payload,
     provider_token: '',
     currency: 'XTR',
-    prices: [{ label: 'Direct contact request', amount: invoice.amountStars }]
+    prices: [{ label: 'Request delivery', amount: invoice.amountStars }]
   });
 }
 
@@ -139,17 +140,19 @@ export function createContactUnlockComposer({
       return next();
     }
 
-    const detail = await loadContactUnlockRequestDetailForTelegramUser({
+    const authorization = await authorizeContactUnlockCheckoutForTelegramUser({
       telegramUserId: ctx.from.id,
       telegramUsername: ctx.from.username || null,
-      requestId: parsed.requestId
-    }).catch(() => ({ persistenceEnabled: true, request: null, blocked: true, reason: 'contact_unlock_request_missing' }));
+      requestId: parsed.requestId,
+      currency: ctx.preCheckoutQuery.currency,
+      totalAmount: ctx.preCheckoutQuery.total_amount
+    }).catch(() => ({ persistenceEnabled: true, authorized: false, blocked: true, reason: 'contact_unlock_checkout_authorization_failed' }));
 
-    const ok = Boolean(detail.request && detail.request.status === 'payment_pending');
+    const ok = Boolean(authorization.authorized);
     await ctx.api.raw.answerPreCheckoutQuery({
       pre_checkout_query_id: ctx.preCheckoutQuery.id,
       ok,
-      ...(ok ? {} : { error_message: formatContactUnlockRequestReason(detail.reason) })
+      ...(ok ? {} : { error_message: formatContactUnlockRequestReason(authorization.reason) })
     });
   });
 
@@ -165,7 +168,9 @@ export function createContactUnlockComposer({
       telegramUsername: ctx.from.username || null,
       requestId: parsed.requestId,
       telegramPaymentChargeId: payment.telegram_payment_charge_id,
-      providerPaymentChargeId: payment.provider_payment_charge_id || null
+      providerPaymentChargeId: payment.provider_payment_charge_id || null,
+      currency: payment.currency,
+      totalAmount: payment.total_amount
     }).catch((error) => ({
       persistenceEnabled: true,
       changed: false,
@@ -176,7 +181,7 @@ export function createContactUnlockComposer({
     }));
 
     if (result.changed) {
-      await ctx.reply('✅ Direct contact request paid. It is now waiting for recipient approval.', {
+      await ctx.reply('✅ Request-delivery fee confirmed. The recipient now decides whether to reveal contact. Approval is not guaranteed, and decline alone does not trigger an automatic refund.', {
         reply_markup: {
           inline_keyboard: [
             [{ text: '📥 Inbox', callback_data: 'intro:inbox' }],

@@ -1,3 +1,5 @@
+import { getSchemaCompat } from './schemaCompat.js';
+
 function normalizeSubscriptionRow(row) {
   if (!row) {
     return null;
@@ -42,6 +44,106 @@ function normalizeReceiptRow(row) {
     rawPayloadSnapshot: row.raw_payload_snapshot || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at
+  };
+}
+
+
+export async function acquirePaymentChargeLock(client, telegramPaymentChargeId) {
+  const normalized = String(telegramPaymentChargeId || '').trim();
+  if (!normalized) {
+    return;
+  }
+  await client.query(
+    `select pg_advisory_xact_lock(hashtextextended($1, 0))`,
+    [`introdeck:payment_charge:${normalized}`]
+  );
+}
+
+export async function findPurchaseReceiptByPaymentCharge(client, {
+  telegramPaymentChargeId = null,
+  providerPaymentChargeId = null
+} = {}) {
+  if (!(telegramPaymentChargeId || providerPaymentChargeId)) {
+    return null;
+  }
+  const result = await client.query(
+    `
+      select *
+      from purchase_receipts
+      where ($1::text is not null and telegram_payment_charge_id = $1)
+         or ($2::text is not null and provider_payment_charge_id = $2)
+      order by id desc
+      limit 1
+    `,
+    [telegramPaymentChargeId, providerPaymentChargeId]
+  );
+  return normalizeReceiptRow(result.rows[0] || null);
+}
+
+export async function getProOutreachAllowance(client, {
+  userId,
+  dailyLimit,
+  acquireLock = false
+}) {
+  const normalizedLimit = Number.parseInt(String(dailyLimit || '0'), 10);
+  if (!Number.isFinite(normalizedLimit) || normalizedLimit <= 0) {
+    return { supported: false, allowed: false, used: 0, remaining: 0, limit: 0, reason: 'invalid_pro_outreach_daily_limit' };
+  }
+
+  const compat = await getSchemaCompat(client);
+  const supported = Boolean(
+    compat.hasContactUnlockRequestsTable &&
+    compat.hasMemberDmThreadsTable &&
+    compat.contactUnlockHasProCovered &&
+    compat.dmThreadsHasProCovered
+  );
+  if (!supported) {
+    return {
+      supported: false,
+      allowed: false,
+      used: 0,
+      remaining: 0,
+      limit: normalizedLimit,
+      reason: 'contact_contract_requires_migration'
+    };
+  }
+
+  if (acquireLock) {
+    await client.query(
+      `select pg_advisory_xact_lock(hashtextextended($1, 0))`,
+      [`introdeck:pro_outreach:${userId}`]
+    );
+  }
+
+  const result = await client.query(
+    `
+      select (
+        select count(*)::int
+        from contact_unlock_requests
+        where requester_user_id = $1
+          and pro_covered = true
+          and payment_state = 'paid'
+          and requested_at >= now() - interval '24 hours'
+      ) + (
+        select count(*)::int
+        from member_dm_threads
+        where initiator_user_id = $1
+          and pro_covered = true
+          and payment_state = 'confirmed'
+          and delivered_at >= now() - interval '24 hours'
+      ) as used
+    `,
+    [userId]
+  );
+  const used = Number(result.rows[0]?.used || 0);
+  const remaining = Math.max(0, normalizedLimit - used);
+  return {
+    supported: true,
+    allowed: used < normalizedLimit,
+    used,
+    remaining,
+    limit: normalizedLimit,
+    reason: used < normalizedLimit ? 'pro_outreach_available' : 'pro_outreach_daily_limit_reached'
   };
 }
 

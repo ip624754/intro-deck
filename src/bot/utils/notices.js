@@ -9,6 +9,8 @@ export function formatDmRequestReason(reason) {
       return 'The target profile is no longer available.';
     case 'target_profile_not_public':
       return 'This profile is not publicly listed right now.';
+    case 'target_profile_not_paid_unlock_mode':
+      return 'This member accepts intro requests only. Paid direct-contact and DM requests are disabled.';
     case 'dm_thread_already_exists':
       return 'A DM request is already open for this profile.';
     case 'dm_thread_already_active':
@@ -21,12 +23,32 @@ export function formatDmRequestReason(reason) {
       return 'This DM request was already paid.';
     case 'dm_thread_not_ready_for_payment':
       return 'Save your first message before paying for this DM request.';
+    case 'dm_thread_not_owned_by_user':
+      return 'This DM payment belongs to another account.';
+    case 'dm_payment_charge_missing':
+      return 'Telegram did not provide a payment charge reference. Contact support before retrying.';
     case 'dm_request_sent_via_pro':
       return 'This DM request is included in active Pro and is already waiting for recipient approval.';
     case 'dm_thread_not_active':
       return 'This conversation is not active yet.';
     case 'dm_thread_declined':
-      return 'This DM request was declined.';
+      return 'This DM request was declined. You can try again after the recipient cooldown.';
+    case 'dm_request_cooldown_active':
+      return 'This member recently declined a contact request. Try again after the shared recipient cooldown.';
+    case 'pro_outreach_daily_limit_reached':
+      return 'Your Pro fair-use allowance for the rolling 24-hour window is used. Try again later or pay per request.';
+    case 'contact_contract_requires_migration':
+      return 'Contact requests are temporarily unavailable until the contact-contract migration is applied.';
+    case 'dm_checkout_already_in_progress':
+      return 'Another checkout for this DM request is already in progress. Wait briefly before retrying.';
+    case 'dm_checkout_authorization_missing_or_expired':
+      return 'This checkout is no longer authorized. Reopen the request and try again.';
+    case 'payment_charge_replay_detected':
+      return 'This payment charge is already linked to another purchase. Contact support before retrying.';
+    case 'payment_currency_mismatch':
+      return 'This payment uses an unexpected currency. Do not retry; contact support.';
+    case 'payment_amount_mismatch':
+      return 'This payment amount does not match the request. Do not retry; contact support.';
     default:
       return 'Could not open the DM request right now.';
   }
@@ -77,8 +99,32 @@ export function formatContactUnlockRequestReason(reason) {
       return 'Please wait a moment before sending the same direct contact request again.';
     case 'contact_unlock_payment_already_confirmed':
       return 'This direct contact request was already paid.';
+    case 'contact_unlock_request_not_ready_for_payment':
+      return 'This direct contact request is not ready for payment.';
+    case 'contact_unlock_request_not_owned_by_user':
+      return 'This direct contact payment belongs to another account.';
+    case 'contact_payment_charge_missing':
+      return 'Telegram did not provide a payment charge reference. Contact support before retrying.';
     case 'contact_unlock_covered_by_pro':
-      return 'This direct contact request is included in active Pro and is already waiting for approval.';
+      return 'This direct contact request used your Pro fair-use allowance and is waiting for approval.';
+    case 'contact_request_cooldown_active':
+      return 'This member recently declined a contact request. Try again after the shared recipient cooldown.';
+    case 'contact_path_blocked':
+      return 'This contact pair is blocked. No new direct-contact request can be opened.';
+    case 'pro_outreach_daily_limit_reached':
+      return 'Your Pro fair-use allowance for the rolling 24-hour window is used. Try again later or pay per request.';
+    case 'contact_contract_requires_migration':
+      return 'Contact requests are temporarily unavailable until the contact-contract migration is applied.';
+    case 'contact_checkout_already_in_progress':
+      return 'Another checkout for this direct-contact request is already in progress. Wait briefly before retrying.';
+    case 'contact_checkout_authorization_missing_or_expired':
+      return 'This checkout is no longer authorized. Reopen the request and try again.';
+    case 'payment_charge_replay_detected':
+      return 'This payment charge is already linked to another purchase. Contact support before retrying.';
+    case 'payment_currency_mismatch':
+      return 'This payment uses an unexpected currency. Do not retry; contact support.';
+    case 'payment_amount_mismatch':
+      return 'This payment amount does not match the request. Do not retry; contact support.';
     default:
       return 'Could not open the direct contact request right now.';
   }
@@ -183,6 +229,16 @@ export function formatUserFacingError(input, fallback = 'Something went wrong. P
 
   if (message.includes('DATABASE_URL is not configured')) {
     return 'This feature is unavailable right now.';
+  }
+
+  if (message === 'payment_currency_mismatch') {
+    return 'This payment uses an unexpected currency. Do not retry; contact support.';
+  }
+  if (message === 'payment_amount_mismatch') {
+    return 'This payment amount does not match the product. Do not retry; contact support.';
+  }
+  if (message === 'pro_subscription_already_active') {
+    return 'Pro is already active on this account.';
   }
 
   const internalSignals = [

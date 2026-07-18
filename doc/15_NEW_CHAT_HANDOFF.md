@@ -3,12 +3,18 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP050J
-- Current mode: PRODUCT HARDENING / CONTACT + DM MONETIZATION FOUNDATION / LANDING PRODUCTION UPLIFT
-- Current focus: keep the STEP048.4 runtime/product layer stable while the landing remains polished and schema truth stays explicit for pre-STEP046 databases.
+- Current baseline: STEP053 — Contact Contract and Payment Honesty Lock
+- Current mode: HEAVY / CONTACT CONSENT / TELEGRAM STARS HONESTY / ABUSE HARDENING
+- Current focus: enforce an authoritative contact contract, honest request-delivery economics, bounded Pro outreach, and auditable/replay-resistant critical transitions without creating a second money core.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP053 contact-mode enforcement exists at render, creation, invoice, pre-checkout, and confirmation boundaries.
+- STEP053 request-delivery fee disclosure exists in invoice, bot, pricing, receipt snapshot, and Terms surfaces.
+- STEP053 bounded combined Pro outreach allowance and paid fallback exist in source.
+- STEP053 pair/payment/allowance locks, checkout authorization, replay checks, policy snapshots, and contact audit events exist in source.
+- migration `027_contact_contract_payment_honesty.sql` exists and is required for STEP053.
 
 - mature operator/admin layer exists in source
 - STEP040 Russian admin analytics drilldowns exist in source
@@ -31,6 +37,7 @@
 - syntax/smoke can be run from repo
 - docs canon exists
 - source-level STEP050J checks pass locally
+- STEP053 source and selected contract checks pass locally on Node 22.16.0
 
 ## Inference
 
@@ -38,6 +45,11 @@
 - the strongest product/runtime rails remain paid direct-contact requests plus gated DM initiation beneath the landing uplift
 
 ## Blocked / unconfirmed
+
+- Node 20 runtime was not available in the implementation workspace.
+- PostgreSQL migration and transaction/concurrency behavior were not executed locally.
+- live Telegram pre-checkout, Stars charge, stale callback, and duplicate delivery proof are not closed.
+- no automatic refund engine exists for decline/no reply.
 
 - fresh production `/api/health` / `/api/health?full=1` verification is not closed here
 - real deployed LinkedIn callback verification for STEP045 copy/seed behavior is not closed here
@@ -60,6 +72,7 @@ When contract certainty is missing, say exactly:
 - `doc/spec/STEP045_LINKEDIN_IDENTITY_AUTO_SEED_UPLIFT.md`
 - `doc/spec/STEP046_PRIVATE_TELEGRAM_HANDLE_AND_PAID_CONTACT_UNLOCK_V1.md`
 - `doc/spec/STEP047_MEMBER_DM_RELAY_V1.md`
+- `doc/spec/STEP053_CONTACT_CONTRACT_AND_PAYMENT_HONESTY_LOCK.md`
 - `doc/spec/STEP049B_LANDING_IMPLEMENTATION.md`
 - `doc/spec/STEP049C_OG_SOCIAL_METADATA_UPLIFT.md`
 - `doc/spec/STEP049D_FINAL_POLISH_MOBILE_LEGAL_CONSISTENCY.md`
@@ -126,3 +139,41 @@ When contract certainty is missing, say exactly:
 - Homepage and legal navigation now use the real Intro Deck brand asset instead of a text-only mark.
 - Product preview cards were rebalanced into a full three-card desktop layout.
 - Privacy and Terms intro blocks were cleaned up for readability and shell consistency.
+
+## STEP053 handoff delta
+
+### Product contract
+- `intro_request`: intro-only; no new paid direct-contact or DM request may be created or paid.
+- `paid_unlock_requires_approval`: new paid request rails allowed.
+- Stars buy permission-request delivery only. Approval, disclosure, and reply are not guaranteed.
+- Decline/no reply does not automatically refund in the current money core.
+- Pro allowance default: `10` combined request deliveries per rolling 24 hours, then paid fallback.
+- Decline cooldown default: `30` days across both paid rails.
+
+### Runtime configuration
+```env
+PRO_OUTREACH_DAILY_LIMIT=10
+CONTACT_REQUEST_RETRY_COOLDOWN_DAYS=30
+PAYMENT_CHECKOUT_AUTH_TTL_MINUTES=30
+PAYMENT_CHECKOUT_RETRY_LOCK_SECONDS=1800
+```
+
+### Migration order
+1. `019_contact_unlock_requests.sql`
+2. `020_member_dm_relay.sql`
+3. `021_pricing_receipts_ops.sql`
+4. `027_contact_contract_payment_honesty.sql`
+
+Before migration `027`, audit existing Telegram/provider charge IDs for duplicates; unique-index creation intentionally fails rather than silently discarding ambiguous payment history.
+
+### Local QA
+- package: `0.50.0`
+- Node: `22.16.0` (repo requires `20.x`)
+- `npm run check`: PASS
+- full STEP053 inventory: `67/80` PASS
+- baseline control inventory: `64/79` PASS
+- new failures versus baseline: none
+- existing failures: 13 unrelated baseline contracts
+
+### Next action
+Run staging migration + Node 20/PostgreSQL/Telegram Stars acceptance before STEP054.

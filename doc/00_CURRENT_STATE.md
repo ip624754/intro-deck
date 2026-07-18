@@ -4,12 +4,18 @@
 Intro Deck
 
 ## Current source baseline
-STEP052.8.1 — Admin Invite Copy + Mode Clarity Hotfix
+STEP053 — Contact Contract and Payment Honesty Lock
 
 ## Layer
-Product hardening / invite expansion / rewards admin clarity polish
+HEAVY / contact consent / Telegram Stars honesty / abuse hardening
 
 ## Source-confirmed
+- STEP053 makes `contact_mode` authoritative for new paid direct-contact and DM permission requests.
+- Stars now buy request delivery, not guaranteed approval, contact disclosure, or reply.
+- Decline/no reply alone has no automatic refund path in the current money core.
+- Pro has one bounded combined rolling 24-hour outreach allowance with canonical paid fallback.
+- Pair/payment/allowance advisory locks, checkout authorization, policy snapshots, replay checks, and contact audit events are in source.
+- Migration `027_contact_contract_payment_honesty.sql` is required; missing STEP053 schema fails closed.
 - Invite layer remains a bounded module:
   - `📨 Share invite`
   - `🔗 Link + copy`
@@ -157,3 +163,41 @@ Founder manual pass on the nested admin and invite screens, then either:
 
 ## Next recommended step
 Founder manual pass in Telegram on nested invite/admin views, then only a real micro-hotfix if one more dead-end or unclear label still appears.
+
+## STEP053 — Contact Contract and Payment Honesty Lock
+
+### Source-confirmed delta
+- `intro_request` blocks both new paid contact rails at render, request creation, invoice, pre-checkout, and confirmation boundaries.
+- `paid_unlock_requires_approval` is the authoritative mode for those rails.
+- Direct-contact and DM Stars products are request-delivery fees; recipient approval remains mandatory.
+- Pro uses one combined rolling 24-hour allowance across both rails; default `10`, followed by paid fallback.
+- Cross-rail decline cooldown defaults to `30` days; pair blocking closes both new paid rails.
+- Payment charges are serialized and checked against canonical purchase receipts to detect cross-product replay.
+- Contact/DM decisions are serialized per user pair to reduce duplicate callback and decision races.
+- Audit events and policy snapshots preserve the contract used for each critical transition.
+
+### Required runtime configuration
+```env
+PRO_OUTREACH_DAILY_LIMIT=10
+CONTACT_REQUEST_RETRY_COOLDOWN_DAYS=30
+PAYMENT_CHECKOUT_AUTH_TTL_MINUTES=30
+PAYMENT_CHECKOUT_RETRY_LOCK_SECONDS=120
+```
+
+### Schema truth
+- STEP050J migration-required schema compatibility remains canonical: `019_contact_unlock_requests.sql` is required for hidden Telegram username writes and direct-contact unlock flows.
+- `019_contact_unlock_requests.sql`, `020_member_dm_relay.sql`, and `021_pricing_receipts_ops.sql` remain prerequisites.
+- STEP053 additionally requires `027_contact_contract_payment_honesty.sql`.
+- Pre-existing duplicate provider/Telegram charge values can block unique-index creation and must be audited before production migration.
+
+### QA truth
+- Node `22.16.0`: `npm run check` PASS.
+- STEP053 and selected contact/DM/legal/product contracts PASS.
+- Full current inventory: `67/80` PASS.
+- Exact baseline comparison: `64/79` PASS. No new failure was introduced; `schema-compat` and `storage` changed from FAIL to PASS.
+- Node 20, PostgreSQL migration execution, live Telegram Stars, and live concurrency remain not verified.
+
+## Next recommended step after STEP053
+1. Stage migration `027` with duplicate-charge preflight.
+2. Run the STEP053 runtime acceptance pack on Node 20 and PostgreSQL.
+3. Continue to STEP054 — Positioning and Discovery Truth Alignment only after runtime proof.

@@ -1,7 +1,8 @@
-import { getPricingConfig, getRuntimeGuardConfig, getTelegramConfig } from '../../config/env.js';
+import { getContactPolicyConfig, getPricingConfig, getRuntimeGuardConfig, getTelegramConfig } from '../../config/env.js';
 import { isDatabaseConfigured, withDbTransaction } from '../../db/pool.js';
 import {
   appendDmThreadMessage,
+  authorizeDmCheckout,
   clearDmComposeSessionByUserId,
   createOrGetDmThreadDraft,
   decideDmThread,
@@ -13,11 +14,13 @@ import {
   saveDmFirstMessageDraft,
   startDmComposeSession
 } from '../../db/dmRepo.js';
+import { acquireContactPairLock, getContactPairRestriction } from '../../db/contactPolicyRepo.js';
 import { getProfileSnapshotByUserId } from '../../db/profileRepo.js';
 import { tryAcquireUserActionGuard } from '../../db/runtimeGuardRepo.js';
 import { upsertTelegramUser } from '../../db/usersRepo.js';
 import { sendTelegramMessage } from '../telegram/botApi.js';
-import { createConfirmedPurchaseReceipt, getUserEntitlements } from '../../db/monetizationRepo.js';
+import { acquirePaymentChargeLock, createConfirmedPurchaseReceipt, findPurchaseReceiptByPaymentCharge, getProOutreachAllowance, getUserEntitlements } from '../../db/monetizationRepo.js';
+import { buildRequestFeeDisclosure, CONTACT_POLICY_SNAPSHOT, PAID_CONTACT_MODE, REQUEST_DELIVERY_FEE_POLICY } from '../contact/contract.js';
 import { normalizeProfileFieldValue } from '../profile/contract.js';
 
 const DM_COMPOSE_TTL_MINUTES = 20;
@@ -79,7 +82,7 @@ function buildDmDecisionNotification(thread, reason) {
     lines.push('The conversation is now active inside the bot.');
   } else if (reason === 'dm_thread_declined') {
     lines.push(`${thread.display_name || 'This member'} declined your DM request.`);
-    lines.push('No active conversation was opened.');
+    lines.push('No active conversation was opened. A decline does not trigger an automatic refund of the request-delivery fee.');
   } else if (reason === 'dm_thread_reported') {
     lines.push('Your DM request was reported and blocked.');
   } else {
@@ -242,10 +245,12 @@ export async function beginDmRequestComposeForTelegramUser({ telegramUserId, tel
     }
 
     const { dmOpenPriceStars } = getPricingConfig();
+    const policyConfig = getContactPolicyConfig();
     const result = await createOrGetDmThreadDraft(client, {
       initiatorUserId: user.id,
       targetProfileId,
-      priceStars: dmOpenPriceStars
+      priceStars: dmOpenPriceStars,
+      retryCooldownDays: policyConfig.retryCooldownDays
     });
 
     let pendingSession = null;
@@ -387,20 +392,41 @@ export async function applyDmComposeInput({ telegramUserId, telegramUsername = n
       let reason = saveResult.reason;
       let autoCovered = false;
       let paymentEnvelope = null;
-      if (!saveResult.blocked && thread?.status === 'payment_pending') {
+      let policyBlocked = Boolean(saveResult.blocked);
+      let allowance = null;
+      if (!policyBlocked && thread?.status === 'payment_pending') {
         const entitlements = await getUserEntitlements(client, { userId: user.id });
         if (entitlements.canOpenDmWithoutPayment) {
-          const covered = await markDmThreadPaymentConfirmed(client, {
-            threadId: session.thread_id,
-            initiatorUserId: user.id,
-            telegramPaymentChargeId: null,
-            providerPaymentChargeId: null
+          const policyConfig = getContactPolicyConfig();
+          allowance = await getProOutreachAllowance(client, {
+            userId: user.id,
+            dailyLimit: policyConfig.proOutreachDailyLimit,
+            acquireLock: true
           });
-          if (covered.changed) {
-            thread = covered.thread || thread;
-            reason = 'dm_request_sent_via_pro';
-            autoCovered = true;
-            paymentEnvelope = covered.envelope || null;
+          if (!allowance.supported) {
+            policyBlocked = true;
+            reason = allowance.reason;
+          } else if (!allowance.allowed) {
+            reason = allowance.reason;
+          } else {
+            const covered = await markDmThreadPaymentConfirmed(client, {
+              threadId: session.thread_id,
+              initiatorUserId: user.id,
+              telegramPaymentChargeId: null,
+              providerPaymentChargeId: null,
+              proCovered: true,
+              checkoutAuthorizationTtlMinutes: policyConfig.checkoutAuthorizationTtlMinutes,
+              retryCooldownDays: policyConfig.retryCooldownDays
+            });
+            if (covered.changed) {
+              thread = covered.thread || thread;
+              reason = covered.reason;
+              autoCovered = true;
+              paymentEnvelope = covered.envelope || null;
+            } else if (covered.blocked) {
+              policyBlocked = true;
+              reason = covered.reason;
+            }
           }
         }
       }
@@ -413,8 +439,9 @@ export async function applyDmComposeInput({ telegramUserId, telegramUsername = n
         consumed: true,
         composeMode: 'request',
         autoCovered,
+        allowance,
         reason,
-        blocked: Boolean(saveResult.blocked),
+        blocked: policyBlocked,
         thread
       };
     }
@@ -492,51 +519,94 @@ export async function getDmThreadInvoiceForTelegramUser({ telegramUserId, telegr
 
   return withDbTransaction(async (client) => {
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
-    const detail = await getDmThreadDetailByUserId(client, { userId: user.id, threadId });
-    if (!detail.thread) {
+    let envelope = await getDmThreadPaymentEnvelope(client, { threadId });
+    if (!envelope) {
+      return { persistenceEnabled: true, blocked: true, reason: 'dm_thread_missing', thread: null, invoice: null };
+    }
+    if (String(envelope.initiator_user_id) !== String(user.id)) {
+      return { persistenceEnabled: true, blocked: true, reason: 'dm_thread_not_owned_by_user', thread: null, invoice: null };
+    }
+    await acquireContactPairLock(client, {
+      userAId: envelope.initiator_user_id,
+      userBId: envelope.recipient_user_id
+    });
+    envelope = await getDmThreadPaymentEnvelope(client, { threadId });
+    if (!envelope) {
+      return { persistenceEnabled: true, blocked: true, reason: 'dm_thread_missing', thread: null, invoice: null };
+    }
+    if (envelope.status !== 'payment_pending' || envelope.payment_state !== 'pending') {
       return {
         persistenceEnabled: true,
-        blocked: true,
-        reason: detail.reason,
+        blocked: envelope.status === 'blocked',
+        reason: envelope.status === 'pending_recipient' ? 'dm_payment_already_confirmed' : 'dm_thread_not_ready_for_payment',
         thread: null,
         invoice: null
       };
     }
-    if (String(detail.thread.initiator_user_id) !== String(user.id)) {
-      return {
-        persistenceEnabled: true,
-        blocked: true,
-        reason: 'dm_thread_not_owned_by_user',
-        thread: detail.thread,
-        invoice: null
-      };
+    const policyConfig = getContactPolicyConfig();
+    const restriction = await getContactPairRestriction(client, {
+      requesterUserId: envelope.initiator_user_id,
+      targetUserId: envelope.recipient_user_id,
+      retryCooldownDays: policyConfig.retryCooldownDays
+    });
+    if (restriction.blocked) {
+      return { persistenceEnabled: true, blocked: true, reason: 'dm_thread_blocked', thread: null, invoice: null };
     }
-    if (detail.thread.status !== 'payment_pending') {
-      return {
-        persistenceEnabled: true,
-        blocked: detail.thread.status === 'blocked',
-        reason: detail.thread.status === 'pending_recipient' ? 'dm_payment_already_confirmed' : 'dm_thread_not_ready_for_payment',
-        thread: detail.thread,
-        invoice: null
-      };
+    if (restriction.retryAvailableAt) {
+      return { persistenceEnabled: true, blocked: true, reason: 'dm_request_cooldown_active', thread: null, invoice: null };
+    }
+    if (envelope.target_visibility_status !== 'listed' || envelope.target_profile_state !== 'active') {
+      return { persistenceEnabled: true, blocked: true, reason: 'target_profile_not_public', thread: null, invoice: null };
+    }
+    if (envelope.target_contact_mode !== PAID_CONTACT_MODE || envelope.contact_policy_snapshot !== CONTACT_POLICY_SNAPSHOT) {
+      return { persistenceEnabled: true, blocked: true, reason: 'target_profile_not_paid_unlock_mode', thread: null, invoice: null };
     }
     const invoice = {
       payload: buildDmInvoicePayload(threadId),
-      amountStars: detail.thread.price_stars_snapshot,
-      title: 'DM request',
-      description: `Send your first DM request to ${detail.thread.display_name || 'this member'}. Recipient approval is required.`
+      amountStars: envelope.price_stars_snapshot,
+      title: 'DM permission request',
+      description: buildRequestFeeDisclosure({
+        amountStars: envelope.price_stars_snapshot,
+        actionLabel: 'DM permission request',
+        recipientName: envelope.recipient_display_name || 'this member'
+      })
     };
     return {
       persistenceEnabled: true,
       blocked: false,
       reason: 'dm_invoice_ready',
-      thread: detail.thread,
+      thread: null,
       invoice
     };
   });
 }
 
-export async function confirmDmPaymentForTelegramUser({ telegramUserId, telegramUsername = null, threadId, telegramPaymentChargeId, providerPaymentChargeId = null }) {
+export async function authorizeDmCheckoutForTelegramUser({
+  telegramUserId,
+  telegramUsername = null,
+  threadId,
+  currency,
+  totalAmount
+}) {
+  if (!isDatabaseConfigured()) {
+    return { persistenceEnabled: false, authorized: false, blocked: true, reason: 'DATABASE_URL is not configured', thread: null };
+  }
+  return withDbTransaction(async (client) => {
+    const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
+    const policyConfig = getContactPolicyConfig();
+    const result = await authorizeDmCheckout(client, {
+      threadId,
+      initiatorUserId: user.id,
+      retryCooldownDays: policyConfig.retryCooldownDays,
+      checkoutRetryLockSeconds: policyConfig.checkoutRetryLockSeconds,
+      currency,
+      totalAmount
+    });
+    return { persistenceEnabled: true, ...result };
+  });
+}
+
+export async function confirmDmPaymentForTelegramUser({ telegramUserId, telegramUsername = null, threadId, telegramPaymentChargeId, providerPaymentChargeId = null, currency, totalAmount }) {
   if (!isDatabaseConfigured()) {
     return {
       persistenceEnabled: false,
@@ -550,23 +620,49 @@ export async function confirmDmPaymentForTelegramUser({ telegramUserId, telegram
 
   const result = await withDbTransaction(async (client) => {
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
+    const policyConfig = getContactPolicyConfig();
+    await acquirePaymentChargeLock(client, telegramPaymentChargeId);
+    const existingReceipt = await findPurchaseReceiptByPaymentCharge(client, {
+      telegramPaymentChargeId,
+      providerPaymentChargeId
+    });
+    if (existingReceipt) {
+      const sameThread = existingReceipt.relatedEntityType === 'dm_thread' && String(existingReceipt.relatedEntityId) === String(threadId);
+      return {
+        changed: false,
+        duplicate: sameThread,
+        blocked: !sameThread,
+        reason: sameThread ? 'dm_payment_already_confirmed' : 'payment_charge_replay_detected',
+        thread: null
+      };
+    }
+
     const paymentResult = await markDmThreadPaymentConfirmed(client, {
       threadId,
       initiatorUserId: user.id,
       telegramPaymentChargeId,
-      providerPaymentChargeId
+      providerPaymentChargeId,
+      proCovered: false,
+      checkoutAuthorizationTtlMinutes: policyConfig.checkoutAuthorizationTtlMinutes,
+      currency,
+      totalAmount
     });
     if (paymentResult.changed && paymentResult.thread) {
       await createConfirmedPurchaseReceipt(client, {
         userId: user.id,
         receiptType: 'dm_open',
-        productCode: 'dm_request_open',
+        productCode: 'dm_request_delivery',
         amountStars: paymentResult.thread.price_stars_snapshot || getPricingConfig().dmOpenPriceStars,
         relatedEntityType: 'dm_thread',
         relatedEntityId: paymentResult.thread.dm_thread_id,
         telegramPaymentChargeId,
         providerPaymentChargeId,
-        rawPayloadSnapshot: { threadId }
+        rawPayloadSnapshot: {
+          threadId,
+          feePolicy: REQUEST_DELIVERY_FEE_POLICY,
+          recipientApprovalRequired: true,
+          automaticRefundOnDecline: false
+        }
       });
     }
     return paymentResult;

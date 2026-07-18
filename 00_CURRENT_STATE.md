@@ -3,10 +3,10 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP051.5
-- Phase: pricing surface hotfix on top of the STEP051.4 command parity fix, the STEP051.3 paired menu polish, and the STEP050M landing + STEP048.4 product baseline
-- Primary mode: PRODUCT HARDENING / MONETIZATION FOUNDATION / TELEGRAM INVITE LAYER
-- Runtime status: source-clean STEP051.5 baseline with the STEP048.4 product/runtime layer intact, the STEP050M landing/meta layer preserved, the STEP051 invite/share layer intact, the paired home/help rows preserved, `/start` still routed through a single handler, `/inbox` still hardened, and the `Plans` surface restored with a real member pricing text/keyboard instead of the broken undefined render path; live status not confirmed — manual verification required
+- Current STEP: STEP053
+- Phase: Contact Contract and Payment Honesty Lock on top of the STEP052.8.1 invite/admin clarity baseline
+- Primary mode: HEAVY / CONTACT CONSENT / TELEGRAM STARS HONESTY / ABUSE HARDENING
+- Runtime status: STEP053 implemented at source level on top of STEP052.8.1; local source checks pass, but migration `027`, PostgreSQL transaction behavior, Telegram pre-checkout/payment callbacks, and live Node 20 runtime remain unconfirmed — manual verification required
 
 ## What exists now
 
@@ -39,6 +39,11 @@
 - STEP051.5 restores the broken `Plans` surface by shipping the missing pricing text/keyboard render layer, so `⭐ Plans`, `/plans`, and `plans:root` no longer fail on `renderPricingText is not a function`
 
 ## Current truth
+
+- STEP053 makes `contact_mode` authoritative for new paid direct-contact and DM permission requests
+- STEP053 defines Stars as a non-refundable request-delivery fee on decline/no reply; approval/contact/reply are not guaranteed
+- STEP053 bounds Pro outreach with one combined rolling 24-hour allowance and preserves the canonical paid fallback
+- STEP053 adds pair/payment/allowance advisory locks, policy snapshots, checkout authorization, charge replay checks, and contact audit events
 
 - LinkedIn login is still identity bootstrap, not full professional import
 - STEP045 auto-seeds only the safe identity layer and only seeds profile display name when the local card name is still empty
@@ -302,3 +307,23 @@
 - hardened `/inbox` with a product-safe fallback render and text clamping so the slash-command path no longer fails silently when the inbox surface cannot be rendered cleanly
 - removed the accidental extra-notice leak on home renders where `appBaseUrl` could be passed into the home surface as if it were a notice
 - updated command/router smoke coverage to assert one `/start` handler and the `/inbox` fallback path
+
+## STEP053 delta
+
+- `intro_request` now blocks creation, invoice, pre-checkout, and confirmation of new paid direct-contact and DM requests.
+- `paid_unlock_requires_approval` remains the only mode that permits those new paid request rails.
+- Stars purchase delivery of a permission request; recipient approval, contact disclosure, and reply are not guaranteed.
+- Decline or no reply alone does not trigger an automatic refund in the current money core.
+- Pro uses a combined rolling 24-hour allowance across direct-contact and DM request deliveries; default `10`, with paid fallback after exhaustion.
+- Cross-rail decline cooldown defaults to `30` days; recipient block closes both new paid rails for the pair.
+- New critical transitions use PostgreSQL advisory locks, short-lived checkout authorization, policy snapshots, charge replay checks, and audit events.
+- Required migration: `migrations/027_contact_contract_payment_honesty.sql`.
+- Package version: `0.50.0`.
+- Local source result: `67/80` smoke PASS versus baseline `64/79`; no new failing smoke contract.
+- Live status not confirmed — manual verification required.
+
+## Next recommended step after STEP053
+
+1. Apply migration `027` in staging after a duplicate-charge preflight.
+2. Run Node 20 + PostgreSQL + Telegram Stars runtime acceptance, including duplicate/stale callback and Pro concurrency cases.
+3. Continue to STEP054 only after runtime evidence is captured.

@@ -1,3 +1,30 @@
+import { CONTACT_POLICY_SNAPSHOT, getTelegramStarsPaymentMismatchReason, PAID_CONTACT_MODE, REQUEST_DELIVERY_FEE_POLICY } from '../lib/contact/contract.js';
+import { acquireContactPairLock, getContactPairRestriction } from './contactPolicyRepo.js';
+import { getSchemaCompat } from './schemaCompat.js';
+
+async function ensureDmContactContractSchema(client) {
+  const compat = await getSchemaCompat(client);
+  return {
+    compat,
+    supported: Boolean(
+      compat.hasMemberDmThreadsTable &&
+      compat.hasMemberDmEventsTable &&
+      compat.hasContactUnlockRequestsTable &&
+      compat.dmThreadsHasContactPolicySnapshot &&
+      compat.dmThreadsHasProCovered &&
+      compat.dmThreadsHasCheckoutAuthorizedAt
+    )
+  };
+}
+
+function dmContractSelects(alias, compat) {
+  return {
+    policySnapshot: compat?.dmThreadsHasContactPolicySnapshot ? `${alias}.contact_policy_snapshot` : 'null::text',
+    proCovered: compat?.dmThreadsHasProCovered ? `${alias}.pro_covered` : 'false',
+    checkoutAuthorizedAt: compat?.dmThreadsHasCheckoutAuthorizedAt ? `${alias}.checkout_authorized_at` : 'null::timestamptz'
+  };
+}
+
 function normalizeDmThreadRow(row, role, detail = null) {
   if (!row) {
     return null;
@@ -27,6 +54,9 @@ function normalizeDmThreadRow(row, role, detail = null) {
     role,
     blocked_by_user_id: row.blocked_by_user_id || null,
     reported_by_user_id: row.reported_by_user_id || null,
+    contact_policy_snapshot: row.contact_policy_snapshot || null,
+    pro_covered: Boolean(row.pro_covered),
+    checkout_authorized_at: row.checkout_authorized_at || null,
     ...(detail ? { messages: detail.messages || [] } : {})
   };
 }
@@ -49,6 +79,7 @@ async function loadDmCounterpartyRow(client, targetProfileId) {
         mp.user_id as target_user_id,
         mp.visibility_status,
         mp.profile_state,
+        mp.contact_mode,
         coalesce(nullif(mp.display_name, ''), la.full_name, 'Unnamed profile') as display_name,
         mp.headline_user
       from member_profiles mp
@@ -105,7 +136,11 @@ async function loadExistingThreadForPair(client, userAId, userBId) {
   return result.rows[0] || null;
 }
 
-export async function createOrGetDmThreadDraft(client, { initiatorUserId, targetProfileId, priceStars }) {
+export async function createOrGetDmThreadDraft(client, { initiatorUserId, targetProfileId, priceStars, retryCooldownDays = 30 }) {
+  const schema = await ensureDmContactContractSchema(client);
+  if (!schema.supported) {
+    return { created: false, blocked: true, duplicate: false, reason: 'contact_contract_requires_migration', thread: null, target: null };
+  }
   const target = await loadDmCounterpartyRow(client, targetProfileId);
   if (!target) {
     return { created: false, blocked: true, duplicate: false, reason: 'target_profile_missing', thread: null, target: null };
@@ -117,6 +152,33 @@ export async function createOrGetDmThreadDraft(client, { initiatorUserId, target
 
   if (target.visibility_status !== 'listed' || target.profile_state !== 'active') {
     return { created: false, blocked: true, duplicate: false, reason: 'target_profile_not_public', thread: null, target };
+  }
+  if (target.contact_mode !== PAID_CONTACT_MODE) {
+    return { created: false, blocked: true, duplicate: false, reason: 'target_profile_not_paid_unlock_mode', thread: null, target };
+  }
+
+  await acquireContactPairLock(client, {
+    userAId: initiatorUserId,
+    userBId: target.target_user_id
+  });
+  const restriction = await getContactPairRestriction(client, {
+    requesterUserId: initiatorUserId,
+    targetUserId: target.target_user_id,
+    retryCooldownDays
+  });
+  if (restriction.blocked) {
+    return { created: false, blocked: true, duplicate: false, reason: 'dm_thread_blocked', thread: null, target };
+  }
+  if (restriction.retryAvailableAt) {
+    return {
+      created: false,
+      blocked: true,
+      duplicate: false,
+      reason: 'dm_request_cooldown_active',
+      retry_available_at: restriction.retryAvailableAt,
+      thread: null,
+      target
+    };
   }
 
   const existing = await loadExistingThreadForPair(client, initiatorUserId, target.target_user_id);
@@ -146,9 +208,10 @@ export async function createOrGetDmThreadDraft(client, { initiatorUserId, target
         opened_via,
         status,
         payment_state,
-        price_stars_snapshot
+        price_stars_snapshot,
+        contact_policy_snapshot
       )
-      values ($1, $2, $3, 'profile_card', 'draft', 'draft', $4)
+      values ($1, $2, $3, 'profile_card', 'draft', 'draft', $4, $5)
       returning
         id as dm_thread_id,
         initiator_user_id,
@@ -170,7 +233,7 @@ export async function createOrGetDmThreadDraft(client, { initiatorUserId, target
         blocked_by_user_id,
         reported_by_user_id
     `,
-    [initiatorUserId, target.target_user_id, target.profile_id, priceStars]
+    [initiatorUserId, target.target_user_id, target.profile_id, priceStars, CONTACT_POLICY_SNAPSHOT]
   );
 
   const inserted = insertResult.rows[0] || null;
@@ -179,7 +242,11 @@ export async function createOrGetDmThreadDraft(client, { initiatorUserId, target
       threadId: inserted.dm_thread_id,
       actorUserId: initiatorUserId,
       eventType: 'dm_request_created',
-      detail: { targetProfileId: target.profile_id }
+      detail: {
+        targetProfileId: target.profile_id,
+        contactMode: target.contact_mode,
+        feePolicy: REQUEST_DELIVERY_FEE_POLICY
+      }
     });
   }
 
@@ -235,6 +302,8 @@ export async function clearExpiredDmComposeSessions(client) {
 }
 
 async function getThreadParticipantEnvelope(client, { threadId, userId }) {
+  const schema = await ensureDmContactContractSchema(client);
+  const contract = dmContractSelects('t', schema.compat);
   const result = await client.query(
     `
       select
@@ -257,6 +326,12 @@ async function getThreadParticipantEnvelope(client, { threadId, userId }) {
         t.last_sender_user_id,
         t.blocked_by_user_id,
         t.reported_by_user_id,
+        ${contract.policySnapshot} as contact_policy_snapshot,
+        ${contract.proCovered} as pro_covered,
+        ${contract.checkoutAuthorizedAt} as checkout_authorized_at,
+        recipient_mp.contact_mode as target_contact_mode,
+        recipient_mp.visibility_status as target_visibility_status,
+        recipient_mp.profile_state as target_profile_state,
         initiator.telegram_user_id as initiator_telegram_user_id,
         recipient.telegram_user_id as recipient_telegram_user_id,
         case when t.initiator_user_id = $2 then 'sent' when t.recipient_user_id = $2 then 'received' else null end as role,
@@ -289,6 +364,12 @@ export async function saveDmFirstMessageDraft(client, { threadId, initiatorUserI
   }
   if (!['draft', 'payment_pending'].includes(envelope.status)) {
     return { changed: false, blocked: envelope.status === 'blocked', duplicate: envelope.status !== 'blocked', reason: envelope.status === 'active' ? 'dm_thread_already_active' : 'dm_thread_not_ready_for_compose', thread: normalizeDmThreadRow(envelope, envelope.role) };
+  }
+  if (envelope.target_visibility_status !== 'listed' || envelope.target_profile_state !== 'active') {
+    return { changed: false, blocked: true, reason: 'target_profile_not_public', thread: normalizeDmThreadRow(envelope, envelope.role) };
+  }
+  if (envelope.target_contact_mode !== PAID_CONTACT_MODE || envelope.contact_policy_snapshot !== CONTACT_POLICY_SNAPSHOT) {
+    return { changed: false, blocked: true, reason: 'target_profile_not_paid_unlock_mode', thread: normalizeDmThreadRow(envelope, envelope.role) };
   }
 
   const result = await client.query(
@@ -341,6 +422,8 @@ export async function saveDmFirstMessageDraft(client, { threadId, initiatorUserI
 }
 
 export async function getDmThreadPaymentEnvelope(client, { threadId }) {
+  const schema = await ensureDmContactContractSchema(client);
+  const contract = dmContractSelects('t', schema.compat);
   const result = await client.query(
     `
       select
@@ -352,6 +435,12 @@ export async function getDmThreadPaymentEnvelope(client, { threadId }) {
         t.payment_state,
         t.price_stars_snapshot,
         t.first_message_text,
+        ${contract.policySnapshot} as contact_policy_snapshot,
+        ${contract.proCovered} as pro_covered,
+        ${contract.checkoutAuthorizedAt} as checkout_authorized_at,
+        recipient_mp.contact_mode as target_contact_mode,
+        recipient_mp.visibility_status as target_visibility_status,
+        recipient_mp.profile_state as target_profile_state,
         initiator.telegram_user_id as initiator_telegram_user_id,
         recipient.telegram_user_id as recipient_telegram_user_id,
         coalesce(nullif(initiator_mp.display_name, ''), initiator_la.full_name, 'Unknown member') as initiator_display_name,
@@ -373,7 +462,85 @@ export async function getDmThreadPaymentEnvelope(client, { threadId }) {
   return result.rows[0] || null;
 }
 
-export async function markDmThreadPaymentConfirmed(client, { threadId, initiatorUserId, telegramPaymentChargeId, providerPaymentChargeId = null }) {
+export async function authorizeDmCheckout(client, { threadId, initiatorUserId, retryCooldownDays = 30, checkoutRetryLockSeconds = 1800, currency, totalAmount }) {
+  const schema = await ensureDmContactContractSchema(client);
+  if (!schema.supported) {
+    return { authorized: false, blocked: true, reason: 'contact_contract_requires_migration', thread: null };
+  }
+  const current = await getDmThreadPaymentEnvelope(client, { threadId });
+  if (!current) {
+    return { authorized: false, blocked: true, reason: 'dm_thread_missing', thread: null };
+  }
+  if (String(current.initiator_user_id) !== String(initiatorUserId)) {
+    return { authorized: false, blocked: true, reason: 'dm_thread_not_owned_by_user', thread: null };
+  }
+  await acquireContactPairLock(client, {
+    userAId: current.initiator_user_id,
+    userBId: current.recipient_user_id
+  });
+  const refreshedCurrent = await getDmThreadPaymentEnvelope(client, { threadId });
+  if (!refreshedCurrent) {
+    return { authorized: false, blocked: true, reason: 'dm_thread_missing', thread: null };
+  }
+  if (refreshedCurrent.status !== 'payment_pending' || refreshedCurrent.payment_state !== 'pending' || !(typeof refreshedCurrent.first_message_text === 'string' && refreshedCurrent.first_message_text.trim())) {
+    return { authorized: false, blocked: true, reason: 'dm_thread_not_ready_for_payment', thread: normalizeDmThreadRow(refreshedCurrent, 'sent') };
+  }
+  const paymentMismatch = getTelegramStarsPaymentMismatchReason({
+    currency,
+    totalAmount,
+    expectedAmount: refreshedCurrent.price_stars_snapshot
+  });
+  if (paymentMismatch) {
+    return { authorized: false, blocked: true, reason: paymentMismatch, thread: normalizeDmThreadRow(refreshedCurrent, 'sent') };
+  }
+  const restriction = await getContactPairRestriction(client, {
+    requesterUserId: refreshedCurrent.initiator_user_id,
+    targetUserId: refreshedCurrent.recipient_user_id,
+    retryCooldownDays
+  });
+  if (restriction.blocked) {
+    return { authorized: false, blocked: true, reason: 'dm_thread_blocked', thread: normalizeDmThreadRow(refreshedCurrent, 'sent') };
+  }
+  if (restriction.retryAvailableAt) {
+    return { authorized: false, blocked: true, reason: 'dm_request_cooldown_active', thread: normalizeDmThreadRow(refreshedCurrent, 'sent') };
+  }
+  const previousAuthorization = refreshedCurrent.checkout_authorized_at ? new Date(refreshedCurrent.checkout_authorized_at).getTime() : 0;
+  if (previousAuthorization && Date.now() - previousAuthorization < checkoutRetryLockSeconds * 1000) {
+    return { authorized: false, blocked: true, reason: 'dm_checkout_already_in_progress', thread: normalizeDmThreadRow(refreshedCurrent, 'sent') };
+  }
+  if (refreshedCurrent.target_visibility_status !== 'listed' || refreshedCurrent.target_profile_state !== 'active') {
+    return { authorized: false, blocked: true, reason: 'target_profile_not_public', thread: normalizeDmThreadRow(refreshedCurrent, 'sent') };
+  }
+  if (refreshedCurrent.target_contact_mode !== PAID_CONTACT_MODE || refreshedCurrent.contact_policy_snapshot !== CONTACT_POLICY_SNAPSHOT) {
+    return { authorized: false, blocked: true, reason: 'target_profile_not_paid_unlock_mode', thread: normalizeDmThreadRow(refreshedCurrent, 'sent') };
+  }
+
+  await client.query(`update member_dm_threads set checkout_authorized_at = now(), updated_at = now() where id = $1`, [threadId]);
+  await createDmEvent(client, {
+    threadId,
+    actorUserId: initiatorUserId,
+    eventType: 'dm_checkout_authorized',
+    detail: { feePolicy: REQUEST_DELIVERY_FEE_POLICY, currency, amountStars: refreshedCurrent.price_stars_snapshot }
+  });
+  const refreshed = await getDmThreadPaymentEnvelope(client, { threadId });
+  return { authorized: true, blocked: false, reason: 'dm_checkout_authorized', thread: normalizeDmThreadRow(refreshed, 'sent') };
+}
+
+export async function markDmThreadPaymentConfirmed(client, {
+  threadId,
+  initiatorUserId,
+  telegramPaymentChargeId,
+  providerPaymentChargeId = null,
+  proCovered = false,
+  checkoutAuthorizationTtlMinutes = 30,
+  currency = null,
+  totalAmount = null,
+  retryCooldownDays = 30
+}) {
+  const schema = await ensureDmContactContractSchema(client);
+  if (!schema.supported) {
+    return { changed: false, blocked: true, duplicate: false, reason: 'contact_contract_requires_migration', thread: null };
+  }
   const current = await getDmThreadPaymentEnvelope(client, { threadId });
   if (!current) {
     return { changed: false, blocked: true, duplicate: false, reason: 'dm_thread_missing', thread: null };
@@ -388,6 +555,47 @@ export async function markDmThreadPaymentConfirmed(client, { threadId, initiator
     return { changed: false, blocked: true, duplicate: false, reason: 'dm_thread_not_ready_for_payment', thread: null };
   }
 
+  if (proCovered) {
+    await acquireContactPairLock(client, {
+      userAId: current.initiator_user_id,
+      userBId: current.recipient_user_id
+    });
+    const restriction = await getContactPairRestriction(client, {
+      requesterUserId: current.initiator_user_id,
+      targetUserId: current.recipient_user_id,
+      retryCooldownDays
+    });
+    if (restriction.blocked) {
+      return { changed: false, blocked: true, reason: 'dm_thread_blocked', thread: null };
+    }
+    if (restriction.retryAvailableAt) {
+      return { changed: false, blocked: true, reason: 'dm_request_cooldown_active', thread: null };
+    }
+    if (current.target_visibility_status !== 'listed' || current.target_profile_state !== 'active') {
+      return { changed: false, blocked: true, reason: 'target_profile_not_public', thread: null };
+    }
+    if (current.target_contact_mode !== PAID_CONTACT_MODE || current.contact_policy_snapshot !== CONTACT_POLICY_SNAPSHOT) {
+      return { changed: false, blocked: true, reason: 'target_profile_not_paid_unlock_mode', thread: null };
+    }
+  } else {
+    const paymentMismatch = getTelegramStarsPaymentMismatchReason({
+      currency,
+      totalAmount,
+      expectedAmount: current.price_stars_snapshot
+    });
+    if (paymentMismatch) {
+      return { changed: false, blocked: true, reason: paymentMismatch, thread: null };
+    }
+    const authorizedAt = current.checkout_authorized_at ? new Date(current.checkout_authorized_at).getTime() : 0;
+    const ttlMs = checkoutAuthorizationTtlMinutes * 60 * 1000;
+    if (!authorizedAt || Date.now() - authorizedAt > ttlMs) {
+      return { changed: false, blocked: true, reason: 'dm_checkout_authorization_missing_or_expired', thread: null };
+    }
+    if (!telegramPaymentChargeId) {
+      return { changed: false, blocked: true, reason: 'dm_payment_charge_missing', thread: null };
+    }
+  }
+
   const updateResult = await client.query(
     `
       update member_dm_threads
@@ -397,11 +605,14 @@ export async function markDmThreadPaymentConfirmed(client, { threadId, initiator
         delivered_at = now(),
         telegram_payment_charge_id = $3,
         provider_payment_charge_id = $4,
+        pro_covered = $5,
         updated_at = now(),
         last_message_at = now(),
         last_sender_user_id = initiator_user_id
       where id = $1
         and initiator_user_id = $2
+        and status = 'payment_pending'
+        and payment_state = 'pending'
       returning
         id as dm_thread_id,
         initiator_user_id,
@@ -411,6 +622,9 @@ export async function markDmThreadPaymentConfirmed(client, { threadId, initiator
         payment_state,
         price_stars_snapshot,
         first_message_text,
+        contact_policy_snapshot,
+        pro_covered,
+        checkout_authorized_at,
         created_at,
         updated_at,
         delivered_at,
@@ -423,10 +637,13 @@ export async function markDmThreadPaymentConfirmed(client, { threadId, initiator
         blocked_by_user_id,
         reported_by_user_id
     `,
-    [threadId, initiatorUserId, telegramPaymentChargeId, providerPaymentChargeId]
+    [threadId, initiatorUserId, telegramPaymentChargeId, providerPaymentChargeId, proCovered]
   );
 
   const row = updateResult.rows[0] || null;
+  if (!row) {
+    return { changed: false, blocked: true, duplicate: false, reason: 'dm_payment_confirmation_failed', thread: null };
+  }
   await client.query(
     `
       insert into member_dm_messages (thread_id, sender_user_id, recipient_user_id, message_kind, message_text, delivery_state, delivered_at)
@@ -437,27 +654,35 @@ export async function markDmThreadPaymentConfirmed(client, { threadId, initiator
   await createDmEvent(client, {
     threadId,
     actorUserId: initiatorUserId,
-    eventType: 'dm_payment_confirmed',
-    detail: { amountStars: current.price_stars_snapshot }
+    eventType: proCovered ? 'dm_request_covered_by_pro' : 'dm_payment_confirmed',
+    detail: { amountStars: current.price_stars_snapshot, currency: proCovered ? null : currency, feePolicy: REQUEST_DELIVERY_FEE_POLICY, proCovered, telegramPaymentChargeId: telegramPaymentChargeId || null, providerPaymentChargeId: providerPaymentChargeId || null }
   });
 
   return {
     changed: true,
     blocked: false,
     duplicate: false,
-    reason: 'dm_request_delivered',
+    reason: proCovered ? 'dm_request_sent_via_pro' : 'dm_request_delivered',
     thread: normalizeDmThreadRow({ ...row, counterpart_profile_id: current.target_profile_id, display_name: current.recipient_display_name, headline_user: current.recipient_headline_user }, 'sent'),
-    envelope: current
+    envelope: { ...current, pro_covered: proCovered }
   };
 }
 
 export async function decideDmThread(client, { userId, threadId, decision }) {
-  const current = await getThreadParticipantEnvelope(client, { threadId, userId });
+  let current = await getThreadParticipantEnvelope(client, { threadId, userId });
   if (!current) {
     return { changed: false, blocked: true, duplicate: false, reason: 'dm_thread_missing', thread: null };
   }
   if (String(current.recipient_user_id) !== String(userId)) {
     return { changed: false, blocked: true, duplicate: false, reason: 'dm_thread_not_actionable_by_user', thread: normalizeDmThreadRow(current, current.role) };
+  }
+  await acquireContactPairLock(client, {
+    userAId: current.initiator_user_id,
+    userBId: current.recipient_user_id
+  });
+  current = await getThreadParticipantEnvelope(client, { threadId, userId });
+  if (!current) {
+    return { changed: false, blocked: true, duplicate: false, reason: 'dm_thread_missing', thread: null };
   }
   if (!['acc', 'dec', 'blk', 'rpt'].includes(decision)) {
     return { changed: false, blocked: true, duplicate: false, reason: 'dm_invalid_decision', thread: normalizeDmThreadRow(current, current.role) };
@@ -621,6 +846,8 @@ async function loadDmMessagesByThreadId(client, threadId, limit = 12) {
 }
 
 export async function getDmInboxStateByUserId(client, { userId }) {
+  const schema = await ensureDmContactContractSchema(client);
+  const contract = dmContractSelects('t', schema.compat);
   const receivedResult = await client.query(
     `
       select
@@ -643,6 +870,9 @@ export async function getDmInboxStateByUserId(client, { userId }) {
         t.last_sender_user_id,
         t.blocked_by_user_id,
         t.reported_by_user_id,
+        ${contract.policySnapshot} as contact_policy_snapshot,
+        ${contract.proCovered} as pro_covered,
+        ${contract.checkoutAuthorizedAt} as checkout_authorized_at,
         initiator_mp.id as counterpart_profile_id,
         coalesce(nullif(initiator_mp.display_name, ''), initiator_la.full_name, 'Unknown member') as display_name,
         initiator_mp.headline_user
@@ -679,6 +909,9 @@ export async function getDmInboxStateByUserId(client, { userId }) {
         t.last_sender_user_id,
         t.blocked_by_user_id,
         t.reported_by_user_id,
+        ${contract.policySnapshot} as contact_policy_snapshot,
+        ${contract.proCovered} as pro_covered,
+        ${contract.checkoutAuthorizedAt} as checkout_authorized_at,
         recipient_mp.id as counterpart_profile_id,
         coalesce(nullif(recipient_mp.display_name, ''), recipient_la.full_name, 'Unknown member') as display_name,
         recipient_mp.headline_user

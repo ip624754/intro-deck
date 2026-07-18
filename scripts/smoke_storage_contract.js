@@ -20,6 +20,23 @@ class FakeClient {
     const normalized = text.replace(/\s+/g, ' ').trim();
     this.queries.push({ text: normalized, params });
 
+    if (normalized.startsWith('select exists (') && normalized.includes('member_profiles_has_hidden_telegram_username')) {
+      return {
+        rows: [{
+          member_profiles_has_hidden_telegram_username: true,
+          has_contact_unlock_requests_table: true,
+          contact_unlock_has_pro_covered: true,
+          contact_unlock_has_checkout_authorized_at: true,
+          has_member_dm_threads_table: true,
+          has_member_dm_events_table: true,
+          dm_threads_has_contact_policy_snapshot: true,
+          dm_threads_has_pro_covered: true,
+          dm_threads_has_checkout_authorized_at: true,
+          has_contact_unlock_events_table: true
+        }]
+      };
+    }
+
     if (normalized.startsWith('insert into users')) {
       return {
         rows: [{

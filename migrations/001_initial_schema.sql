@@ -74,6 +74,8 @@ create table if not exists contact_unlock_requests (
   target_headline_user text,
   telegram_payment_charge_id text,
   provider_payment_charge_id text,
+  pro_covered boolean not null default false,
+  checkout_authorized_at timestamptz,
   revealed_contact_value text,
   requested_at timestamptz not null default now(),
   approved_at timestamptz,
@@ -90,6 +92,19 @@ create table if not exists contact_unlock_requests (
 create index if not exists idx_contact_unlock_requests_target_status on contact_unlock_requests(target_user_id, status, updated_at desc);
 create index if not exists idx_contact_unlock_requests_requester_status on contact_unlock_requests(requester_user_id, status, updated_at desc);
 create unique index if not exists uniq_contact_unlock_requests_active_pair on contact_unlock_requests(requester_user_id, target_profile_id, contact_type) where status in ('payment_pending', 'paid_pending_approval');
+create unique index if not exists uq_contact_unlock_provider_charge on contact_unlock_requests(provider_payment_charge_id) where provider_payment_charge_id is not null;
+create index if not exists idx_contact_unlock_pro_usage on contact_unlock_requests(requester_user_id, requested_at desc) where pro_covered = true;
+
+create table if not exists contact_unlock_events (
+  id bigserial primary key,
+  request_id bigint not null references contact_unlock_requests(id) on delete cascade,
+  actor_user_id bigint references users(id) on delete set null,
+  event_type text not null,
+  detail_json jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists contact_unlock_events_request_id_idx on contact_unlock_events(request_id, created_at desc);
 
 
 create table if not exists member_dm_threads (
@@ -101,6 +116,9 @@ create table if not exists member_dm_threads (
   status text not null default 'draft' check (status in ('draft', 'payment_pending', 'pending_recipient', 'active', 'declined', 'blocked', 'closed')),
   payment_state text not null default 'draft' check (payment_state in ('draft', 'pending', 'confirmed', 'not_required')),
   price_stars_snapshot integer not null default 0,
+  contact_policy_snapshot text,
+  pro_covered boolean not null default false,
+  checkout_authorized_at timestamptz,
   first_message_text text,
   blocked_by_user_id bigint references users(id) on delete set null,
   reported_by_user_id bigint references users(id) on delete set null,
@@ -121,6 +139,9 @@ create table if not exists member_dm_threads (
 create index if not exists member_dm_threads_initiator_status_idx on member_dm_threads (initiator_user_id, status, updated_at desc);
 create index if not exists member_dm_threads_recipient_status_idx on member_dm_threads (recipient_user_id, status, updated_at desc);
 create index if not exists member_dm_threads_pair_idx on member_dm_threads (least(initiator_user_id, recipient_user_id), greatest(initiator_user_id, recipient_user_id), updated_at desc);
+create unique index if not exists uq_member_dm_telegram_charge on member_dm_threads(telegram_payment_charge_id) where telegram_payment_charge_id is not null;
+create unique index if not exists uq_member_dm_provider_charge on member_dm_threads(provider_payment_charge_id) where provider_payment_charge_id is not null;
+create index if not exists idx_member_dm_pro_usage on member_dm_threads(initiator_user_id, delivered_at desc) where pro_covered = true;
 
 create table if not exists member_dm_messages (
   id bigserial primary key,

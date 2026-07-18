@@ -1,6 +1,7 @@
 import { Composer } from 'grammy';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
 import {
+  authorizeDmCheckoutForTelegramUser,
   beginDmReplyComposeForTelegramUser,
   beginDmRequestComposeForTelegramUser,
   confirmDmPaymentForTelegramUser,
@@ -19,7 +20,7 @@ async function sendDmInvoice(ctx, invoice) {
     payload: invoice.payload,
     provider_token: '',
     currency: 'XTR',
-    prices: [{ label: 'DM request', amount: invoice.amountStars }]
+    prices: [{ label: 'Request delivery', amount: invoice.amountStars }]
   });
 }
 
@@ -81,7 +82,8 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       '',
       'Reply with the first message now.',
       'Recipient approval is required before the conversation becomes active.',
-      'After you send the message, you will be asked to pay the DM request fee.'
+      'After you send the message, you can pay to deliver this permission request.',
+      'Payment does not guarantee approval or reply, and decline alone does not trigger an automatic refund.'
     ].join('\n'));
   });
 
@@ -212,17 +214,19 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       return next();
     }
 
-    const detail = await loadDmThreadDetailForTelegramUser({
+    const authorization = await authorizeDmCheckoutForTelegramUser({
       telegramUserId: ctx.from.id,
       telegramUsername: ctx.from.username || null,
-      threadId: parsed.threadId
-    }).catch(() => ({ persistenceEnabled: true, thread: null, blocked: true, reason: 'dm_thread_missing' }));
+      threadId: parsed.threadId,
+      currency: ctx.preCheckoutQuery.currency,
+      totalAmount: ctx.preCheckoutQuery.total_amount
+    }).catch(() => ({ persistenceEnabled: true, authorized: false, blocked: true, reason: 'dm_checkout_authorization_failed' }));
 
-    const ok = Boolean(detail.thread && detail.thread.status === 'payment_pending');
+    const ok = Boolean(authorization.authorized);
     await ctx.api.raw.answerPreCheckoutQuery({
       pre_checkout_query_id: ctx.preCheckoutQuery.id,
       ok,
-      ...(ok ? {} : { error_message: formatDmRequestReason(detail.reason) })
+      ...(ok ? {} : { error_message: formatDmRequestReason(authorization.reason) })
     });
   });
 
@@ -238,7 +242,9 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       telegramUsername: ctx.from.username || null,
       threadId: parsed.threadId,
       telegramPaymentChargeId: payment.telegram_payment_charge_id,
-      providerPaymentChargeId: payment.provider_payment_charge_id || null
+      providerPaymentChargeId: payment.provider_payment_charge_id || null,
+      currency: payment.currency,
+      totalAmount: payment.total_amount
     }).catch((error) => ({
       persistenceEnabled: true,
       changed: false,
@@ -249,7 +255,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (result.changed) {
-      await ctx.reply('✅ DM request paid. It is now waiting for recipient approval.', {
+      await ctx.reply('✅ Request-delivery fee confirmed. The recipient now decides whether to accept the DM request. Approval or reply is not guaranteed, and decline alone does not trigger an automatic refund.', {
         reply_markup: {
           inline_keyboard: [
             [{ text: '📨 DM inbox', callback_data: 'dm:inbox' }],

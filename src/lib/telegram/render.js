@@ -5,6 +5,7 @@ import {
   getContactModeLabel,
   summarizeDirectoryFilters
 } from '../profile/contract.js';
+import { buildProFairUseDisclosure, canOpenPaidContactRail } from '../contact/contract.js';
 
 function buildInlineKeyboard(rows) {
   return {
@@ -217,25 +218,27 @@ function directContactAvailabilityLine(profileSnapshot) {
   }
 
   if (profileSnapshot?.contact_mode === 'paid_unlock_requires_approval') {
-    return 'Direct contact: available by paid request • recipient approval required';
+    return 'Contact requests: direct contact + DM available • recipient approval required';
   }
 
-  return 'Direct contact: intro only';
+  return 'Contact requests: intro only • paid direct-contact and DM disabled';
 }
 
 function canViewerRequestDirectContact(profileSnapshot) {
-  return Boolean(!profileSnapshot?.is_viewer && profileSnapshot?.profile_id && profileSnapshot?.contact_mode === 'paid_unlock_requires_approval');
+  return canOpenPaidContactRail(profileSnapshot);
 }
 
 function canViewerRequestDm(profileSnapshot) {
-  return Boolean(!profileSnapshot?.is_viewer && profileSnapshot?.profile_id);
+  return canOpenPaidContactRail(profileSnapshot);
 }
 
 function renderDmThreadLine(item, index) {
   const name = toDisplayValue(item?.display_name, 'Unknown member');
   const headline = truncate(item?.headline_user, 36);
-  const paidHint = Number.isFinite(Number(item?.price_stars_snapshot)) ? ` • ${item.price_stars_snapshot}⭐` : '';
-  return `${index + 1}. ${name} — ${headline} • ${item?.status || 'pending'}${paidHint} • ${formatDateShort(item?.last_message_at || item?.updated_at || item?.created_at)}`;
+  const coverageHint = item?.pro_covered
+    ? ' • Pro'
+    : Number.isFinite(Number(item?.price_stars_snapshot)) ? ` • ${item.price_stars_snapshot}⭐ delivery fee` : '';
+  return `${index + 1}. ${name} — ${headline} • ${item?.status || 'pending'}${coverageHint} • ${formatDateShort(item?.last_message_at || item?.updated_at || item?.created_at)}`;
 }
 
 function renderDmMessageLine(message, viewerUserId) {
@@ -248,7 +251,9 @@ ${truncate(message?.message_text, 280)}`;
 function renderContactUnlockLine(item, index) {
   const name = toDisplayValue(item?.display_name, 'Unknown member');
   const headline = truncate(item?.headline_user, 36);
-  const paidHint = Number.isFinite(Number(item?.price_stars_snapshot)) ? ` • ${item.price_stars_snapshot}⭐` : '';
+  const paidHint = item?.pro_covered
+    ? ' • Pro'
+    : Number.isFinite(Number(item?.price_stars_snapshot)) ? ` • ${item.price_stars_snapshot}⭐ delivery fee` : '';
   const revealHint = item?.status === 'revealed' && item?.revealed_contact_value ? ` • @${String(item.revealed_contact_value).replace(/^@+/, '')}` : '';
   return `${index + 1}. ${name} — ${headline} • ${item?.status || 'pending'}${paidHint}${revealHint} • ${formatDateShort(item?.requested_at || item?.updated_at)}`;
 }
@@ -672,10 +677,12 @@ export function renderPricingText({ pricingState = null } = {}) {
   const subscriptionConfig = state.subscriptionConfig || {};
   const subscription = state.subscription || null;
   const recentReceipts = Array.isArray(state.recentReceipts) ? state.recentReceipts.slice(0, 5) : [];
+  const allowance = state.proOutreachAllowance || null;
+  const fairUseLimit = allowance?.limit || state.contactPolicy?.proOutreachDailyLimit || 0;
   const lines = [
     '⭐ Intro Deck Pro',
     '',
-    'Use Pro when you want direct-contact requests and DM request opens included during your active subscription.',
+    'Pro includes a bounded fair-use allowance for delivering direct-contact and DM permission requests.',
     ''
   ];
 
@@ -691,12 +698,16 @@ export function renderPricingText({ pricingState = null } = {}) {
 
   lines.push('');
   lines.push(`Pro monthly: ${pricing.proMonthlyPriceStars || 0}⭐ • ${subscriptionConfig.proMonthlyDurationDays || 30} days`);
-  lines.push(`Direct contact request: ${pricing.contactUnlockPriceStars || 0}⭐ each without Pro`);
-  lines.push(`DM request open: ${pricing.dmOpenPriceStars || 0}⭐ each without Pro`);
+  lines.push(`Direct-contact request delivery: ${pricing.contactUnlockPriceStars || 0}⭐ each without Pro`);
+  lines.push(`DM permission-request delivery: ${pricing.dmOpenPriceStars || 0}⭐ each without Pro`);
   lines.push('');
-  lines.push('Included with active Pro:');
-  lines.push('• direct-contact request opens');
-  lines.push('• DM request opens');
+  lines.push('Pro fair use:');
+  lines.push(`• ${buildProFairUseDisclosure({ dailyLimit: fairUseLimit })}`);
+  if (allowance?.supported) {
+    lines.push(`• Current rolling window: ${allowance.used}/${allowance.limit} used • ${allowance.remaining} remaining`);
+  }
+  lines.push('• Recipient approval is always required. Approval or reply is not guaranteed.');
+  lines.push('• Decline or no reply alone does not trigger an automatic refund of a paid request-delivery fee.');
 
   if (recentReceipts.length) {
     lines.push('');
@@ -1379,8 +1390,13 @@ export function renderContactUnlockDetailText({ persistenceEnabled = false, requ
     lines.push(`Member: ${toDisplayValue(request.display_name, 'Unknown member')}`);
     lines.push(`Headline: ${truncate(request.headline_user, 120)}`);
     lines.push(`Status: ${toDisplayValue(request.status)}`);
-    lines.push(`Payment: ${toDisplayValue(request.payment_state)}`);
-    lines.push(`Price: ${Number.isFinite(Number(request.price_stars_snapshot)) ? `${request.price_stars_snapshot}⭐` : '—'}`);
+    lines.push(request.pro_covered
+      ? 'Delivery coverage: Pro fair-use allowance'
+      : `Payment: ${toDisplayValue(request.payment_state)}`);
+    lines.push(request.pro_covered
+      ? `Reference per-request price: ${Number.isFinite(Number(request.price_stars_snapshot)) ? `${request.price_stars_snapshot}⭐ • not charged` : '—'}`
+      : `Request-delivery fee: ${Number.isFinite(Number(request.price_stars_snapshot)) ? `${request.price_stars_snapshot}⭐` : '—'}`);
+    lines.push('Contract: delivery of a permission request only • recipient approval is required • approval is not guaranteed.');
     lines.push(`Requested: ${formatDateShort(request.requested_at)}`);
     if (request.role === 'sent') {
       if (request.status === 'revealed' && request.revealed_contact_value) {
@@ -1515,8 +1531,15 @@ export function renderDmThreadText({ persistenceEnabled = false, thread = null, 
     lines.push(`Member: ${toDisplayValue(thread.display_name, 'Unknown member')}`);
     lines.push(`Headline: ${truncate(thread.headline_user, 120)}`);
     lines.push(`Status: ${toDisplayValue(thread.status)}`);
-    lines.push(`Payment: ${toDisplayValue(thread.payment_state)}`);
-    lines.push(`Price: ${Number.isFinite(Number(thread.price_stars_snapshot)) ? `${thread.price_stars_snapshot}⭐` : '—'}`);
+    lines.push(thread.pro_covered
+      ? 'Delivery coverage: Pro fair-use allowance'
+      : `Payment: ${toDisplayValue(thread.payment_state)}`);
+    lines.push(thread.pro_covered
+      ? `Reference per-request price: ${Number.isFinite(Number(thread.price_stars_snapshot)) ? `${thread.price_stars_snapshot}⭐ • not charged` : '—'}`
+      : `Request-delivery fee: ${Number.isFinite(Number(thread.price_stars_snapshot)) ? `${thread.price_stars_snapshot}⭐` : '—'}`);
+    if (thread.status !== 'active') {
+      lines.push('Contract: delivery of a DM permission request only • recipient approval is required • approval or reply is not guaranteed.');
+    }
     lines.push(`Created: ${formatDateShort(thread.created_at)}`);
     if (thread.first_message_text) {
       lines.push('', `First message: ${truncate(thread.first_message_text, 280)}`);

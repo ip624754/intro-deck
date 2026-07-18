@@ -4,7 +4,7 @@ import { applyDirectoryFilterInputForTelegramUser } from '../../lib/storage/dire
 import { applyAdminCommsPhotoInput, applyAdminCommsTextInput, applyAdminUserNoteInput, loadAdminBroadcastState, loadAdminDirectMessageState, loadAdminNoticeState, loadAdminSearchResults } from '../../lib/storage/adminStore.js';
 import { applyProfileFieldInput } from '../../lib/storage/profileEditStore.js';
 import { applyDmComposeInput } from '../../lib/storage/dmStore.js';
-import { formatUserFacingError } from '../utils/notices.js';
+import { formatDmRequestReason, formatUserFacingError } from '../utils/notices.js';
 
 export function createTextComposer({ buildDirectoryFiltersSurface, buildAdminUserCardSurface, buildAdminUserMessageSurface, buildAdminNoticeSurface, buildAdminBroadcastSurface, buildAdminSearchResultsSurface, buildDmThreadSurface }) {
   const composer = new Composer();
@@ -158,11 +158,15 @@ export function createTextComposer({ buildDirectoryFiltersSurface, buildAdminUse
     }));
 
     if (dmResult.consumed) {
-      const notice = dmResult.composeMode === 'request'
-        ? (dmResult.autoCovered
-          ? '✅ First DM request message sent via Pro. It is now waiting for recipient approval.'
-          : '✅ First DM request message saved. Pay to deliver it to the recipient.')
-        : '✅ DM message sent.';
+      const notice = dmResult.blocked
+        ? `⚠️ ${formatDmRequestReason(dmResult.reason)}`
+        : dmResult.composeMode === 'request'
+          ? (dmResult.autoCovered
+            ? '✅ DM permission request delivered through Pro. Recipient approval is still required.'
+            : dmResult.reason === 'pro_outreach_daily_limit_reached'
+              ? 'ℹ️ Your Pro rolling allowance is used. The first message is saved; pay the per-request fee to deliver it.'
+              : '✅ First message saved. Payment delivers the permission request; approval or reply is not guaranteed.')
+          : '✅ DM message sent.';
       const surface = await buildDmThreadSurface(ctx, dmResult.thread?.dm_thread_id, notice);
       await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
       return;
