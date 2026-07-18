@@ -17,7 +17,7 @@ function fallbackRenderHelpText() {
   return [
     '❓ Help',
     '',
-    'Use Intro Deck to connect your LinkedIn identity, complete a concise profile inside Telegram, browse listed professionals, manage your intro inbox, review gated DM requests, and open plans when you need direct contact.',
+    'Use Intro Deck to connect a LinkedIn account, complete a member-provided professional card, browse listed profiles, send permission requests, and continue privately only after approval.',
     '',
     'Shortcuts:',
     '• /profile — open your profile',

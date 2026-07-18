@@ -3,13 +3,14 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP053A
-- Phase: Staging Runtime Acceptance Pack on top of STEP053 Contact Contract and Payment Honesty Lock
-- Primary mode: HEAVY / STAGING ACCEPTANCE / POSTGRESQL CONCURRENCY / TELEGRAM STARS EVIDENCE
-- Runtime status: STEP053A acceptance tooling is implemented and source-verified on Node 20; PostgreSQL staging, deployed health, Telegram webhook, and real Stars scenarios remain unconfirmed until the generated runtime evidence pack passes
+- Current STEP: STEP054
+- Phase: Positioning and Discovery Truth Alignment on top of live-deployed STEP053A
+- Primary mode: STANDARD / PRODUCT CONTRACT / COPY CONSISTENCY / DISCOVERY TRUTH
+- Runtime status: STEP053A is live-deployed with health/config confirmed at artifact `b67371385030bef8ef528fb13eb7ffcc86933b7f`; STEP054 is source-implemented and awaits deploy verification
 
 ## What exists now
 
+- STEP054 positioning canon: listed member profiles, LinkedIn-connected account identity, member-provided professional claims, and approval-based contact
 - STEP053A reproducible staging preflight, isolated PostgreSQL runtime harness, and operator-assisted Telegram Stars evidence verifier
 - canonical runtime release marker shared by health and admin surfaces
 - LinkedIn OIDC identity bootstrap
@@ -42,7 +43,11 @@
 
 ## Current truth
 
-- STEP053A is an acceptance pack, not a staging PASS claim; only complete Node 20 + PostgreSQL + Telegram evidence can produce `GO`
+- STEP054 removes stronger-than-mechanism claims from active landing, Telegram, legal, README, and BotFather-facing copy
+- LinkedIn sign-in connects basic account identity; it does not verify member-entered roles, companies, skills, experience, or expertise
+- Active, listed profile cards are visible to bot users; private contact details remain hidden by default and contact stays approval-based
+- Intro requests go directly to the profile owner and are not represented as third-party warm introductions
+- STEP053A remains an acceptance pack; deployed health is confirmed, while complete Stars/concurrency scenario evidence remains partial
 - mutating fixture tests require exact staging target, mutation ACK, database fingerprint ACK, and artifact SHA; automated and manual evidence must share that anchor
 - STEP053 makes `contact_mode` authoritative for new paid direct-contact and DM permission requests
 - STEP053 defines Stars as a non-refundable request-delivery fee on decline/no reply; approval/contact/reply are not guaranteed
@@ -84,7 +89,7 @@
 
 ## Next recommended step
 
-- deploy STEP051.5 and do a short live smoke on the real bot: verify `⭐ Plans` and `/plans` both open the pricing screen, confirm `/start` still produces one home render, `/menu` still opens the same home surface, and invite deep links still attribute correctly
+- deploy STEP054 and verify `/api/health?full=1` reports `STEP054`; then check landing hero/FAQ, Telegram home/Help/directory/profile copy, Privacy/Terms, and apply the BotFather text from `doc/80_STEP054_BOTFATHER_PROFILE_COPY.md`
 
 ## STEP039.1 delta
 
@@ -205,7 +210,7 @@
 ## STEP050A delta
 
 - homepage hero rebuilt into a stronger product-first composition with one focal phone sculpture instead of the prior equal-weight feature grid
-- hero copy now frames Intro Deck around warm access inside Telegram while keeping LinkedIn as the identity/trust layer
+- hero copy was shifted toward a stronger professional-access framing; STEP054 later replaced that wording with the current account-identity and approval-based contact canon
 - added a compact five-step workflow rail so the value path reads immediately from identity to continuation
 - kept runtime, legal pages, and product contracts untouched; scope is front-end-only `index.html` + `site.css` plus docs state alignment
 
@@ -239,7 +244,7 @@
 
 - hero was rebuilt around one integrated rendered device visual instead of the prior HTML phone + float-card composition
 - removed the hero workflow rail, explanatory plaque, and extra trust chips so the first screen reads shorter and cleaner
-- headline/subhead/CTA stack now emphasizes warm professional access inside Telegram with one lighter trust line beneath the actions
+- headline/subhead/CTA stack was simplified around professional access; STEP054 later replaced the earlier wording with the current discovery and permission-based contact canon
 - scope stays front-end-only on `index.html` + `site.css` + landing smoke alignment; runtime and legal surfaces remain untouched
 
 
@@ -330,4 +335,4 @@
 
 1. Apply migration `027` in staging after a duplicate-charge preflight.
 2. Run Node 20 + PostgreSQL + Telegram Stars runtime acceptance, including duplicate/stale callback and Pro concurrency cases.
-3. Continue to STEP054 only after runtime evidence is captured.
+3. STEP054 proceeded after operator-confirmed STEP053A health/config; remaining payment/concurrency scenarios stay tracked as partial runtime evidence rather than blocking copy alignment.

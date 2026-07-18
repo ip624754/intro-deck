@@ -3,13 +3,18 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP053A — Staging Runtime Acceptance Pack
-- Current mode: HEAVY / STAGING ACCEPTANCE / POSTGRESQL CONCURRENCY / TELEGRAM STARS EVIDENCE
-- Current focus: make STEP053 staging-verifiable through fail-closed preflight, isolated PostgreSQL runtime scenarios, and artifact-bound Telegram/operator evidence.
+- Current baseline: STEP054 — Positioning and Discovery Truth Alignment
+- Current mode: STANDARD / PRODUCT CONTRACT / COPY CONSISTENCY / DISCOVERY TRUTH
+- Current focus: keep landing, Telegram, legal, README, and BotFather-facing wording aligned with actual LinkedIn identity, directory visibility, and approval-based contact mechanisms.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
 
+- STEP054 positioning contract exists across landing, Telegram, Privacy, Terms, README, state docs, and BotFather-facing copy.
+- LinkedIn sign-in is described as basic account identity connection, not professional verification.
+- Professional profile fields are described as member-provided.
+- Active, listed cards are described as visible to bot users; private contact details remain controlled.
+- Intro requests are described as direct requests to the profile owner, not third-party warm introductions.
 - STEP053 contact-mode enforcement exists at render, creation, invoice, pre-checkout, and confirmation boundaries.
 - STEP053 request-delivery fee disclosure exists in invoice, bot, pricing, receipt snapshot, and Terms surfaces.
 - STEP053 bounded combined Pro outreach allowance and paid fallback exist in source.
@@ -37,13 +42,16 @@
 
 - syntax/smoke can be run from repo;
 - docs canon exists;
-- STEP053A syntax and dedicated source contract pass locally on Node `20.20.2`;
-- full Node 20 inventory is `68/81` PASS versus STEP053 `67/80`, with the same 13 inherited failures;
+- STEP053A syntax and dedicated source contract passed locally on Node `20.20.2`;
+- STEP054 dedicated positioning truth contract is part of the current source QA;
+- full Node 20 inventory is `69/82` PASS versus STEP053A `68/81`, with the same 13 inherited failures and one new passing STEP054 contract;
 - missing-target, wrong-database-fingerprint, and artifact-mismatch paths fail closed.
 
 ## Live-confirmed
 
-None in this workspace. **live status not confirmed — manual verification required**
+- Production `/api/health?full=1` operator-confirmed STEP053A with `ok=true`, `docsStep=STEP053A`, and artifact `b67371385030bef8ef528fb13eb7ffcc86933b7f`.
+- Database, LinkedIn, Telegram, webhook, persistence, contact unlock, DM relay, pricing, runtime guards, and operator diagnostics flags were true.
+- STEP054 deployment and live copy surfaces are not yet confirmed.
 
 ## Inference
 
@@ -52,7 +60,8 @@ None in this workspace. **live status not confirmed — manual verification requ
 
 ## Blocked / unconfirmed
 
-- PostgreSQL migration and transaction/concurrency behavior were not executed locally; STEP053A now provides the runner but not the runtime verdict.
+- Complete live Stars, replay, cooldown/block, Pro allowance, and concurrency scenario evidence remains partial.
+- STEP054 BotFather profile copy requires an operator update after deploy.
 - live Telegram pre-checkout, Stars charge, stale callback, and duplicate delivery proof are not closed.
 - no automatic refund engine exists for decline/no reply.
 
@@ -79,6 +88,8 @@ When contract certainty is missing, say exactly:
 - `doc/spec/STEP047_MEMBER_DM_RELAY_V1.md`
 - `doc/spec/STEP053_CONTACT_CONTRACT_AND_PAYMENT_HONESTY_LOCK.md`
 - `doc/spec/STEP053A_STAGING_RUNTIME_ACCEPTANCE_PACK.md`
+- `doc/spec/STEP054_POSITIONING_AND_DISCOVERY_TRUTH_ALIGNMENT.md`
+- `doc/80_STEP054_BOTFATHER_PROFILE_COPY.md`
 - `doc/77_STEP053A_STAGING_RUNTIME_ACCEPTANCE_RUNBOOK.md`
 - `doc/spec/STEP049B_LANDING_IMPLEMENTATION.md`
 - `doc/spec/STEP049C_OG_SOCIAL_METADATA_UPLIFT.md`
@@ -183,7 +194,7 @@ Before migration `027`, audit existing Telegram/provider charge IDs for duplicat
 - existing failures: 13 unrelated baseline contracts
 
 ### Next action
-Run staging migration + Node 20/PostgreSQL/Telegram Stars acceptance before STEP054.
+STEP054 proceeded after operator-confirmed STEP053A deployed health/config. Full Stars/concurrency acceptance remains partial and should be closed through real usage or a focused runtime pass.
 
 ## STEP053A handoff delta
 
@@ -214,4 +225,13 @@ npm run step053a:evidence:verify -- runtime_evidence/step053a/manual-evidence.js
 - staging GO report: not generated.
 
 ### Next action
-Deploy the exact FULL artifact to staging, run the complete STEP053A runbook, archive evidence, then proceed to STEP054 only after a GO report.
+Deploy STEP054, verify live positioning surfaces and BotFather copy, then proceed to STEP055 guided activation. Keep unresolved STEP053A Stars/concurrency scenarios explicit rather than treating them as complete.
+
+
+## STEP054 delta
+
+- Source step: STEP054.
+- Package: 0.51.0.
+- Positioning canon: listed member profiles; LinkedIn-connected account identity; member-provided professional claims; approval-based contact.
+- No schema or critical money/contact state changes.
+- Deploy verification and BotFather text update remain operator actions.

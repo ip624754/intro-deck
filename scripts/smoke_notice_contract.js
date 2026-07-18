@@ -6,7 +6,7 @@ const surface = await surfaces.buildAdminNoticeSurface({
   state: {
     persistenceEnabled: true,
     notice: {
-      body: 'Complete your profile to start receiving warm intros.',
+      body: 'Complete your profile to start receiving contact requests.',
       audienceKey: 'READY_NOT_LISTED',
       isActive: true,
       updatedAt: new Date().toISOString()

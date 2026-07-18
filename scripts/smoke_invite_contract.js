@@ -177,7 +177,7 @@ if (!inlineShareText.includes('Join Intro Deck')) {
 }
 
 const inlineCaption = renderInlineInviteCaption({ inviteState: { inlineInviteLink: inviteUrl } });
-if (!inlineCaption.includes('Trusted intros and direct contact in Telegram.') || !inlineCaption.includes('Join Intro Deck')) {
+if (!inlineCaption.includes('Professional discovery and contact by permission in Telegram.') || !inlineCaption.includes('Join Intro Deck')) {
   throw new Error('Invite photo caption must contain the upgraded invite copy and join anchor');
 }
 

@@ -6,7 +6,7 @@
     <title>Privacy — Intro Deck</title>
     <meta
       name="description"
-      content="Privacy information for Intro Deck, the private professional directory and contact workflow in Telegram."
+      content="Privacy information for Intro Deck, a Telegram-native professional directory with listed profiles and approval-based contact."
     />
     <meta name="robots" content="index,follow" />
     <meta name="theme-color" content="#07111f" />
@@ -19,11 +19,11 @@
     <meta property="og:title" content="Privacy — Intro Deck" />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://intro-deck.vercel.app/privacy" />
-    <meta property="og:description" content="Privacy information for Intro Deck, the private professional directory and contact workflow in Telegram." />
+    <meta property="og:description" content="Privacy information for Intro Deck, a Telegram-native professional directory with listed profiles and approval-based contact." />
     <meta property="og:image" content="https://intro-deck.vercel.app/assets/social/intro-deck-og-1200x630.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Privacy — Intro Deck" />
-    <meta name="twitter:description" content="Privacy information for Intro Deck, the private professional directory and contact workflow in Telegram." />
+    <meta name="twitter:description" content="Privacy information for Intro Deck, a Telegram-native professional directory with listed profiles and approval-based contact." />
     <meta name="twitter:image" content="https://intro-deck.vercel.app/assets/social/intro-deck-og-1200x630.png" />
     <link rel="stylesheet" href="/site.css" />
   </head>
@@ -49,8 +49,8 @@
             <div class="eyebrow">Effective date: 2026-03-29</div>
             <h1>Privacy Policy</h1>
             <p>
-              Intro Deck is a Telegram-native private professional directory and contact workflow. This Privacy Policy explains what
-              information Intro Deck processes, why it is processed, and how it is used when you interact with the bot, website, and LinkedIn sign-in flow.
+              Intro Deck is a Telegram-native professional directory and approval-based contact workflow. Active, listed profile cards may be browsed
+              by bot users, while private contact details and private continuation remain controlled by the supported request flows.
             </p>
           </div>
           <aside class="legal-summary">
@@ -69,8 +69,8 @@
           <h2>1. Information we process</h2>
           <ul>
             <li>Telegram identifiers and account metadata needed to operate the bot.</li>
-            <li>LinkedIn sign-in and identity bootstrap data received through the LinkedIn authorization flow.</li>
-            <li>Profile information you add or edit inside the bot, such as display name, headline, company, city, about, skills, and listing status.</li>
+            <li>Basic LinkedIn account identity data received through the LinkedIn authorization flow, such as name, photo, locale, or email when available.</li>
+            <li>Member-provided profile information you add or edit inside the bot, such as display name, headline, company, city, about, skills, and listing status.</li>
             <li>Intro request records, direct-contact state, and DM workflow state needed to run the product.</li>
             <li>Operational data such as notification receipts, retry metadata, anti-abuse guards, purchase receipts, and security logs.</li>
           </ul>
@@ -79,7 +79,7 @@
         <section>
           <h2>2. Why we process this information</h2>
           <ul>
-            <li>To authenticate users and bootstrap identity through LinkedIn sign-in.</li>
+            <li>To connect a LinkedIn account identity through sign-in. This does not verify member-entered professional claims.</li>
             <li>To create and maintain user profiles and directory listings inside Telegram.</li>
             <li>To deliver intro requests, direct-contact requests, DM relay flows, and related decisions.</li>
             <li>To keep the service secure, prevent abuse, and maintain operational reliability.</li>
@@ -90,8 +90,9 @@
         <section>
           <h2>3. How visibility and contact access work</h2>
           <p>
-            Profiles are shown in the directory only when they are both active and listed. Contact details are not public by default.
-            Contact access stays controlled through product features such as intro requests, direct-contact requests, and private DM relay.
+            Profiles are shown in the directory only when they are both active and listed. Those listed cards are visible to bot users.
+            Member-entered professional fields are not verified by LinkedIn or Intro Deck unless explicitly stated. Contact details are not public by default,
+            and private continuation stays controlled through intro requests, direct-contact requests, and private DM relay.
           </p>
         </section>
 
@@ -118,6 +119,7 @@
           <ul>
             <li>You may edit your profile fields inside the bot.</li>
             <li>You may control whether your profile is listed and active in the directory.</li>
+            <li>You may choose the supported contact mode for new requests, subject to the product rules shown in the bot.</li>
             <li>You may stop using the bot at any time.</li>
           </ul>
         </section>
@@ -134,7 +136,7 @@
 
       <footer class="footer footer-bar">
         <div class="footer-copy">
-          <span>Intro Deck — private professional directory in Telegram</span>
+          <span>Intro Deck — listed profiles and approval-based contact in Telegram</span>
           <span class="small subtle">Legal pages are written for the current product scope and may change as the service evolves.</span>
         </div>
         <div class="footer-links small">

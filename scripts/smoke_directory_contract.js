@@ -37,7 +37,7 @@ if (homeKeyboard.inline_keyboard.flat().some((button) => button.callback_data ==
 }
 
 const listText = renderDirectoryListText({ profiles: sampleProfiles, page: 0, totalCount: 1, persistenceEnabled: true });
-if (!listText.includes('Public directory') || !listText.includes('Rustam Lukmanov')) {
+if (!listText.includes('🌐 Directory') || !listText.includes('Listed profile cards are visible to bot users') || !listText.includes('Rustam Lukmanov')) {
   throw new Error('Directory list text must render listed profiles');
 }
 

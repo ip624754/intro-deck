@@ -174,7 +174,7 @@ if (!skillsKeyboard.includes('p:sk:clr')) {
 console.log('OK: router baseline contract');
 
 const helpText = renderHelpText();
-if (!helpText.includes('Use Intro Deck to connect your LinkedIn identity')) {
+if (!helpText.includes('Use Intro Deck to connect a LinkedIn account')) {
   throw new Error('help text missing product summary');
 }
 const helpKeyboardInline = renderHelpKeyboard().inline_keyboard;

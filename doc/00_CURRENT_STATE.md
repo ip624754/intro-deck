@@ -4,12 +4,17 @@
 Intro Deck
 
 ## Current source baseline
-STEP053A — Staging Runtime Acceptance Pack
+STEP054 — Positioning and Discovery Truth Alignment
 
 ## Layer
-HEAVY / staging acceptance / PostgreSQL concurrency / Telegram Stars evidence
+STANDARD / product contract / copy consistency / discovery truth
 
 ## Source-confirmed
+- STEP054 defines Intro Deck as a Telegram-native directory of active, listed member profiles with approval-based contact paths.
+- LinkedIn sign-in connects basic account identity; member-entered professional claims are not verified by LinkedIn or Intro Deck unless explicitly stated.
+- Listed profile cards are visible to bot users; private contact details remain hidden by default.
+- Intro requests are sent directly to the profile owner and are not described as third-party warm introductions.
+- STEP054 aligns landing, Telegram, Privacy, Terms, README, current state, and BotFather-facing copy.
 - STEP053 makes `contact_mode` authoritative for new paid direct-contact and DM permission requests.
 - Stars now buy request delivery, not guaranteed approval, contact disclosure, or reply.
 - Decline/no reply alone has no automatic refund path in the current money core.
@@ -85,9 +90,10 @@ Pending reward accrual check is now re-run after:
 - docs canon and artifact protocol
 
 ## Live truth boundary
-- source-confirmed: yes
-- live-confirmed: no
-- live status not confirmed — manual verification required
+- STEP053A deployed health/config: operator-confirmed live at artifact `b67371385030bef8ef528fb13eb7ffcc86933b7f`
+- STEP054 source-confirmed: yes
+- STEP054 live-confirmed: no
+- BotFather STEP054 profile copy: not applied/verified in this workspace
 
 ## Redeem truth now in source
 - starter catalog:
@@ -200,7 +206,7 @@ PAYMENT_CHECKOUT_RETRY_LOCK_SECONDS=1800
 ## Next recommended step after STEP053
 1. Stage migration `027` with duplicate-charge preflight.
 2. Run the STEP053 runtime acceptance pack on Node 20 and PostgreSQL.
-3. Continue to STEP054 — Positioning and Discovery Truth Alignment only after runtime proof.
+3. STEP054 proceeded after operator-confirmed STEP053A deployed health/config; complete Stars/concurrency evidence remains partial and tracked separately.
 
 ## STEP053A — Staging Runtime Acceptance Pack
 
@@ -227,4 +233,12 @@ STEP053A source implementation does not make STEP053 staging-accepted. A valid `
 1. Deploy the STEP053A artifact to staging on Node 20.
 2. Run `step053a:preflight` and `step053a:database`.
 3. Complete all 13 Telegram/operator-assisted scenarios and generate the staging acceptance report.
-4. After GO, continue to STEP054 — Positioning and Discovery Truth Alignment.
+4. STEP054 is now source-implemented; deploy and verify the aligned landing/Telegram/legal surfaces, then proceed to STEP055 guided activation.
+
+
+## STEP054 delta
+
+- Active product copy no longer claims `LinkedIn-verified` identity, trusted professionals, warm introductions, private discovery, or a private directory.
+- Canon: LinkedIn-connected account identity + member-provided professional profile + listed cards visible to bot users + approval-based private contact.
+- No database, callback, payment, entitlement, or contact state-machine changes.
+- Next: deploy, verify live surfaces, apply BotFather copy, then proceed to STEP055 guided activation.

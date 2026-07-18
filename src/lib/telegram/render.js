@@ -536,7 +536,7 @@ export function renderHomeText({ profileSnapshot = null, persistenceEnabled = fa
   const lines = [
     '💼 Intro Deck',
     '',
-    'Trusted profiles and warm intros inside Telegram.',
+    'Listed professional profiles. Contact by permission.',
     ''
   ];
 
@@ -627,7 +627,7 @@ export function renderHelpText() {
   return [
     '❓ Help',
     '',
-    'Use Intro Deck to connect your LinkedIn identity, complete a concise profile inside Telegram, browse trusted professionals, send warm intros, open gated DM requests, and manage Pro access when you need direct contact.',
+    'Use Intro Deck to connect a LinkedIn account, complete a member-provided professional card, browse listed profiles, send intro or paid permission requests, and continue privately only after approval.',
     '',
     'Start here:',
     '• connect LinkedIn',
@@ -636,7 +636,7 @@ export function renderHelpText() {
     '• check your intro inbox',
     '• review your DM inbox',
     '• open plans / Pro status',
-    '• invite trusted contacts'
+    '• invite professional contacts'
   ].join('\n');
 }
 
@@ -766,7 +766,8 @@ export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabl
       lines.push(`• ${linkedInImportLine.replace(/^LinkedIn import:\s*/i, '')}`);
     }
     lines.push(...buildLinkedInIdentityDetailLines(profileSnapshot, { includeEmail: true }));
-    lines.push('• These LinkedIn basics are stored privately. Only your card fields below appear publicly.');
+    lines.push('• These LinkedIn basics are stored privately. Only your card fields below appear on your listed profile.');
+    lines.push('• LinkedIn does not verify the professional fields you enter on your card.');
     lines.push('');
 
     lines.push('🪪 Your card');
@@ -933,8 +934,8 @@ export function renderProfileInputKeyboard() {
 export function renderDirectoryFilterInputPrompt({ kind, filterSummary = summarizeDirectoryFilters() } = {}) {
   const label = kind === 'q' ? 'Search text' : 'City';
   const prompt = kind === 'q'
-    ? 'Send a short text query for the public directory. It matches display name, headline, company, industry, and about.'
-    : 'Send a city or location fragment to narrow the public directory.';
+    ? 'Send a short text query for listed profiles. It matches display name, headline, company, industry, and about.'
+    : 'Send a city or location fragment to narrow listed profiles.';
   const currentValue = kind === 'q' ? filterSummary.textQueryLabel : filterSummary.cityQueryLabel;
   const limit = kind === 'q' ? 80 : 60;
 
@@ -1024,9 +1025,9 @@ export function renderProfileSavedKeyboard() {
 
 export function renderDirectoryListText({ profiles = [], page = 0, totalCount = 0, persistenceEnabled = false, filterSummary = summarizeDirectoryFilters(), viewerProfile = null, notice = null } = {}) {
   const lines = [
-    '🌐 Public directory',
+    '🌐 Directory',
     '',
-    'Browse listed, active profiles. Use filters to narrow by text, city, industry, or skills.',
+    'Listed profile cards are visible to bot users. Private contact details stay hidden unless the owner approves a supported contact path.',
     '',
     ...renderFilterSummaryLines(filterSummary)
   ];
@@ -1111,6 +1112,7 @@ export function renderDirectoryCardText({ profileSnapshot = null, persistenceEna
     lines.push(`${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'Unnamed profile')}${profileSnapshot.is_viewer ? ' • you' : ''}`);
     lines.push(toDisplayValue(profileSnapshot.headline_user));
     lines.push('');
+    lines.push('Profile details: member-provided');
     lines.push(`Company: ${toDisplayValue(profileSnapshot.company_user)}`);
     lines.push(`City: ${toDisplayValue(profileSnapshot.city_user)}`);
     lines.push(`Industry: ${toDisplayValue(profileSnapshot.industry_user)}`);
@@ -1589,7 +1591,7 @@ export function renderDirectoryFiltersText({ persistenceEnabled = false, filterS
   const lines = [
     '🎯 Directory filters',
     '',
-    'Use text, city, one industry bucket, and any number of skills to narrow the public directory. Skill filters match any selected skill.',
+    'Use text, city, one industry bucket, and any number of skills to narrow listed profiles. Skill filters match any selected skill.',
     '',
     ...renderFilterSummaryLines(filterSummary)
   ];
@@ -2058,7 +2060,7 @@ export function renderInviteCardKeyboard({ inviteState = null } = {}) {
 
 export function renderInlineInviteShareText({ inviteState = null } = {}) {
   return [
-    'I found a clean Telegram directory for discovering people, requesting intros, and unlocking direct contact.',
+    'I found a Telegram directory for browsing listed profiles and requesting permission to connect.',
     '',
     buildJoinIntroDeckAnchor(inviteState?.inlineInviteLink || inviteState?.inviteLink)
   ].join('\n');
@@ -2066,8 +2068,8 @@ export function renderInlineInviteShareText({ inviteState = null } = {}) {
 
 export function renderInlineInviteCaption({ inviteState = null } = {}) {
   return [
-    'Trusted intros and direct contact in Telegram.',
-    'Private directory. LinkedIn identity. Consent-based access.',
+    'Professional discovery and contact by permission in Telegram.',
+    'Listed profiles. LinkedIn-connected accounts. Private contact after approval.',
     '',
     buildJoinIntroDeckAnchor(inviteState?.inlineInviteLink || inviteState?.inviteLink)
   ].join('\n');

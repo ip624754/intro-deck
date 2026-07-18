@@ -33,7 +33,7 @@ if (homeComposerSource.includes("composer.command('sent'")) {
 }
 
 const helpText = renderHelpText();
-if (!helpText.includes('Use Intro Deck to connect your LinkedIn identity')) {
+if (!helpText.includes('Use Intro Deck to connect a LinkedIn account')) {
   throw new Error('Help surface must explain the product clearly');
 }
 

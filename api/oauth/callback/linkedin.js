@@ -193,7 +193,7 @@ function buildPreviousOwnerMessage() {
     '⚠️ LinkedIn connection moved',
     '',
     'Your LinkedIn connection was moved to another Telegram account.',
-    'Your public directory listing on this Telegram account was hidden.'
+    'Your directory listing on this Telegram account was hidden.'
   ].join('\n');
 }
 
@@ -246,7 +246,7 @@ function renderPersistenceSuccessPage({ identity, persistResult }) {
   ].map((item) => `<li>${escapeHtml(item)}</li>`).join('');
   const nextItems = [
     persistResult?.transferred
-      ? 'The previous Telegram account was disconnected and hidden from the public directory.'
+      ? 'The previous Telegram account was disconnected and hidden from the directory.'
       : 'Your LinkedIn identity is connected. Review and finish your card in Telegram.',
     'Return to Telegram when you are ready.'
   ].map((item) => `<li>${escapeHtml(item)}</li>`).join('');

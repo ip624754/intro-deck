@@ -9,11 +9,11 @@ const privacyHtml = fs.readFileSync(path.join(repoRoot, 'privacy', 'index.html')
 const termsHtml = fs.readFileSync(path.join(repoRoot, 'terms', 'index.html'), 'utf8');
 
 const requiredIndexSnippets = [
-  'Trusted intros and direct contact',
+  'Professional discovery and contact by permission',
   'id="how-it-works"',
-  'A simple path from identity to conversation.',
+  'A clear path from account connection to approved contact.',
   'Five moments. One controlled path.',
-  'A more deliberate system for professional access.',
+  'A clearer system for professional access.',
   'What people usually want to know.',
   'Open @introdeckbot'
 ];

@@ -22,7 +22,7 @@ const terms = fs.readFileSync(path.join(root, 'terms', 'index.html'), 'utf8');
 
 const homeChecks = [
   'Intro Deck',
-  'Warm professional access inside Telegram.',
+  'Professional discovery. Contact by permission.',
   'https://t.me/introdeckbot',
   '/privacy',
   '/terms'
@@ -36,7 +36,7 @@ for (const needle of homeChecks) {
 
 const privacyChecks = [
   'Privacy Policy',
-  'LinkedIn sign-in',
+  'LinkedIn account identity',
   'Telegram identifiers',
   'notification receipts',
   '@introdeckbot'
@@ -50,7 +50,8 @@ for (const needle of privacyChecks) {
 
 const termsChecks = [
   'Terms of Use',
-  'private professional directory',
+  'listed member profiles',
+  'LinkedIn sign-in connects an account identity',
   'spam, scraping, fraud, harassment, or unlawful activity',
   '@introdeckbot'
 ];

@@ -10,9 +10,9 @@ const termsHtml = fs.readFileSync(path.join(root, 'terms', 'index.html'), 'utf8'
 const requiredIndexSnippets = [
   'Skip to content',
   'href="#why-better"',
-  'Warm professional access inside Telegram.',
+  'Professional discovery. Contact by permission.',
   'See how it works',
-  'LinkedIn is used as the identity layer. Public contact is not open by default.'
+  'LinkedIn connects account identity. Professional claims are member-provided.'
 ];
 
 for (const snippet of requiredIndexSnippets) {

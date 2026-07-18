@@ -120,7 +120,7 @@ export const DIRECTORY_FILTER_INPUTS = {
   c: {
     kind: 'c',
     label: 'City',
-    prompt: 'Send a city or location fragment to narrow the public directory.',
+    prompt: 'Send a city or location fragment to narrow listed profiles.',
     placeholder: 'Miami',
     maxLength: 60,
     storesAs: 'cityQuery'
