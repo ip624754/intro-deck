@@ -200,13 +200,13 @@ export function createProfileComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (result.blocked && result.reason === 'hidden_telegram_username_required_for_paid_unlock') {
-      notice = '⚠️ Add your hidden Telegram username first before enabling paid direct contact requests.';
+      notice = '⚠️ Add your hidden Telegram username first before enabling paid Telegram-contact requests.';
     } else if (result.blocked || !result.changed) {
       notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update contact mode right now.')}`;
     } else {
       notice = result.profile?.contact_mode === 'paid_unlock_requires_approval'
-        ? '✅ Contact mode is now direct contact by paid request.'
-        : '✅ Contact mode is now intro only.';
+        ? '✅ Contact mode now offers private-chat and Telegram-contact requests.'
+        : '✅ Contact mode is now free intro requests only.';
     }
 
     const surface = await buildProfileOptionalSurface(ctx, notice);

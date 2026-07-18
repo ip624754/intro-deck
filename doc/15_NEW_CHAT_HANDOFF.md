@@ -3,12 +3,20 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP055 — Guided Activation Spine
-- Current mode: STANDARD / TELEGRAM UX / PROFILE ACTIVATION / NAVIGATION
-- Current focus: guide each connected member through one next required profile step, then preview and publish without mixing optional fields into activation.
+- Current baseline: STEP056 — Core Contact Rail Simplification
+- Current mode: HEAVY / CONTACT UX / PAYMENT ORCHESTRATION / CONSENT
+- Current focus: expose one understandable Contact entry and inbox while preserving the canonical intro, Telegram-contact, private-chat, payment, and entitlement cores.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP056 canonical contact entry exists: `🤝 Request contact` on eligible profile cards.
+- The contact options surface shows free intro, private chat, or Telegram contact according to authoritative profile mode.
+- Exact configured prices or active Pro coverage are visible before entering the existing request flows.
+- One Contact inbox hub routes to existing Requests and Private chats surfaces without creating a new inbox repository.
+- Legacy callbacks remain active for stale Telegram messages.
+- No migration or data rewrite is required.
+- STEP053 consent, payment honesty, cooldown, block, replay, Pro allowance, and audit invariants remain unchanged.
 
 - STEP055 canonical activation resolver exists and drives progress/next action across Home, Profile, Skills, Saved, and Preview surfaces.
 - Required steps: LinkedIn, display name, headline, industry, about, and at least one skill.
@@ -50,26 +58,27 @@
 - docs canon exists;
 - STEP053A syntax and dedicated source contract passed locally on Node `20.20.2`;
 - STEP054 positioning truth contract remains green under STEP055;
-- STEP055 dedicated guided-activation contract passes on Node `20.20.2`;
-- full Node 20 inventory is `70/83` PASS versus STEP054 `69/82`, with the same 13 inherited failures and one new passing STEP055 contract;
+- STEP055 dedicated guided-activation contract remains green on Node `20.20.2`;
+- STEP056 dedicated contact-rail contract passes on Node `20.20.2`;
+- full Node 20 inventory is `71/84` PASS versus STEP055 `70/83`, with the same 13 inherited failures and one new passing STEP056 contract;
 - missing-target, wrong-database-fingerprint, and artifact-mismatch paths fail closed.
 
 ## Live-confirmed
 
-- Production `/api/health?full=1` operator-confirmed STEP054 with `ok=true`, `docsStep=STEP054`, and artifact `c3e9294c43a357992f663c772093df4892e7721f`.
+- Production `/api/health?full=1` operator-confirmed STEP055 with `ok=true`, `docsStep=STEP055`, and artifact `c582529c422915f5bf8b87364be47e957a9e9d71`.
 - Database, LinkedIn, Telegram, webhook, persistence, contact unlock, DM relay, pricing, runtime guards, and operator diagnostics flags were true.
-- STEP055 deployment and live activation flow are not yet confirmed.
+- STEP056 deployment and live contact-flow behavior are not yet confirmed.
 
 ## Inference
 
 - the next safe landing step after deploy is a narrow manual verification pass for STEP049K homepage/mobile/legal behavior plus OG/share-preview cache refresh, not another broad landing rewrite
-- the strongest product/runtime rails remain paid direct-contact requests plus gated DM initiation beneath the landing uplift
+- the strongest product/runtime rail is now one user-facing Contact entry backed by the existing intro, Telegram-contact, and private-chat mechanisms
 
 ## Blocked / unconfirmed
 
 - Complete live Stars, replay, cooldown/block, Pro allowance, and concurrency scenario evidence remains partial.
 - STEP054 BotFather profile copy application remains an operator action not verified here.
-- STEP055 Telegram activation path requires a short manual live pass after deploy.
+- STEP056 Contact card → options → request path and Contact inbox require a short manual live pass after deploy.
 - live Telegram pre-checkout, Stars charge, stale callback, and duplicate delivery proof are not closed.
 - no automatic refund engine exists for decline/no reply.
 

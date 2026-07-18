@@ -96,7 +96,7 @@ export async function getProSubscriptionInvoiceForTelegramUser({ telegramUserId,
         payload: buildProInvoicePayload('pro_monthly'),
         amountStars: pricing.proMonthlyPriceStars,
         title: 'Intro Deck Pro',
-        description: `Unlock Pro for ${subscriptionConfig.proMonthlyDurationDays} days. Includes up to ${contactPolicy.proOutreachDailyLimit} combined direct-contact and DM permission-request deliveries per rolling 24 hours. Recipient approval is still required.`
+        description: `Unlock Pro for ${subscriptionConfig.proMonthlyDurationDays} days. Includes up to ${contactPolicy.proOutreachDailyLimit} contact-request deliveries across private-chat and Telegram-contact options per rolling 24 hours. Recipient approval is still required.`
       }
     };
   });

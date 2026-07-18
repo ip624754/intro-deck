@@ -5,7 +5,7 @@ const source = fs.readFileSync(new URL('../src/bot/surfaces/appSurfaces.js', imp
 const required = [
   "callback_data: 'p:menu'",
   "callback_data: 'dir:list:0'",
-  "callback_data: 'intro:inbox'",
+  "callback_data: 'contact:inbox'",
   "callback_data: 'home:root'"
 ];
 

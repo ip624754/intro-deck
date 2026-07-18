@@ -113,13 +113,13 @@ export function createContactUnlockComposer({
       request: null
     }));
 
-    let notice = 'Direct contact request updated.';
+    let notice = 'Telegram contact request updated.';
     if (!result.persistenceEnabled) {
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (result.changed && result.reason === 'contact_unlock_revealed') {
-      notice = `✅ Approved direct contact request from ${result.request?.display_name || 'this member'}. Your hidden Telegram username is now revealed to the requester.`;
+      notice = `✅ Approved Telegram contact request from ${result.request?.display_name || 'this member'}. Your hidden Telegram username is now revealed to the requester.`;
     } else if (result.changed && result.reason === 'contact_unlock_declined') {
-      notice = `✅ Declined direct contact request from ${result.request?.display_name || 'this member'}.`;
+      notice = `✅ Declined Telegram contact request from ${result.request?.display_name || 'this member'}.`;
     } else if (result.duplicate) {
       notice = `ℹ️ ${formatContactUnlockDecisionReason(result.reason)}`;
     } else if (result.blocked) {
@@ -197,7 +197,7 @@ export function createContactUnlockComposer({
       return;
     }
 
-    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'Could not finalize this direct contact payment right now.')}`);
+    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'Could not finalize this Telegram contact payment right now.')}`);
   });
 
   return composer;

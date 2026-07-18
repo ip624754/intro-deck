@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP055 baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP056 baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
@@ -8,8 +8,9 @@ A Telegram-first professional directory:
 - LinkedIn OIDC for basic account identity; member-entered professional claims are not verified
 - self-managed profile completion inside Telegram
 - listed/active profile browse visible to bot users, with private contact details hidden by default
+- one canonical Request contact entry point with free intro, private-chat, or Telegram-contact outcomes
 - persisted intro requests and decisions
-- gated member DM relay with first-message approval and paid request opening
+- gated member private-chat relay with first-message approval and paid request opening
 - Telegram-native invite contacts surface with inline share + raw-link/card fallbacks
 - operator shell with communications, delivery, audit, quality, and search
 - analytics drilldowns and guarded operator bulk-prep
@@ -30,6 +31,7 @@ A Telegram-first professional directory:
 - STEP053A — runtime acceptance tooling and artifact binding
 - STEP054 — positioning and discovery truth alignment
 - STEP055 — guided profile activation spine
+- STEP056 — core contact rail simplification
 
 ## Core docs
 
@@ -56,3 +58,4 @@ A Telegram-first professional directory:
 - `npm run smoke:invite`
 - `npm run smoke:positioning-truth`
 - `npm run smoke:guided-activation`
+- `npm run smoke:contact-rail`

@@ -9,7 +9,7 @@ import { loadNotificationOperatorSurface } from '../../lib/storage/notificationS
 import { loadPricingSurfaceState } from '../../lib/storage/monetizationStore.js';
 import { loadInviteHistoryState, loadInviteRewardsSummaryState, loadInviteSurfaceState } from '../../lib/storage/inviteStore.js';
 import { loadProfileEditorState } from '../../lib/storage/profileEditStore.js';
-import { isOperatorTelegramUser } from '../../config/env.js';
+import { getPricingConfig, isOperatorTelegramUser } from '../../config/env.js';
 import { loadActiveAdminNotice } from '../../lib/storage/adminStore.js';
 
 
@@ -17,13 +17,14 @@ function fallbackRenderHelpText() {
   return [
     '❓ Help',
     '',
-    'Use Intro Deck to connect a LinkedIn account, complete a member-provided professional card, browse listed profiles, send permission requests, and continue privately only after approval.',
+    'Use Intro Deck to connect a LinkedIn account, complete a member-provided professional card, browse listed profiles, and use one Contact flow to continue privately only after approval.',
     '',
     'Shortcuts:',
     '• /profile — open your profile',
     '• /browse — browse the directory',
-    '• /inbox — open your intro inbox',
-    '• /dm — open your DM inbox',
+    '• /contact — open the Contact inbox hub',
+    '• /inbox — open contact requests',
+    '• /dm — open private chats',
     '• /plans — open pricing and Pro status',
     '• /invite — share your invite',
     '• /menu — return home'
@@ -37,10 +38,7 @@ function fallbackRenderHelpKeyboard() {
         { text: '🧩 Profile', callback_data: 'p:menu' },
         { text: '🌐 Browse directory', callback_data: 'dir:list:0' }
       ],
-      [
-        { text: '📥 Intro inbox', callback_data: 'intro:inbox' },
-        { text: '💬 DM inbox', callback_data: 'dm:inbox' }
-      ],
+      [{ text: '📨 Contact inbox', callback_data: 'contact:inbox' }],
       [
         { text: '⭐ Plans', callback_data: 'plans:root' },
         { text: '📨 Invite contacts', callback_data: 'invite:root' }
@@ -54,6 +52,10 @@ const renderHelpText = typeof render.renderHelpText === 'function' ? render.rend
 const renderHelpKeyboard = typeof render.renderHelpKeyboard === 'function' ? render.renderHelpKeyboard : fallbackRenderHelpKeyboard;
 const renderDirectoryCardKeyboard = render.renderDirectoryCardKeyboard;
 const renderDirectoryCardText = render.renderDirectoryCardText;
+const renderContactRequestText = render.renderContactRequestText;
+const renderContactRequestKeyboard = render.renderContactRequestKeyboard;
+const renderContactInboxText = render.renderContactInboxText;
+const renderContactInboxKeyboard = render.renderContactInboxKeyboard;
 const renderDirectoryFiltersKeyboard = render.renderDirectoryFiltersKeyboard;
 const renderDirectoryFiltersText = render.renderDirectoryFiltersText;
 const renderContactUnlockDetailKeyboard = render.renderContactUnlockDetailKeyboard;
@@ -413,6 +415,31 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
         notice
       }),
       reply_markup: renderDirectoryCardKeyboard({ profileSnapshot: state.profile, page })
+    };
+  }
+
+  async function buildContactRequestSurface(ctx, profileId, page = 0, notice = null) {
+    const [directoryState, pricingState] = await Promise.all([
+      loadDirectoryCard({ profileId, viewerTelegramUserId: ctx.from.id }).catch((error) => {
+        console.warn('[contact request] directory load failed', error?.message || error);
+        return { persistenceEnabled: false, profile: null, reason: 'contact_request_profile_load_failed' };
+      }),
+      loadPricingSurfaceState({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null }).catch((error) => {
+        console.warn('[contact request] pricing load failed', error?.message || error);
+        return { persistenceEnabled: false, profile: null, pricing: getPricingConfig(), subscription: null, proOutreachAllowance: null, reason: 'contact_request_pricing_load_failed' };
+      })
+    ]);
+    const persistenceEnabled = Boolean(directoryState.persistenceEnabled);
+    return {
+      text: renderContactRequestText({ profileSnapshot: directoryState.profile, pricingState, persistenceEnabled, notice }),
+      reply_markup: renderContactRequestKeyboard({ profileSnapshot: directoryState.profile, pricingState, page })
+    };
+  }
+
+  async function buildContactInboxSurface(ctx, notice = null) {
+    return {
+      text: renderContactInboxText({ notice }),
+      reply_markup: renderContactInboxKeyboard()
     };
   }
 
@@ -849,6 +876,8 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
     buildProfileOptionalSurface,
     buildDirectoryListSurface,
     buildDirectoryCardSurface,
+    buildContactRequestSurface,
+    buildContactInboxSurface,
     buildDirectoryFiltersSurface,
     buildIntroDetailSurface,
     buildContactUnlockDetailSurface,

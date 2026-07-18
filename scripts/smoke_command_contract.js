@@ -19,6 +19,7 @@ for (const [command, source] of [
   ['help', homeComposerSource],
   ['profile', profileComposerSource],
   ['browse', directoryComposerSource],
+  ['contact', directoryComposerSource],
   ['inbox', introComposerSource],
   ['invite', inviteComposerSource],
   ['ops', operatorComposerSource]
@@ -38,7 +39,7 @@ if (!helpText.includes('Use Intro Deck to connect a LinkedIn account')) {
 }
 
 const helpKeyboard = JSON.stringify(renderHelpKeyboard().inline_keyboard);
-for (const callback of ['p:menu', 'dir:list:0', 'intro:inbox', 'plans:root', 'home:root']) {
+for (const callback of ['p:menu', 'dir:list:0', 'contact:inbox', 'plans:root', 'home:root']) {
   if (!helpKeyboard.includes(callback)) {
     throw new Error(`Help keyboard missing ${callback}`);
   }

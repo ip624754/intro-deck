@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import {
   buildProFairUseDisclosure,
   buildRequestFeeDisclosure,
+  canOpenContactRequestRail,
   canOpenPaidContactRail,
   CONTACT_POLICY_SNAPSHOT,
   getTelegramStarsPaymentMismatchReason,
@@ -11,7 +12,7 @@ import {
   TELEGRAM_STARS_CURRENCY
 } from '../src/lib/contact/contract.js';
 import { getContactPolicyConfig } from '../src/config/env.js';
-import { renderDirectoryCardKeyboard, renderPricingText } from '../src/lib/telegram/render.js';
+import { renderContactRequestKeyboard, renderDirectoryCardKeyboard, renderPricingText } from '../src/lib/telegram/render.js';
 
 const paidProfile = { profile_id: 42, is_viewer: false, contact_mode: PAID_CONTACT_MODE };
 const introOnlyProfile = { profile_id: 43, is_viewer: false, contact_mode: 'intro_request' };
@@ -19,13 +20,19 @@ const introOnlyProfile = { profile_id: 43, is_viewer: false, contact_mode: 'intr
 assert.equal(canOpenPaidContactRail(paidProfile), true);
 assert.equal(canOpenPaidContactRail(introOnlyProfile), false);
 assert.equal(canOpenPaidContactRail({ ...paidProfile, is_viewer: true }), false);
+assert.equal(canOpenContactRequestRail(paidProfile), true);
+assert.equal(canOpenContactRequestRail({ ...paidProfile, is_viewer: true }), false);
 
 const paidKeyboard = JSON.stringify(renderDirectoryCardKeyboard({ profileSnapshot: paidProfile, page: 0 }));
-assert.match(paidKeyboard, /dir:unlock:42:0/);
-assert.match(paidKeyboard, /dir:dm:42:0/);
+assert.match(paidKeyboard, /dir:contact:42:0/);
+assert.doesNotMatch(paidKeyboard, /dir:unlock:/);
+assert.doesNotMatch(paidKeyboard, /dir:dm:/);
+const paidOptions = JSON.stringify(renderContactRequestKeyboard({ profileSnapshot: paidProfile, pricingState: { profile: { linkedin_sub: 'viewer' }, pricing: { contactUnlockPriceStars: 75, dmOpenPriceStars: 100 } }, page: 0 }));
+assert.match(paidOptions, /dir:unlock:42:0/);
+assert.match(paidOptions, /dir:dm:42:0/);
 
 const introKeyboard = JSON.stringify(renderDirectoryCardKeyboard({ profileSnapshot: introOnlyProfile, page: 0 }));
-assert.match(introKeyboard, /dir:intro:43:0/);
+assert.match(introKeyboard, /dir:contact:43:0/);
 assert.doesNotMatch(introKeyboard, /dir:unlock:/);
 assert.doesNotMatch(introKeyboard, /dir:dm:/);
 

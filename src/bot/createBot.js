@@ -89,6 +89,8 @@ export async function createBot() {
     clearAllPendingInputs,
     buildDirectoryListSurface: surfaces.buildDirectoryListSurface,
     buildDirectoryCardSurface: surfaces.buildDirectoryCardSurface,
+    buildContactRequestSurface: surfaces.buildContactRequestSurface,
+    buildContactInboxSurface: surfaces.buildContactInboxSurface,
     buildDirectoryFiltersSurface: surfaces.buildDirectoryFiltersSurface,
     buildIntroInboxSurface: surfaces.buildIntroInboxSurface,
     formatIntroRequestReason

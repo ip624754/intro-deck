@@ -30,8 +30,8 @@ const publicButtons = publicKeyboard.inline_keyboard.flat();
 if (publicButtons.some((button) => button.url === 'https://www.linkedin.com/in/rustam-lukmanov')) {
   throw new Error('Public directory card must not expose LinkedIn URL directly in intro_request mode');
 }
-if (!publicButtons.some((button) => button.callback_data === 'dir:intro:101:2')) {
-  throw new Error('Directory card keyboard must still expose intro-request callback');
+if (!publicButtons.some((button) => button.callback_data === 'dir:contact:101:2')) {
+  throw new Error('Directory card keyboard must expose the canonical contact callback');
 }
 
 const viewerKeyboard = renderDirectoryCardKeyboard({
@@ -47,8 +47,8 @@ const viewerButtons = viewerKeyboard.inline_keyboard.flat();
 if (!viewerButtons.some((button) => button.url === 'https://www.linkedin.com/in/rustam-lukmanov')) {
   throw new Error('Viewer must still be able to open their own submitted LinkedIn URL');
 }
-if (viewerButtons.some((button) => button.callback_data?.startsWith('dir:intro:'))) {
-  throw new Error('Viewer must not see intro-request button on own card');
+if (viewerButtons.some((button) => button.callback_data?.startsWith('dir:contact:'))) {
+  throw new Error('Viewer must not see contact-request button on own card');
 }
 
 const externalKeyboard = renderDirectoryCardKeyboard({

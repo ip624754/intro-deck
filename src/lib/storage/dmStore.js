@@ -50,7 +50,7 @@ function validateDmMessageText(text, { firstMessage = false } = {}) {
 function buildDmRequestNotification(envelope) {
   return {
     text: [
-      '💬 New DM request',
+      '💬 New private-chat request',
       '',
       `${envelope.initiator_display_name || 'A member'} wants to message you through Intro Deck.`,
       envelope.initiator_headline_user ? `Headline: ${envelope.initiator_headline_user}` : null,
@@ -76,17 +76,17 @@ function buildDmRequestNotification(envelope) {
 }
 
 function buildDmDecisionNotification(thread, reason) {
-  const lines = ['💬 DM request update', ''];
+  const lines = ['💬 Private-chat request update', ''];
   if (reason === 'dm_thread_accepted') {
-    lines.push(`${thread.display_name || 'This member'} accepted your DM request.`);
+    lines.push(`${thread.display_name || 'This member'} accepted your private-chat request.`);
     lines.push('The conversation is now active inside the bot.');
   } else if (reason === 'dm_thread_declined') {
-    lines.push(`${thread.display_name || 'This member'} declined your DM request.`);
+    lines.push(`${thread.display_name || 'This member'} declined your private-chat request.`);
     lines.push('No active conversation was opened. A decline does not trigger an automatic refund of the request-delivery fee.');
   } else if (reason === 'dm_thread_reported') {
-    lines.push('Your DM request was reported and blocked.');
+    lines.push('Your private-chat request was reported and blocked.');
   } else {
-    lines.push('Your DM request was blocked.');
+    lines.push('Your private-chat request was blocked.');
   }
 
   return {
@@ -94,7 +94,7 @@ function buildDmDecisionNotification(thread, reason) {
     replyMarkup: {
       inline_keyboard: [
         [{ text: '🧾 View thread', callback_data: `dm:view:${thread.dm_thread_id}` }],
-        [{ text: '📨 DM inbox', callback_data: 'dm:inbox' }]
+        [{ text: '💬 Private chats', callback_data: 'dm:inbox' }]
       ]
     }
   };
@@ -112,7 +112,7 @@ function buildDmMessageNotification({ thread, messageText }) {
     replyMarkup: {
       inline_keyboard: [
         [{ text: '🧾 Open thread', callback_data: `dm:view:${thread.dm_thread_id}` }],
-        [{ text: '📨 DM inbox', callback_data: 'dm:inbox' }]
+        [{ text: '💬 Private chats', callback_data: 'dm:inbox' }]
       ]
     }
   };

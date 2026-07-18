@@ -13,7 +13,7 @@ import {
 
 assert.equal(normalizeTelegramUsername('@rustam_dev'), 'rustam_dev');
 assert.equal(normalizeTelegramUsername('https://t.me/Rustam_Dev'), 'Rustam_Dev');
-assert.equal(getContactModeLabel('paid_unlock_requires_approval'), 'Direct contact by paid request');
+assert.equal(getContactModeLabel('paid_unlock_requires_approval'), 'Paid contact options');
 
 const profileKeyboard = renderProfileOptionalKeyboard({
   persistenceEnabled: true,
@@ -30,7 +30,7 @@ const directoryKeyboard = renderDirectoryCardKeyboard({
     contact_mode: 'paid_unlock_requires_approval'
   }
 });
-assert.match(JSON.stringify(directoryKeyboard), /dir:unlock:44:0/);
+assert.match(JSON.stringify(directoryKeyboard), /dir:contact:44:0/);
 
 const preview = renderProfilePreviewText({
   persistenceEnabled: true,
@@ -52,7 +52,7 @@ const preview = renderProfilePreviewText({
   }
 });
 assert.match(preview, /Hidden Telegram username: @rustam_dev/);
-assert.match(preview, /Contact mode: Direct contact by paid request/);
+assert.match(preview, /Contact mode: Paid contact options/);
 
 const detailText = renderContactUnlockDetailText({
   persistenceEnabled: true,

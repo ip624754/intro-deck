@@ -1,0 +1,47 @@
+{
+  "step": "STEP056",
+  "mode": "HEAVY",
+  "riskScore": 12,
+  "node": "v20.20.2",
+  "packageVersion": "0.53.0",
+  "checks": {
+    "npmCi": "PASS",
+    "npmCheck": "PASS",
+    "dedicatedSmoke": "PASS",
+    "npmAuditHigh": "PASS (0 vulnerabilities)",
+    "fullSmoke": {
+      "pass": 71,
+      "fail": 13,
+      "total": 84
+    },
+    "baselineSmoke": {
+      "pass": 70,
+      "fail": 13,
+      "total": 83
+    },
+    "newFailures": [],
+    "resolvedFailures": [],
+    "inheritedFailures": [
+      "smoke:admin-allowlist",
+      "smoke:admin-intros",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-runbook-freeze",
+      "smoke:admin-russian-layer",
+      "smoke:admin-search",
+      "smoke:admin-user-card",
+      "smoke:admin-users",
+      "smoke:broadcast-idempotency",
+      "smoke:code-split",
+      "smoke:env",
+      "smoke:profile-session-schema"
+    ]
+  },
+  "truthBoundary": {
+    "sourceVerified": true,
+    "liveVerified": false,
+    "migrationRequired": false,
+    "paymentStateMachineChanged": false,
+    "schemaChanged": false
+  }
+}

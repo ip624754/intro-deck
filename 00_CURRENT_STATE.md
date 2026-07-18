@@ -3,12 +3,14 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP055
-- Phase: Guided Activation Spine on top of live-deployed STEP054
-- Primary mode: STANDARD / TELEGRAM UX / PROFILE ACTIVATION / NAVIGATION
-- Runtime status: STEP054 is live-deployed at artifact `c3e9294c43a357992f663c772093df4892e7721f`; STEP055 is source-implemented and awaits deploy verification
+- Current STEP: STEP056
+- Phase: Core Contact Rail Simplification on top of live-deployed STEP055
+- Primary mode: HEAVY / CONTACT UX / PAYMENT ORCHESTRATION / CONSENT
+- Runtime status: STEP055 is live-deployed at artifact `c582529c422915f5bf8b87364be47e957a9e9d71`; STEP056 is source-implemented and awaits deploy verification
 
 ## What exists now
+
+- STEP056 one canonical `Request contact` entry on profile cards, a deterministic contact-options surface, and one Contact inbox hub while preserving existing intro/contact/DM repositories and payment transitions
 
 - STEP055 guided activation: exact next required step, progress, separate optional details, preview-before-publish, and explicit publish/hide callbacks
 - STEP054 positioning canon: listed member profiles, LinkedIn-connected account identity, member-provided professional claims, and approval-based contact
@@ -43,6 +45,11 @@
 - STEP051.5 restores the broken `Plans` surface by shipping the missing pricing text/keyboard render layer, so `⭐ Plans`, `/plans`, and `plans:root` no longer fail on `renderPricingText is not a function`
 
 ## Current truth
+
+- STEP056 changes the user-facing entry and navigation only: one `dir:contact` rail resolves to free intro, private chat, or Telegram contact according to profile mode
+- Existing `dir:intro`, `dir:dm`, and `dir:unlock` callbacks remain supported for stale messages and backend compatibility
+- One Contact inbox routes to existing Requests and Private chats surfaces; no request rows or money state are migrated
+- STEP056 adds no schema or migration and preserves STEP053 consent, cooldown, block, replay, Pro allowance, and audit invariants
 
 - STEP055 uses one canonical activation resolver across Home, Profile setup, saved-field, Skills, and Preview surfaces
 - Required activation steps are LinkedIn, display name, headline, industry, about, and at least one skill

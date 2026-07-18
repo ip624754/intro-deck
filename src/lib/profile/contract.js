@@ -75,7 +75,7 @@ export const PROFILE_FIELDS = {
     key: 'tg',
     column: 'telegram_username_hidden',
     label: 'Hidden Telegram username',
-    prompt: 'Send your Telegram username without @ or t.me/. This stays hidden and can only be revealed after an approved direct contact request.',
+    prompt: 'Send your Telegram username without @ or t.me/. This stays hidden and can only be revealed after an approved Telegram contact request.',
     placeholder: 'rustam',
     maxLength: 32,
     required: false,
@@ -132,10 +132,10 @@ export const CONTACT_MODE_OPTIONS = ['intro_request', 'paid_unlock_requires_appr
 
 export function getContactModeLabel(contactMode) {
   if (contactMode === 'paid_unlock_requires_approval') {
-    return 'Direct contact by paid request';
+    return 'Paid contact options';
   }
   if (contactMode === 'intro_request') {
-    return 'Intro only';
+    return 'Intro requests only';
   }
   if (contactMode === 'telegram_only') {
     return 'Telegram only';

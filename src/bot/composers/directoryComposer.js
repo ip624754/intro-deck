@@ -18,6 +18,8 @@ export function createDirectoryComposer({
   clearAllPendingInputs,
   buildDirectoryListSurface,
   buildDirectoryCardSurface,
+  buildContactRequestSurface,
+  buildContactInboxSurface,
   buildDirectoryFiltersSurface,
   buildIntroInboxSurface,
   formatIntroRequestReason
@@ -38,6 +40,12 @@ export function createDirectoryComposer({
     await renderDirectoryList(ctx, 0, 'reply');
   });
 
+  composer.command('contact', async (ctx) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildContactInboxSurface(ctx);
+    await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
+  });
+
   composer.callbackQuery(/^dir:list:(\d+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     const page = Number.parseInt(ctx.match?.[1] || '0', 10);
@@ -50,6 +58,22 @@ export function createDirectoryComposer({
     const profileId = Number.parseInt(ctx.match?.[1] || '0', 10);
     const page = Number.parseInt(ctx.match?.[2] || '0', 10);
     const surface = await buildDirectoryCardSurface(ctx, profileId, page);
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+  });
+
+  composer.callbackQuery(/^dir:contact:(\d+):(\d+)$/, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await clearAllPendingInputs(ctx.from.id);
+    const profileId = Number.parseInt(ctx.match?.[1] || '0', 10);
+    const page = Number.parseInt(ctx.match?.[2] || '0', 10);
+    const surface = await buildContactRequestSurface(ctx, profileId, page);
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+  });
+
+  composer.callbackQuery('contact:inbox', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildContactInboxSurface(ctx);
     await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
   });
 

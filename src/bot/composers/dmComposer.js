@@ -76,9 +76,9 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       return;
     }
 
-    await ctx.answerCallbackQuery({ text: 'Send your first DM request message in chat.' });
+    await ctx.answerCallbackQuery({ text: 'Send your first private-chat request message.' });
     await ctx.reply([
-      `💬 DM request to ${result.target?.display_name || 'this member'}`,
+      `💬 Private-chat request to ${result.target?.display_name || 'this member'}`,
       '',
       'Reply with the first message now.',
       'Recipient approval is required before the conversation becomes active.',
@@ -126,7 +126,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       `💬 Reply to ${result.thread?.display_name || 'this member'}`,
       '',
       'Send your next text message in chat now.',
-      'It will be delivered inside this active DM thread.'
+      'It will be delivered inside this active private chat.'
     ].join('\n'));
   });
 
@@ -183,17 +183,17 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       thread: null
     }));
 
-    let notice = 'DM thread updated.';
+    let notice = 'Private chat updated.';
     if (!result.persistenceEnabled) {
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (result.changed && result.reason === 'dm_thread_accepted') {
-      notice = `✅ Accepted DM request from ${result.thread?.display_name || 'this member'}. The conversation is now active.`;
+      notice = `✅ Accepted private-chat request from ${result.thread?.display_name || 'this member'}. The conversation is now active.`;
     } else if (result.changed && result.reason === 'dm_thread_declined') {
-      notice = `✅ Declined DM request from ${result.thread?.display_name || 'this member'}.`;
+      notice = `✅ Declined private-chat request from ${result.thread?.display_name || 'this member'}.`;
     } else if (result.changed && result.reason === 'dm_thread_reported') {
-      notice = '✅ Reported and blocked this DM request.';
+      notice = '✅ Reported and blocked this private-chat request.';
     } else if (result.changed && result.reason === 'dm_thread_blocked') {
-      notice = '✅ Blocked this DM request.';
+      notice = '✅ Blocked this private-chat request.';
     } else if (result.duplicate) {
       notice = `ℹ️ ${formatDmDecisionReason(result.reason)}`;
     } else if (result.blocked) {
@@ -255,10 +255,10 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (result.changed) {
-      await ctx.reply('✅ Request-delivery fee confirmed. The recipient now decides whether to accept the DM request. Approval or reply is not guaranteed, and decline alone does not trigger an automatic refund.', {
+      await ctx.reply('✅ Request-delivery fee confirmed. The recipient now decides whether to accept the private-chat request. Approval or reply is not guaranteed, and decline alone does not trigger an automatic refund.', {
         reply_markup: {
           inline_keyboard: [
-            [{ text: '📨 DM inbox', callback_data: 'dm:inbox' }],
+            [{ text: '💬 Private chats', callback_data: 'dm:inbox' }],
             [{ text: '🧾 View thread', callback_data: `dm:view:${parsed.threadId}` }]
           ]
         }

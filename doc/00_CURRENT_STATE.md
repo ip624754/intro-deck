@@ -4,12 +4,19 @@
 Intro Deck
 
 ## Current source baseline
-STEP055 — Guided Activation Spine
+STEP056 — Core Contact Rail Simplification
 
 ## Layer
-STANDARD / Telegram UX / profile activation / navigation
+HEAVY / contact UX / payment orchestration / consent
 
 ## Source-confirmed
+- STEP056 exposes one canonical `🤝 Request contact` entry on every eligible non-self profile card.
+- `dir:contact:<profileId>:<page>` resolves current profile mode and renders one explicit options screen.
+- Intro-only profiles expose one free intro request; paid-contact profiles expose private-chat and Telegram-contact outcomes with exact Stars price or active Pro coverage.
+- Existing `dir:intro`, `dir:dm`, and `dir:unlock` callbacks remain supported for historical Telegram messages and backend compatibility.
+- Home and Help expose one `📨 Contact inbox` hub; the hub routes to the existing Requests and Private chats surfaces.
+- STEP056 changes no schema, migration, purchase receipt, payment confirmation, entitlement, cooldown, block, replay, or audit state machine.
+- STEP055 is operator-confirmed live at artifact `c582529c422915f5bf8b87364be47e957a9e9d71`; STEP056 awaits deploy verification.
 - STEP055 defines one deterministic activation sequence: LinkedIn, display name, headline, industry, about, and at least one skill.
 - Home, profile setup, saved-field, skills, and preview surfaces share the canonical activation resolver.
 - Optional company, city, public LinkedIn URL, hidden Telegram username, and contact mode live on a separate surface.
@@ -95,9 +102,9 @@ Pending reward accrual check is now re-run after:
 - docs canon and artifact protocol
 
 ## Live truth boundary
-- STEP054 deployed health/config: operator-confirmed live at artifact `c3e9294c43a357992f663c772093df4892e7721f`
-- STEP055 source-confirmed: yes
-- STEP055 live-confirmed: no
+- STEP055 deployed health/config: operator-confirmed live at artifact `c582529c422915f5bf8b87364be47e957a9e9d71`
+- STEP056 source-confirmed: yes
+- STEP056 live-confirmed: no
 - BotFather STEP054 profile copy: operator action not verified in this workspace
 
 ## Redeem truth now in source

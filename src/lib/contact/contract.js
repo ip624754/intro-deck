@@ -2,6 +2,25 @@ export const PAID_CONTACT_MODE = 'paid_unlock_requires_approval';
 export const REQUEST_DELIVERY_FEE_POLICY = 'request_delivery_fee_non_refundable_v1';
 export const TELEGRAM_STARS_CURRENCY = 'XTR';
 export const CONTACT_POLICY_SNAPSHOT = `${PAID_CONTACT_MODE}|${REQUEST_DELIVERY_FEE_POLICY}`;
+export const CONTACT_RAIL_CALLBACK_PREFIX = 'dir:contact';
+
+export function canOpenContactRequestRail(profileSnapshot = null) {
+  return Boolean(
+    profileSnapshot?.profile_id &&
+    !profileSnapshot?.is_viewer &&
+    [PAID_CONTACT_MODE, 'intro_request'].includes(profileSnapshot?.contact_mode)
+  );
+}
+
+export function getContactRequestCoverageLabel({ pricingState = null, amountStars = 0 } = {}) {
+  const subscriptionActive = Boolean(pricingState?.subscription?.isActive);
+  const allowance = pricingState?.proOutreachAllowance || null;
+  if (subscriptionActive && allowance?.supported && allowance?.allowed && Number(allowance?.remaining || 0) > 0) {
+    return 'Included in Pro';
+  }
+  const amount = Number.isFinite(Number(amountStars)) ? Number(amountStars) : 0;
+  return `${amount}⭐`;
+}
 
 export function canOpenPaidContactRail(profileSnapshot = null) {
   return Boolean(
@@ -49,5 +68,5 @@ export function getTelegramStarsPaymentMismatchReason({
 
 export function buildProFairUseDisclosure({ dailyLimit = 0 } = {}) {
   const limit = Number.isFinite(Number(dailyLimit)) ? Number(dailyLimit) : 0;
-  return `Active Pro includes up to ${limit} combined direct-contact and DM requests per rolling 24 hours, subject to recipient cooldowns and abuse controls.`;
+  return `Active Pro includes up to ${limit} combined contact-request deliveries per rolling 24 hours across private-chat and Telegram-contact options, subject to recipient cooldowns and abuse controls.`;
 }

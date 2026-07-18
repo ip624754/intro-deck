@@ -8,7 +8,12 @@ import {
   getProfileActivationState,
   summarizeDirectoryFilters
 } from '../profile/contract.js';
-import { buildProFairUseDisclosure, canOpenPaidContactRail } from '../contact/contract.js';
+import {
+  buildProFairUseDisclosure,
+  canOpenContactRequestRail,
+  canOpenPaidContactRail,
+  getContactRequestCoverageLabel
+} from '../contact/contract.js';
 
 function buildInlineKeyboard(rows) {
   return {
@@ -257,18 +262,10 @@ function directContactAvailabilityLine(profileSnapshot) {
   }
 
   if (profileSnapshot?.contact_mode === 'paid_unlock_requires_approval') {
-    return 'Contact requests: direct contact + DM available • recipient approval required';
+    return 'Contact: private chat or Telegram contact • recipient approval required';
   }
 
-  return 'Contact requests: intro only • paid direct-contact and DM disabled';
-}
-
-function canViewerRequestDirectContact(profileSnapshot) {
-  return canOpenPaidContactRail(profileSnapshot);
-}
-
-function canViewerRequestDm(profileSnapshot) {
-  return canOpenPaidContactRail(profileSnapshot);
+  return 'Contact: free intro request • recipient approval required';
 }
 
 function renderDmThreadLine(item, index) {
@@ -644,13 +641,10 @@ export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot
 
   if (persistenceEnabled && isLinkedInConnected) {
     rows.push([
-      { text: '📥 Intro inbox', callback_data: 'intro:inbox' },
-      { text: '💬 DM inbox', callback_data: 'dm:inbox' }
+      { text: '📨 Contact inbox', callback_data: 'contact:inbox' },
+      { text: '⭐ Plans', callback_data: 'plans:root' }
     ]);
-    rows.push([
-      { text: '⭐ Plans', callback_data: 'plans:root' },
-      { text: '📨 Invite contacts', callback_data: 'invite:root' }
-    ]);
+    rows.push([{ text: '📨 Invite contacts', callback_data: 'invite:root' }]);
   }
 
   rows.push([{ text: '❓ Help', callback_data: 'help:root' }]);
@@ -666,14 +660,14 @@ export function renderHelpText() {
   return [
     '❓ Help',
     '',
-    'Use Intro Deck to connect a LinkedIn account, complete a member-provided professional card, browse listed profiles, send intro or paid permission requests, and continue privately only after approval.',
+    'Use Intro Deck to connect a LinkedIn account, complete a member-provided professional card, browse listed profiles, and use one Contact flow to continue privately only after approval.',
     '',
     'Start here:',
     '• connect LinkedIn',
     '• complete your profile',
     '• browse the directory',
-    '• check your intro inbox',
-    '• review your DM inbox',
+    '• open Contact inbox for requests and private chats',
+    '• use /contact to return to that hub',
     '• open plans / Pro status',
     '• invite professional contacts'
   ].join('\n');
@@ -685,10 +679,7 @@ export function renderHelpKeyboard() {
       { text: '🧩 Profile', callback_data: 'p:menu' },
       { text: '🌐 Browse directory', callback_data: 'dir:list:0' }
     ],
-    [
-      { text: '📥 Intro inbox', callback_data: 'intro:inbox' },
-      { text: '💬 DM inbox', callback_data: 'dm:inbox' }
-    ],
+    [{ text: '📨 Contact inbox', callback_data: 'contact:inbox' }],
     [
       { text: '⭐ Plans', callback_data: 'plans:root' },
       { text: '📨 Invite contacts', callback_data: 'invite:root' }
@@ -702,7 +693,7 @@ function pricingReceiptLabel(receipt) {
     return 'Pro';
   }
   if (receipt?.receiptType === 'contact_unlock') {
-    return 'Direct contact';
+    return 'Telegram contact';
   }
   if (receipt?.receiptType === 'dm_open') {
     return 'DM open';
@@ -721,7 +712,7 @@ export function renderPricingText({ pricingState = null } = {}) {
   const lines = [
     '⭐ Intro Deck Pro',
     '',
-    'Pro includes a bounded fair-use allowance for delivering direct-contact and DM permission requests.',
+    'Pro includes a bounded fair-use allowance for delivering contact requests across both private-chat and Telegram-contact options.',
     ''
   ];
 
@@ -737,8 +728,8 @@ export function renderPricingText({ pricingState = null } = {}) {
 
   lines.push('');
   lines.push(`Pro monthly: ${pricing.proMonthlyPriceStars || 0}⭐ • ${subscriptionConfig.proMonthlyDurationDays || 30} days`);
-  lines.push(`Direct-contact request delivery: ${pricing.contactUnlockPriceStars || 0}⭐ each without Pro`);
-  lines.push(`DM permission-request delivery: ${pricing.dmOpenPriceStars || 0}⭐ each without Pro`);
+  lines.push(`Telegram-contact request delivery: ${pricing.contactUnlockPriceStars || 0}⭐ each without Pro`);
+  lines.push(`Private-chat request delivery: ${pricing.dmOpenPriceStars || 0}⭐ each without Pro`);
   lines.push('');
   lines.push('Pro fair use:');
   lines.push(`• ${buildProFairUseDisclosure({ dailyLimit: fairUseLimit })}`);
@@ -1245,16 +1236,8 @@ export function renderDirectoryCardKeyboard({ profileSnapshot = null, page = 0 }
     rows.push([{ text: profileSnapshot?.is_viewer ? '🔗 Open my LinkedIn' : '🔗 Open LinkedIn', url: profileSnapshot.linkedin_public_url.trim() }]);
   }
 
-  if (!profileSnapshot?.is_viewer && profileSnapshot?.contact_mode === 'intro_request' && profileSnapshot?.profile_id) {
-    rows.push([{ text: '✉️ Request intro', callback_data: `dir:intro:${profileSnapshot.profile_id}:${page}` }]);
-  }
-
-  if (canViewerRequestDirectContact(profileSnapshot)) {
-    rows.push([{ text: '⭐ Request direct contact', callback_data: `dir:unlock:${profileSnapshot.profile_id}:${page}` }]);
-  }
-
-  if (canViewerRequestDm(profileSnapshot)) {
-    rows.push([{ text: '💬 DM request', callback_data: `dir:dm:${profileSnapshot.profile_id}:${page}` }]);
+  if (canOpenContactRequestRail(profileSnapshot)) {
+    rows.push([{ text: '🤝 Request contact', callback_data: `dir:contact:${profileSnapshot.profile_id}:${page}` }]);
   }
 
   rows.push([{ text: '↩️ Back to directory', callback_data: `dir:list:${page}` }]);
@@ -1264,16 +1247,109 @@ export function renderDirectoryCardKeyboard({ profileSnapshot = null, page = 0 }
   return buildInlineKeyboard(rows);
 }
 
+export function renderContactRequestText({ profileSnapshot = null, pricingState = null, persistenceEnabled = false, notice = null } = {}) {
+  const lines = ['🤝 Request contact', ''];
+
+  if (!persistenceEnabled) {
+    lines.push('Contact options are unavailable right now.');
+  } else if (!profileSnapshot?.profile_id || profileSnapshot?.is_viewer) {
+    lines.push('This contact flow is not available for this profile.');
+  } else if (!pricingState?.profile?.linkedin_sub) {
+    lines.push('Connect LinkedIn before sending contact requests.');
+    lines.push('Your professional profile data remains member-provided.');
+  } else {
+    lines.push(`${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'This member')}`);
+    lines.push(truncate(profileSnapshot.headline_user, 120));
+    lines.push('');
+    lines.push('Every option goes to the profile owner and requires approval.');
+
+    if (profileSnapshot.contact_mode === 'intro_request') {
+      lines.push('');
+      lines.push('Free intro request');
+      lines.push('• Sends a permission request directly to the profile owner.');
+      lines.push('• Does not reveal a Telegram username or open a private chat.');
+      lines.push('• Approval is not guaranteed.');
+    } else if (canOpenPaidContactRail(profileSnapshot)) {
+      const pricing = pricingState?.pricing || {};
+      const chatCoverage = getContactRequestCoverageLabel({ pricingState, amountStars: pricing.dmOpenPriceStars || 0 });
+      const telegramCoverage = getContactRequestCoverageLabel({ pricingState, amountStars: pricing.contactUnlockPriceStars || 0 });
+      lines.push('');
+      lines.push(`Private chat • ${chatCoverage}`);
+      lines.push('• Send a first message with the request.');
+      lines.push('• Chat becomes active only after approval.');
+      lines.push('');
+      lines.push(`Telegram contact • ${telegramCoverage}`);
+      lines.push('• Ask the owner to reveal the hidden Telegram username.');
+      lines.push('• No private chat is opened inside Intro Deck.');
+      lines.push('');
+      lines.push('Stars or Pro cover request delivery only. Approval, contact reveal, or reply is not guaranteed. Decline or no reply alone does not trigger an automatic refund.');
+    } else {
+      lines.push('', 'This profile is not accepting new contact requests right now.');
+    }
+  }
+
+  if (notice) lines.push('', notice);
+  return lines.join('\n');
+}
+
+export function renderContactRequestKeyboard({ profileSnapshot = null, pricingState = null, page = 0 } = {}) {
+  const rows = [];
+  if (profileSnapshot?.profile_id && !profileSnapshot?.is_viewer) {
+    if (!pricingState?.profile?.linkedin_sub) {
+      rows.push([{ text: '🔗 Connect LinkedIn', callback_data: 'p:menu' }]);
+    } else if (profileSnapshot.contact_mode === 'intro_request') {
+      rows.push([{ text: '✉️ Send free intro request', callback_data: `dir:intro:${profileSnapshot.profile_id}:${page}` }]);
+    } else if (canOpenPaidContactRail(profileSnapshot)) {
+      const pricing = pricingState?.pricing || {};
+      const chatCoverage = getContactRequestCoverageLabel({ pricingState, amountStars: pricing.dmOpenPriceStars || 0 });
+      const telegramCoverage = getContactRequestCoverageLabel({ pricingState, amountStars: pricing.contactUnlockPriceStars || 0 });
+      rows.push([{ text: `💬 Private chat • ${chatCoverage}`, callback_data: `dir:dm:${profileSnapshot.profile_id}:${page}` }]);
+      rows.push([{ text: `🔐 Telegram contact • ${telegramCoverage}`, callback_data: `dir:unlock:${profileSnapshot.profile_id}:${page}` }]);
+      rows.push([{ text: '⭐ Plans / Pro status', callback_data: 'plans:root' }]);
+    }
+  }
+  if (profileSnapshot?.profile_id) rows.push([{ text: '↩️ Back to profile', callback_data: `dir:open:${profileSnapshot.profile_id}:${page}` }]);
+  rows.push([{ text: '🌐 Directory', callback_data: `dir:list:${page}` }]);
+  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  return buildInlineKeyboard(rows);
+}
+
+export function renderContactInboxText({ notice = null } = {}) {
+  const lines = [
+    '📨 Contact inbox',
+    '',
+    'One place to open contact requests and approved private conversations.',
+    '',
+    'Requests',
+    '• Free intro requests',
+    '• Telegram-contact reveal requests',
+    '',
+    'Private chats',
+    '• New chat requests',
+    '• Approved conversations'
+  ];
+  if (notice) lines.push('', notice);
+  return lines.join('\n');
+}
+
+export function renderContactInboxKeyboard() {
+  return buildInlineKeyboard([
+    [{ text: '📥 Requests', callback_data: 'intro:inbox' }, { text: '💬 Private chats', callback_data: 'dm:inbox' }],
+    [{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }, { text: '⭐ Plans', callback_data: 'plans:root' }],
+    [{ text: '🏠 Home', callback_data: 'home:root' }]
+  ]);
+}
+
 export function renderIntroInboxText({ persistenceEnabled = false, inboxState = null, contactUnlockInbox = null, notice = null } = {}) {
   const lines = [
-    '📥 Intro inbox',
+    '📨 Contact requests',
     '',
-    'Review incoming intros and track the ones you have sent.'
+    'Review free intro requests and Telegram-contact requests.'
   ];
 
   if (!persistenceEnabled) {
     lines.push('');
-    lines.push('Intro inbox is unavailable right now.');
+    lines.push('Contact requests are unavailable right now.');
   } else {
     const counts = inboxState?.counts || { receivedPending: 0, receivedTotal: 0, sentPending: 0, sentTotal: 0 };
     const receivedItems = Array.isArray(inboxState?.received) ? inboxState.received : [];
@@ -1307,19 +1383,19 @@ export function renderIntroInboxText({ persistenceEnabled = false, inboxState = 
 
     if (unlockReceivedItems.length) {
       lines.push('');
-      lines.push('Direct contact requests to review:');
+      lines.push('Telegram contact requests to review:');
       unlockReceivedItems.forEach((item, index) => lines.push(renderContactUnlockLine(item, index)));
     }
 
     if (unlockSentItems.length) {
       lines.push('');
-      lines.push('Sent direct contact requests:');
+      lines.push('Sent Telegram contact requests:');
       unlockSentItems.forEach((item, index) => lines.push(renderContactUnlockLine(item, index)));
     }
 
     if (!(receivedItems.length || sentItems.length || unlockReceivedItems.length || unlockSentItems.length)) {
       lines.push('');
-      lines.push('No intro requests yet. Browse the directory and send the first one from a public profile card.');
+      lines.push('No contact requests yet. Browse the directory and use Request contact on a listed profile.');
     }
   }
 
@@ -1391,7 +1467,7 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
   }
 
   rows.push([{ text: '🔄 Refresh', callback_data: 'intro:inbox' }]);
-  rows.push([{ text: '💬 DM inbox', callback_data: 'dm:inbox' }]);
+  rows.push([{ text: '💬 Private chats', callback_data: 'dm:inbox' }]);
   rows.push([{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }]);
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
 
@@ -1481,18 +1557,18 @@ export function renderIntroDetailKeyboard({ introRequest = null } = {}) {
 
 export function renderContactUnlockDetailText({ persistenceEnabled = false, request = null, notice = null } = {}) {
   const lines = [
-    '🔐 Direct contact request',
+    '🔐 Telegram contact request',
     '',
     'Review the current state of this direct Telegram contact request.'
   ];
 
   if (!persistenceEnabled) {
-    lines.push('', 'Persistence is disabled in this environment. Direct contact detail is unavailable.');
+    lines.push('', 'Persistence is disabled in this environment. Telegram contact detail is unavailable.');
   } else if (!request?.contact_unlock_request_id) {
-    lines.push('', 'Direct contact request not found.');
+    lines.push('', 'Telegram contact request not found.');
   } else {
     lines.push('');
-    lines.push(`Perspective: ${request.role === 'received' ? 'Received direct contact request' : 'Sent direct contact request'}`);
+    lines.push(`Perspective: ${request.role === 'received' ? 'Received Telegram contact request' : 'Sent Telegram contact request'}`);
     lines.push(`Member: ${toDisplayValue(request.display_name, 'Unknown member')}`);
     lines.push(`Headline: ${truncate(request.headline_user, 120)}`);
     lines.push(`Status: ${toDisplayValue(request.status)}`);
@@ -1508,16 +1584,16 @@ export function renderContactUnlockDetailText({ persistenceEnabled = false, requ
       if (request.status === 'revealed' && request.revealed_contact_value) {
         lines.push(`Unlocked Telegram username: @${String(request.revealed_contact_value).replace(/^@+/, '')}`);
       } else if (request.status === 'paid_pending_approval') {
-        lines.push('Direct contact is still waiting for recipient approval.');
+        lines.push('Telegram contact is still waiting for recipient approval.');
       } else if (request.status === 'declined') {
         lines.push('No Telegram username was revealed.');
       }
     } else {
       lines.push(request.status === 'paid_pending_approval'
-        ? 'You can approve or decline this direct contact request.'
+        ? 'You can approve or decline this Telegram contact request.'
         : request.status === 'revealed'
           ? 'You approved this request and your hidden Telegram username was revealed to the requester.'
-          : 'This direct contact request is no longer actionable.');
+          : 'This Telegram contact request is no longer actionable.');
     }
   }
 
@@ -1555,34 +1631,34 @@ export function renderContactUnlockDetailKeyboard({ request = null } = {}) {
 
 export function renderDmInboxText({ persistenceEnabled = false, inboxState = null, notice = null } = {}) {
   const lines = [
-    '💬 DM inbox',
+    '💬 Private chats',
     '',
-    'Review incoming DM requests and continue active member conversations.'
+    'Review private-chat requests and continue approved conversations.'
   ];
 
   if (!persistenceEnabled) {
-    lines.push('', 'DM inbox is unavailable right now.');
+    lines.push('', 'Private chats are unavailable right now.');
   } else {
     const counts = inboxState?.counts || { received_pending: 0, received_total: 0, sent_pending: 0, sent_total: 0, active_total: 0 };
     const receivedItems = Array.isArray(inboxState?.received) ? inboxState.received : [];
     const sentItems = Array.isArray(inboxState?.sent) ? inboxState.sent : [];
     lines.push('');
-    lines.push(`Received DM requests: ${counts.received_pending}/${counts.received_total} pending/total`);
-    lines.push(`Sent DM requests: ${counts.sent_pending}/${counts.sent_total} pending/total`);
+    lines.push(`Received chat requests: ${counts.received_pending}/${counts.received_total} pending/total`);
+    lines.push(`Sent chat requests: ${counts.sent_pending}/${counts.sent_total} pending/total`);
     lines.push(`Active conversations: ${counts.active_total || 0}`);
 
     if (receivedItems.length) {
-      lines.push('', 'Incoming DM requests / threads:');
+      lines.push('', 'Incoming chat requests / threads:');
       receivedItems.forEach((item, index) => lines.push(renderDmThreadLine(item, index)));
     }
 
     if (sentItems.length) {
-      lines.push('', 'Sent DM requests / threads:');
+      lines.push('', 'Sent chat requests / threads:');
       sentItems.forEach((item, index) => lines.push(renderDmThreadLine(item, index)));
     }
 
     if (!(receivedItems.length || sentItems.length)) {
-      lines.push('', 'No DM requests yet. Open a listed profile card to start one.');
+      lines.push('', 'No private-chat requests yet. Open a listed profile and use Request contact.');
     }
   }
 
@@ -1615,6 +1691,7 @@ export function renderDmInboxKeyboard({ inboxState = null } = {}) {
   }
 
   rows.push([{ text: '🔄 Refresh', callback_data: 'dm:inbox' }]);
+  rows.push([{ text: '📨 Contact inbox', callback_data: 'contact:inbox' }]);
   rows.push([{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }]);
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
@@ -1622,18 +1699,18 @@ export function renderDmInboxKeyboard({ inboxState = null } = {}) {
 
 export function renderDmThreadText({ persistenceEnabled = false, thread = null, viewerTelegramUserId = null, notice = null } = {}) {
   const lines = [
-    '🧾 DM thread',
+    '🧾 Private chat',
     '',
-    'Review the current DM request state and continue the conversation when active.'
+    'Review the current private-chat request state and continue the conversation when active.'
   ];
 
   if (!persistenceEnabled) {
-    lines.push('', 'DM thread detail is unavailable right now.');
+    lines.push('', 'Private chat detail is unavailable right now.');
   } else if (!thread?.dm_thread_id) {
-    lines.push('', 'DM thread not found.');
+    lines.push('', 'Private chat not found.');
   } else {
     lines.push('');
-    lines.push(`Perspective: ${thread.role === 'received' ? 'Received DM request' : 'Sent DM request'}`);
+    lines.push(`Perspective: ${thread.role === 'received' ? 'Received private-chat request' : 'Sent private-chat request'}`);
     lines.push(`Member: ${toDisplayValue(thread.display_name, 'Unknown member')}`);
     lines.push(`Headline: ${truncate(thread.headline_user, 120)}`);
     lines.push(`Status: ${toDisplayValue(thread.status)}`);
@@ -1686,7 +1763,7 @@ export function renderDmThreadKeyboard({ thread = null } = {}) {
     rows.push([{ text: '✉️ Send message', callback_data: `dm:send:${thread.dm_thread_id}` }]);
   }
 
-  rows.push([{ text: '↩️ Back to DM inbox', callback_data: 'dm:inbox' }]);
+  rows.push([{ text: '↩️ Back to Private chats', callback_data: 'dm:inbox' }]);
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }

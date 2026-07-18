@@ -33,7 +33,7 @@ export function parseContactUnlockInvoicePayload(payload) {
 function buildOwnerNotification(request) {
   return {
     text: [
-      '🔐 New direct contact request',
+      '🔐 New Telegram contact request',
       '',
       request.pro_covered
         ? `${request.requester_display_name || 'A member'} used Pro to send a direct Telegram contact request.`
@@ -57,7 +57,7 @@ function buildOwnerNotification(request) {
 function buildRequesterPaidNotification(request) {
   return {
     text: [
-      request.pro_covered ? '⭐ Direct contact request sent via Pro' : '⭐ Direct contact request delivered',
+      request.pro_covered ? '⭐ Telegram contact request sent via Pro' : '⭐ Telegram contact request delivered',
       '',
       `Your request for ${request.target_display_name || 'this member'} is now waiting for approval.`,
       request.pro_covered
@@ -78,7 +78,7 @@ function buildRequesterRevealNotification(request) {
   const clean = username.replace(/^@+/, '');
   return {
     text: [
-      '✅ Direct contact approved',
+      '✅ Telegram contact approved',
       '',
       `Telegram username: @${clean}`,
       'You can now open the direct contact in Telegram.'
@@ -95,9 +95,9 @@ function buildRequesterRevealNotification(request) {
 function buildRequesterDeclineNotification(request) {
   return {
     text: [
-      'ℹ️ Direct contact request declined',
+      'ℹ️ Telegram contact request declined',
       '',
-      `${request.display_name || 'This member'} declined your direct contact request.`,
+      `${request.display_name || 'This member'} declined your Telegram contact request.`,
       'No Telegram username was revealed. A decline does not trigger an automatic refund of the request-delivery fee.'
     ].join('\n'),
     replyMarkup: {
@@ -297,7 +297,7 @@ export async function beginContactUnlockPaymentForTelegramUser({ telegramUserId,
       ? {
         payload: buildContactUnlockInvoicePayload(request.contact_unlock_request_id),
         amountStars: request.price_stars_snapshot,
-        title: 'Direct contact request',
+        title: 'Telegram contact request',
         description: buildRequestFeeDisclosure({
           amountStars: request.price_stars_snapshot,
           actionLabel: 'direct-contact permission request',

@@ -7,8 +7,8 @@ const homeKeyboard = renderHomeKeyboard({
   profileSnapshot: { linkedin_sub: 'abc123' }
 });
 
-if (!homeKeyboard.inline_keyboard.flat().some((button) => button.callback_data === 'intro:inbox')) {
-  throw new Error('Home keyboard must expose intro inbox entrypoint for connected users');
+if (!homeKeyboard.inline_keyboard.flat().some((button) => button.callback_data === 'contact:inbox')) {
+  throw new Error('Home keyboard must expose the canonical Contact inbox entrypoint for connected users');
 }
 
 const inboxText = renderIntroInboxText({
@@ -24,8 +24,8 @@ const inboxText = renderIntroInboxText({
   }
 });
 
-if (!inboxText.includes('Review incoming intros and track the ones you have sent.')) {
-  throw new Error('Intro inbox text must use product-facing summary copy');
+if (!inboxText.includes('Review free intro requests and Telegram-contact requests.')) {
+  throw new Error('Contact requests text must use product-facing summary copy');
 }
 if (!inboxText.includes('Received: 2/3 pending/total')) {
   throw new Error('Intro inbox text must show received counters');

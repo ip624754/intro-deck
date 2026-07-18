@@ -88,8 +88,8 @@ if (serialized.includes('home:root')) {
 const homeRows = keyboard.inline_keyboard.map((row) => row.map((button) => button.callback_data || button.url || '').join(' + '));
 const expectedHomeRows = [
   'p:menu + dir:list:0',
-  'intro:inbox + dm:inbox',
-  'plans:root + invite:root',
+  'contact:inbox + plans:root',
+  'invite:root',
   'help:root'
 ];
 if (JSON.stringify(homeRows.slice(0, expectedHomeRows.length)) !== JSON.stringify(expectedHomeRows)) {
@@ -196,12 +196,12 @@ if (!helpText.includes('Use Intro Deck to connect a LinkedIn account')) {
 }
 const helpKeyboardInline = renderHelpKeyboard().inline_keyboard;
 const helpKeyboard = JSON.stringify(helpKeyboardInline);
-if (!helpKeyboard.includes('p:menu') || !helpKeyboard.includes('dir:list:0') || !helpKeyboard.includes('intro:inbox') || !helpKeyboard.includes('plans:root')) {
+if (!helpKeyboard.includes('p:menu') || !helpKeyboard.includes('dir:list:0') || !helpKeyboard.includes('contact:inbox') || !helpKeyboard.includes('plans:root')) {
   throw new Error('help keyboard missing key entrypoints');
 }
 const expectedHelpRows = [
   'p:menu + dir:list:0',
-  'intro:inbox + dm:inbox',
+  'contact:inbox',
   'plans:root + invite:root',
   'home:root'
 ];
