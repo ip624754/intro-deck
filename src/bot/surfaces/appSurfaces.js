@@ -74,6 +74,8 @@ const renderOperatorDiagnosticsKeyboard = render.renderOperatorDiagnosticsKeyboa
 const renderOperatorDiagnosticsText = render.renderOperatorDiagnosticsText;
 const renderProfileMenuKeyboard = render.renderProfileMenuKeyboard;
 const renderProfileMenuText = render.renderProfileMenuText;
+const renderProfileOptionalKeyboard = render.renderProfileOptionalKeyboard;
+const renderProfileOptionalText = render.renderProfileOptionalText;
 const renderProfilePreviewKeyboard = render.renderProfilePreviewKeyboard;
 const renderProfilePreviewText = render.renderProfilePreviewText;
 const renderProfileSkillsKeyboard = render.renderProfileSkillsKeyboard;
@@ -284,7 +286,10 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         persistenceEnabled: state.persistenceEnabled,
         notice
       }),
-      reply_markup: renderProfilePreviewKeyboard()
+      reply_markup: renderProfilePreviewKeyboard({
+        profileSnapshot: state.profile,
+        persistenceEnabled: state.persistenceEnabled
+      })
     };
   }
 
@@ -308,6 +313,32 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
       }),
       reply_markup: renderProfileSkillsKeyboard({
         profileSnapshot: state.profile
+      })
+    };
+  }
+
+
+  async function buildProfileOptionalSurface(ctx, notice = null) {
+    const state = await loadProfileEditorState({
+      telegramUserId: ctx.from.id
+    }).catch((error) => {
+      console.warn('[profile optional] load failed', error?.message || error);
+      return {
+        persistenceEnabled: false,
+        profile: null,
+        reason: 'profile_optional_load_failed'
+      };
+    });
+
+    return {
+      text: renderProfileOptionalText({
+        profileSnapshot: state.profile,
+        persistenceEnabled: state.persistenceEnabled,
+        notice
+      }),
+      reply_markup: renderProfileOptionalKeyboard({
+        profileSnapshot: state.profile,
+        persistenceEnabled: state.persistenceEnabled
       })
     };
   }
@@ -815,6 +846,7 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
     buildProfileMenuSurface,
     buildProfilePreviewSurface,
     buildProfileSkillsSurface,
+    buildProfileOptionalSurface,
     buildDirectoryListSurface,
     buildDirectoryCardSurface,
     buildDirectoryFiltersSurface,

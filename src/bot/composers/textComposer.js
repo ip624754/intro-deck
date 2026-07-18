@@ -1,5 +1,5 @@
 import { Composer } from 'grammy';
-import { renderProfilePreviewKeyboard, renderProfileSavedNotice } from '../../lib/telegram/render.js';
+import { renderProfileSavedKeyboard, renderProfileSavedNotice } from '../../lib/telegram/render.js';
 import { applyDirectoryFilterInputForTelegramUser } from '../../lib/storage/directoryFilterStore.js';
 import { applyAdminCommsPhotoInput, applyAdminCommsTextInput, applyAdminUserNoteInput, loadAdminBroadcastState, loadAdminDirectMessageState, loadAdminNoticeState, loadAdminSearchResults } from '../../lib/storage/adminStore.js';
 import { applyProfileFieldInput } from '../../lib/storage/profileEditStore.js';
@@ -187,7 +187,7 @@ export function createTextComposer({ buildDirectoryFiltersSurface, buildAdminUse
         fieldLabel: profileResult.fieldMeta.label,
         profileSnapshot: profileResult.profile
       }), {
-        reply_markup: renderProfilePreviewKeyboard()
+        reply_markup: renderProfileSavedKeyboard({ profileSnapshot: profileResult.profile })
       });
       return;
     }

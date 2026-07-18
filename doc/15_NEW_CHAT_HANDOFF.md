@@ -3,12 +3,18 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP054 — Positioning and Discovery Truth Alignment
-- Current mode: STANDARD / PRODUCT CONTRACT / COPY CONSISTENCY / DISCOVERY TRUTH
-- Current focus: keep landing, Telegram, legal, README, and BotFather-facing wording aligned with actual LinkedIn identity, directory visibility, and approval-based contact mechanisms.
+- Current baseline: STEP055 — Guided Activation Spine
+- Current mode: STANDARD / TELEGRAM UX / PROFILE ACTIVATION / NAVIGATION
+- Current focus: guide each connected member through one next required profile step, then preview and publish without mixing optional fields into activation.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP055 canonical activation resolver exists and drives progress/next action across Home, Profile, Skills, Saved, and Preview surfaces.
+- Required steps: LinkedIn, display name, headline, industry, about, and at least one skill.
+- Optional details/contact settings are separated under `p:opt`.
+- Publishing is explicit and preview-gated through `p:pub`; `p:vis` is hide-only.
+- No schema, payment, auth, DM, intro, or contact-state-machine changes were made.
 
 - STEP054 positioning contract exists across landing, Telegram, Privacy, Terms, README, state docs, and BotFather-facing copy.
 - LinkedIn sign-in is described as basic account identity connection, not professional verification.
@@ -43,15 +49,16 @@
 - syntax/smoke can be run from repo;
 - docs canon exists;
 - STEP053A syntax and dedicated source contract passed locally on Node `20.20.2`;
-- STEP054 dedicated positioning truth contract is part of the current source QA;
-- full Node 20 inventory is `69/82` PASS versus STEP053A `68/81`, with the same 13 inherited failures and one new passing STEP054 contract;
+- STEP054 positioning truth contract remains green under STEP055;
+- STEP055 dedicated guided-activation contract passes on Node `20.20.2`;
+- full Node 20 inventory is `70/83` PASS versus STEP054 `69/82`, with the same 13 inherited failures and one new passing STEP055 contract;
 - missing-target, wrong-database-fingerprint, and artifact-mismatch paths fail closed.
 
 ## Live-confirmed
 
-- Production `/api/health?full=1` operator-confirmed STEP053A with `ok=true`, `docsStep=STEP053A`, and artifact `b67371385030bef8ef528fb13eb7ffcc86933b7f`.
+- Production `/api/health?full=1` operator-confirmed STEP054 with `ok=true`, `docsStep=STEP054`, and artifact `c3e9294c43a357992f663c772093df4892e7721f`.
 - Database, LinkedIn, Telegram, webhook, persistence, contact unlock, DM relay, pricing, runtime guards, and operator diagnostics flags were true.
-- STEP054 deployment and live copy surfaces are not yet confirmed.
+- STEP055 deployment and live activation flow are not yet confirmed.
 
 ## Inference
 
@@ -61,7 +68,8 @@
 ## Blocked / unconfirmed
 
 - Complete live Stars, replay, cooldown/block, Pro allowance, and concurrency scenario evidence remains partial.
-- STEP054 BotFather profile copy requires an operator update after deploy.
+- STEP054 BotFather profile copy application remains an operator action not verified here.
+- STEP055 Telegram activation path requires a short manual live pass after deploy.
 - live Telegram pre-checkout, Stars charge, stale callback, and duplicate delivery proof are not closed.
 - no automatic refund engine exists for decline/no reply.
 
@@ -89,6 +97,7 @@ When contract certainty is missing, say exactly:
 - `doc/spec/STEP053_CONTACT_CONTRACT_AND_PAYMENT_HONESTY_LOCK.md`
 - `doc/spec/STEP053A_STAGING_RUNTIME_ACCEPTANCE_PACK.md`
 - `doc/spec/STEP054_POSITIONING_AND_DISCOVERY_TRUTH_ALIGNMENT.md`
+- `doc/spec/STEP055_GUIDED_ACTIVATION_SPINE.md`
 - `doc/80_STEP054_BOTFATHER_PROFILE_COPY.md`
 - `doc/77_STEP053A_STAGING_RUNTIME_ACCEPTANCE_RUNBOOK.md`
 - `doc/spec/STEP049B_LANDING_IMPLEMENTATION.md`
@@ -235,3 +244,15 @@ Deploy STEP054, verify live positioning surfaces and BotFather copy, then procee
 - Positioning canon: listed member profiles; LinkedIn-connected account identity; member-provided professional claims; approval-based contact.
 - No schema or critical money/contact state changes.
 - Deploy verification and BotFather text update remain operator actions.
+
+## STEP055 handoff delta
+
+- Source step: STEP055.
+- Package: 0.52.0.
+- Required activation sequence: LinkedIn → display name → headline → industry → about → skills.
+- One primary CTA resolves the next missing step from current evidence.
+- Optional details/contact settings are separate.
+- Ready hidden profile: Preview → `p:pub`; listed profile: `p:vis` hide only.
+- No migration.
+- Node 20 QA: `70/83` PASS, same 13 inherited failures, new failures 0.
+- Live status not confirmed — manual verification required.

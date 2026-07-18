@@ -1,13 +1,15 @@
 import { Composer } from 'grammy';
-import { renderProfileInputKeyboard, renderProfileInputPrompt, renderProfilePreviewKeyboard, renderProfileSavedNotice } from '../../lib/telegram/render.js';
+import { getProfileActivationNextAction } from '../../lib/profile/contract.js';
+import { renderProfileInputKeyboard, renderProfileInputPrompt } from '../../lib/telegram/render.js';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
 import { cancelDirectoryFilterInputForTelegramUser } from '../../lib/storage/directoryFilterStore.js';
 import {
   beginProfileFieldEdit,
   clearProfileSkillsForTelegramUser,
+  loadProfileEditorState,
+  setProfileVisibilityForTelegramUser,
   toggleProfileContactModeForTelegramUser,
-  toggleProfileSkillForTelegramUser,
-  toggleProfileVisibilityForTelegramUser
+  toggleProfileSkillForTelegramUser
 } from '../../lib/storage/profileEditStore.js';
 import { formatUserFacingError } from '../utils/notices.js';
 
@@ -15,7 +17,8 @@ export function createProfileComposer({
   clearAllPendingInputs,
   buildProfileMenuSurface,
   buildProfilePreviewSurface,
-  buildProfileSkillsSurface
+  buildProfileSkillsSurface,
+  buildProfileOptionalSurface
 }) {
   const composer = new Composer();
 
@@ -29,6 +32,66 @@ export function createProfileComposer({
     await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
   };
 
+  const renderProfilePreview = async (ctx, notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildProfilePreviewSurface(ctx, notice);
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+  };
+
+  const renderProfileSkills = async (ctx, notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildProfileSkillsSurface(ctx, notice);
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+  };
+
+  const renderProfileOptional = async (ctx, notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildProfileOptionalSurface(ctx, notice);
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+  };
+
+  const openFieldEditor = async (ctx, fieldKey) => {
+    await clearAllPendingInputs(ctx.from.id);
+    await cancelDirectoryFilterInputForTelegramUser({ telegramUserId: ctx.from.id }).catch(() => null);
+    const editState = await beginProfileFieldEdit({
+      telegramUserId: ctx.from.id,
+      fieldKey
+    });
+
+    await safeEditOrReply(ctx, renderProfileInputPrompt({
+      fieldKey,
+      profileSnapshot: editState.profile
+    }), {
+      reply_markup: renderProfileInputKeyboard()
+    });
+  };
+
+  const openNextActivationStep = async (ctx) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const state = await loadProfileEditorState({ telegramUserId: ctx.from.id });
+    const action = getProfileActivationNextAction(state.profile || {});
+
+    if (action.kind === 'field') {
+      await openFieldEditor(ctx, action.fieldKey);
+      return;
+    }
+
+    if (action.kind === 'skills') {
+      const surface = await buildProfileSkillsSurface(ctx);
+      await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+      return;
+    }
+
+    if (action.kind === 'preview' || action.kind === 'listed_preview') {
+      const surface = await buildProfilePreviewSurface(ctx);
+      await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+      return;
+    }
+
+    const surface = await buildProfileMenuSurface(ctx, 'Connect LinkedIn first to continue profile setup.');
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+  };
+
   composer.command('profile', async (ctx) => {
     await renderProfileMenu(ctx, 'reply');
   });
@@ -38,18 +101,26 @@ export function createProfileComposer({
     await renderProfileMenu(ctx, 'edit');
   });
 
+  composer.callbackQuery('p:next', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await openNextActivationStep(ctx).catch(async (error) => {
+      await renderProfileMenu(ctx, 'edit', `⚠️ ${formatUserFacingError(error?.message || error, 'Could not continue profile setup right now.')}`);
+    });
+  });
+
+  composer.callbackQuery('p:opt', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderProfileOptional(ctx);
+  });
+
   composer.callbackQuery('p:prev', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await cancelDirectoryFilterInputForTelegramUser({ telegramUserId: ctx.from.id }).catch(() => null);
-    const surface = await buildProfilePreviewSurface(ctx);
-    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+    await renderProfilePreview(ctx);
   });
 
   composer.callbackQuery('p:sk', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await clearAllPendingInputs(ctx.from.id);
-    const surface = await buildProfileSkillsSurface(ctx);
-    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+    await renderProfileSkills(ctx);
   });
 
   composer.callbackQuery('p:sk:clr', async (ctx) => {
@@ -68,7 +139,7 @@ export function createProfileComposer({
     } else if (!result.changed) {
       notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear skills right now.')}`;
     } else {
-      notice = '✅ Skills cleared. Add at least 1 skill to become directory-ready.';
+      notice = '✅ Skills cleared. Choose at least 1 skill to complete the required setup.';
     }
 
     const surface = await buildProfileSkillsSurface(ctx, notice);
@@ -108,23 +179,11 @@ export function createProfileComposer({
     const fieldKey = ctx.match?.[1];
 
     try {
-      await cancelDirectoryFilterInputForTelegramUser({ telegramUserId: ctx.from.id }).catch(() => null);
-      const editState = await beginProfileFieldEdit({
-        telegramUserId: ctx.from.id,
-        fieldKey
-      });
-
-      await ctx.reply(renderProfileInputPrompt({
-        fieldKey,
-        profileSnapshot: editState.profile
-      }), {
-        reply_markup: renderProfileInputKeyboard()
-      });
+      await openFieldEditor(ctx, fieldKey);
     } catch (error) {
       await renderProfileMenu(ctx, 'edit', `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open this editor right now.')}`);
     }
   });
-
 
   composer.callbackQuery('p:cm', async (ctx) => {
     await ctx.answerCallbackQuery();
@@ -142,9 +201,7 @@ export function createProfileComposer({
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (result.blocked && result.reason === 'hidden_telegram_username_required_for_paid_unlock') {
       notice = '⚠️ Add your hidden Telegram username first before enabling paid direct contact requests.';
-    } else if (result.blocked) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update contact mode right now.')}`;
-    } else if (!result.changed) {
+    } else if (result.blocked || !result.changed) {
       notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update contact mode right now.')}`;
     } else {
       notice = result.profile?.contact_mode === 'paid_unlock_requires_approval'
@@ -152,14 +209,15 @@ export function createProfileComposer({
         : '✅ Contact mode is now intro only.';
     }
 
-    const surface = await buildProfilePreviewSurface(ctx, notice);
+    const surface = await buildProfileOptionalSurface(ctx, notice);
     await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
   });
 
-  composer.callbackQuery('p:vis', async (ctx) => {
+  composer.callbackQuery('p:pub', async (ctx) => {
     await ctx.answerCallbackQuery();
-    const result = await toggleProfileVisibilityForTelegramUser({
-      telegramUserId: ctx.from.id
+    const result = await setProfileVisibilityForTelegramUser({
+      telegramUserId: ctx.from.id,
+      visibilityStatus: 'listed'
     }).catch((error) => ({
       persistenceEnabled: true,
       changed: false,
@@ -167,19 +225,46 @@ export function createProfileComposer({
       reason: String(error?.message || error)
     }));
 
-    let notice = 'Visibility updated.';
+    let notice = 'Profile publication updated.';
     if (!result.persistenceEnabled) {
       notice = '⚠️ Persistence is disabled in this environment.';
     } else if (result.blocked) {
-      notice = '⚠️ Complete all required fields and add at least 1 skill before listing in the directory.';
+      notice = '⚠️ Complete every required setup step before publishing the profile.';
+    } else if (!result.changed && result.reason === 'visibility_unchanged') {
+      notice = 'ℹ️ Your profile is already listed.';
     } else if (!result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update directory visibility right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not publish the profile right now.')}`;
     } else {
-      notice = `✅ Visibility is now ${result.profile.visibility_status}.`;
+      notice = '✅ Profile published in the directory.';
     }
 
-    const surface = await buildProfilePreviewSurface(ctx, notice);
-    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+    await renderProfilePreview(ctx, notice);
+  });
+
+  composer.callbackQuery('p:vis', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    const result = await setProfileVisibilityForTelegramUser({
+      telegramUserId: ctx.from.id,
+      visibilityStatus: 'hidden'
+    }).catch((error) => ({
+      persistenceEnabled: true,
+      changed: false,
+      blocked: false,
+      reason: String(error?.message || error)
+    }));
+
+    let notice = 'Profile visibility updated.';
+    if (!result.persistenceEnabled) {
+      notice = '⚠️ Persistence is disabled in this environment.';
+    } else if (!result.changed && result.reason === 'visibility_unchanged') {
+      notice = 'ℹ️ Your profile is already hidden. Use Preview & publish when you are ready to list it.';
+    } else if (!result.changed) {
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not hide the profile right now.')}`;
+    } else {
+      notice = '✅ Profile hidden from the directory.';
+    }
+
+    await renderProfilePreview(ctx, notice);
   });
 
   return composer;

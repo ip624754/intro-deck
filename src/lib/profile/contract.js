@@ -155,7 +155,14 @@ const DIRECTORY_INDUSTRY_MAP = new Map(DIRECTORY_INDUSTRY_BUCKETS.map((bucket) =
 const DIRECTORY_FILTER_INPUT_MAP = new Map(Object.values(DIRECTORY_FILTER_INPUTS).map((input) => [input.kind, input]));
 
 export const REQUIRED_PROFILE_FIELD_KEYS = PROFILE_FIELD_KEYS.filter((fieldKey) => PROFILE_FIELDS[fieldKey].required);
+export const OPTIONAL_PROFILE_FIELD_KEYS = PROFILE_FIELD_KEYS.filter((fieldKey) => !PROFILE_FIELDS[fieldKey].required);
 export const REQUIRED_SKILL_COUNT = 1;
+
+export const PROFILE_ACTIVATION_STEP_KEYS = [
+  'linkedin',
+  ...REQUIRED_PROFILE_FIELD_KEYS.map((fieldKey) => `field:${fieldKey}`),
+  'skills'
+];
 
 export function getProfileFieldMeta(fieldKey) {
   return PROFILE_FIELDS[fieldKey] || null;
@@ -461,5 +468,98 @@ export function computeProfileCompletion(profileSnapshot = {}) {
     requiredSkillCount: REQUIRED_SKILL_COUNT,
     hasRequiredSkills,
     isReady
+  };
+}
+
+export function getProfileActivationState(profileSnapshot = {}) {
+  const completion = profileSnapshot?.completion || computeProfileCompletion(profileSnapshot);
+  const completionFields = Array.isArray(completion?.fields) ? completion.fields : [];
+  const completionFieldMap = new Map(completionFields.map((field) => [field.key, field]));
+
+  const steps = [
+    {
+      key: 'linkedin',
+      kind: 'linkedin',
+      label: 'LinkedIn account',
+      complete: Boolean(profileSnapshot?.linkedin_sub)
+    },
+    ...REQUIRED_PROFILE_FIELD_KEYS.map((fieldKey) => {
+      const meta = getProfileFieldMeta(fieldKey);
+      const completionField = completionFieldMap.get(fieldKey);
+      const value = completionField?.value ?? profileSnapshot?.[meta.column] ?? null;
+      return {
+        key: `field:${fieldKey}`,
+        kind: 'field',
+        fieldKey,
+        label: meta.label,
+        complete: completionField ? Boolean(completionField.filled) : isFilled(value)
+      };
+    }),
+    {
+      key: 'skills',
+      kind: 'skills',
+      label: 'Skills',
+      complete: Boolean(completion?.hasRequiredSkills)
+    }
+  ];
+
+  const completedCount = steps.filter((step) => step.complete).length;
+  const nextStep = steps.find((step) => !step.complete) || null;
+  const isReady = steps.every((step) => step.complete);
+  const isListed = profileSnapshot?.visibility_status === 'listed';
+
+  return {
+    steps,
+    completedCount,
+    totalCount: steps.length,
+    remainingCount: steps.length - completedCount,
+    progressPercent: steps.length ? Math.round((completedCount / steps.length) * 100) : 0,
+    nextStep,
+    isReady,
+    isListed,
+    needsPreview: isReady && !isListed
+  };
+}
+
+export function getProfileActivationNextAction(profileSnapshot = {}) {
+  const activation = getProfileActivationState(profileSnapshot);
+  const nextStep = activation.nextStep;
+
+  if (nextStep?.kind === 'linkedin') {
+    return {
+      kind: 'linkedin',
+      label: 'Connect LinkedIn',
+      callbackData: null,
+      fieldKey: null,
+      activation
+    };
+  }
+
+  if (nextStep?.kind === 'field') {
+    return {
+      kind: 'field',
+      label: `Add ${nextStep.label.toLowerCase()}`,
+      callbackData: `p:ed:${nextStep.fieldKey}`,
+      fieldKey: nextStep.fieldKey,
+      activation
+    };
+  }
+
+  if (nextStep?.kind === 'skills') {
+    return {
+      kind: 'skills',
+      label: 'Choose at least 1 skill',
+      callbackData: 'p:sk',
+      fieldKey: null,
+      activation
+    };
+  }
+
+  return {
+    kind: activation.isListed ? 'listed_preview' : 'preview',
+    label: activation.isListed ? 'Review listed profile' : 'Preview and publish',
+    callbackData: 'p:prev',
+    fieldKey: null,
+    activation
   };
 }

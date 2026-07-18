@@ -7,6 +7,8 @@ import {
   renderProfileInputPrompt,
   renderProfileMenuKeyboard,
   renderProfileMenuText,
+  renderProfileOptionalKeyboard,
+  renderProfileOptionalText,
   renderProfilePreviewKeyboard,
   renderProfilePreviewText,
   renderProfileSkillsKeyboard,
@@ -114,11 +116,14 @@ const menuText = renderProfileMenuText({
   profileSnapshot,
   persistenceEnabled: true
 });
-if (!menuText.includes('Profile editor')) {
+if (!menuText.includes('Profile setup')) {
   throw new Error('profile menu text missing title');
 }
-if (!menuText.includes('Skills: Founder, Growth')) {
-  throw new Error('profile menu text missing skills summary');
+if (!menuText.includes('✅ Skills')) {
+  throw new Error('profile menu text missing required skills status');
+}
+if (!menuText.includes('Setup progress: 6/6 required steps')) {
+  throw new Error('profile menu text missing guided setup progress');
 }
 
 const menuKeyboard = JSON.stringify(renderProfileMenuKeyboard({ profileSnapshot, persistenceEnabled: true }).inline_keyboard);
@@ -137,9 +142,21 @@ if (!previewText.includes('Skills: Founder, Growth')) {
   throw new Error('profile preview text missing skills line');
 }
 
-const previewKeyboard = JSON.stringify(renderProfilePreviewKeyboard().inline_keyboard);
+const previewKeyboard = JSON.stringify(renderProfilePreviewKeyboard({ profileSnapshot, persistenceEnabled: true }).inline_keyboard);
 if (!previewKeyboard.includes('p:menu')) {
   throw new Error('profile preview keyboard missing menu callback');
+}
+if (!previewKeyboard.includes('p:pub')) {
+  throw new Error('ready hidden profile preview must expose publish callback');
+}
+
+const optionalText = renderProfileOptionalText({ profileSnapshot, persistenceEnabled: true });
+if (!optionalText.includes('Optional profile details')) {
+  throw new Error('optional profile surface missing title');
+}
+const optionalKeyboard = JSON.stringify(renderProfileOptionalKeyboard({ profileSnapshot, persistenceEnabled: true }).inline_keyboard);
+if (!optionalKeyboard.includes('p:ed:co') || !optionalKeyboard.includes('p:ed:tg') || !optionalKeyboard.includes('p:cm')) {
+  throw new Error('optional profile surface missing optional/contact actions');
 }
 
 const inputPrompt = renderProfileInputPrompt({ fieldKey: 'ab', profileSnapshot });

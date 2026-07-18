@@ -6,8 +6,8 @@ const profileComposerSource = readFileSync(new URL('../src/bot/composers/profile
 const textComposerSource = readFileSync(new URL('../src/bot/composers/textComposer.js', import.meta.url), 'utf8');
 
 assert.ok(renderSource.includes('export function renderProfilePreviewKeyboard('), 'renderProfilePreviewKeyboard export must exist');
-assert.ok(profileComposerSource.includes('renderProfilePreviewKeyboard'), 'profileComposer must import preview keyboard for compatibility');
-assert.ok(textComposerSource.includes('renderProfilePreviewKeyboard'), 'textComposer must import preview keyboard for compatibility');
-assert.ok(!profileComposerSource.includes('renderProfileSavedKeyboard'), 'profileComposer must not depend on renderProfileSavedKeyboard');
-assert.ok(!textComposerSource.includes('renderProfileSavedKeyboard'), 'textComposer must not depend on renderProfileSavedKeyboard');
+assert.ok(renderSource.includes('export function renderProfileSavedKeyboard('), 'renderProfileSavedKeyboard export must exist');
+assert.ok(!profileComposerSource.includes('renderProfileSavedKeyboard'), 'profileComposer should keep navigation in surface builders');
+assert.ok(textComposerSource.includes('renderProfileSavedKeyboard'), 'textComposer must use guided saved-state navigation');
+assert.ok(!textComposerSource.includes('renderProfilePreviewKeyboard'), 'textComposer must not fall back to generic preview navigation after a saved field');
 console.log('OK: profile render export compatibility holds');

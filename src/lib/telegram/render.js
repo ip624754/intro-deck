@@ -2,7 +2,10 @@ import {
   DIRECTORY_INDUSTRY_BUCKETS,
   DIRECTORY_SKILLS,
   PROFILE_FIELDS,
+  OPTIONAL_PROFILE_FIELD_KEYS,
   getContactModeLabel,
+  getProfileActivationNextAction,
+  getProfileActivationState,
   summarizeDirectoryFilters
 } from '../profile/contract.js';
 import { buildProFairUseDisclosure, canOpenPaidContactRail } from '../contact/contract.js';
@@ -105,12 +108,16 @@ function readinessLine(profileSnapshot) {
     return 'Directory readiness: not ready yet';
   }
 
+  if (completion.requiredFilledCount < completion.requiredCount) {
+    return 'Directory readiness: complete all required fields';
+  }
+
   if (!completion.hasRequiredSkills) {
     return 'Directory readiness: add at least 1 skill';
   }
 
   if (!completion.isReady) {
-    return 'Directory readiness: complete all required fields';
+    return 'Directory readiness: not ready yet';
   }
 
   if (profileSnapshot?.visibility_status === 'listed') {
@@ -118,6 +125,38 @@ function readinessLine(profileSnapshot) {
   }
 
   return 'Directory readiness: ready • currently hidden';
+}
+
+
+function activationProgressLine(profileSnapshot) {
+  const activation = getProfileActivationState(profileSnapshot || {});
+  return `Setup progress: ${activation.completedCount}/${activation.totalCount} required steps • ${activation.progressPercent}%`;
+}
+
+function activationNextStepLine(profileSnapshot) {
+  const action = getProfileActivationNextAction(profileSnapshot || {});
+  if (action.kind === 'linkedin') {
+    return 'Next required step: connect LinkedIn';
+  }
+  if (action.kind === 'listed_preview') {
+    return 'Next step: review or update your listed profile';
+  }
+  if (action.kind === 'preview') {
+    return 'Next step: preview the card, then publish it';
+  }
+  return `Next required step: ${action.label}`;
+}
+
+function buildActivationStepLines(profileSnapshot) {
+  return getProfileActivationState(profileSnapshot || {}).steps.map((step) => `${step.complete ? '✅' : '▫️'} ${step.label}`);
+}
+
+function buildOptionalFieldStatusLines(profileSnapshot) {
+  return OPTIONAL_PROFILE_FIELD_KEYS.map((fieldKey) => {
+    const field = PROFILE_FIELDS[fieldKey];
+    const value = profileSnapshot?.[field.column] || null;
+    return `${value && String(value).trim() ? '✅' : '▫️'} ${field.label}: ${truncate(value, 90)}`;
+  });
 }
 
 function linkedinIdentityImportLine(profileSnapshot) {
@@ -414,19 +453,17 @@ function notificationHeadline(value) {
 }
 
 function homeNextStepLine(profileSnapshot) {
-  if (!profileSnapshot?.linkedin_sub) {
+  const action = getProfileActivationNextAction(profileSnapshot || {});
+  if (action.kind === 'linkedin') {
     return 'Next step: connect LinkedIn to create your profile card.';
   }
-
-  if (!profileSnapshot?.completion?.isReady) {
-    return 'Next step: complete your profile to appear in the directory.';
-  }
-
-  if (profileSnapshot?.visibility_status === 'listed') {
+  if (action.kind === 'listed_preview') {
     return 'Your profile is live in the directory.';
   }
-
-  return 'Next step: list your profile when you are ready to accept intros.';
+  if (action.kind === 'preview') {
+    return 'Next step: preview your card, then publish it in the directory.';
+  }
+  return `Next step: ${action.label}.`;
 }
 
 export function renderIntroNotificationText({ eventType = null, introRequest = null } = {}) {
@@ -553,7 +590,7 @@ export function renderHomeText({ profileSnapshot = null, persistenceEnabled = fa
       lines.push(linkedInImportLine);
     }
     lines.push(`Profile status: ${profileSnapshot.profile_state || 'draft'} • ${profileSnapshot.visibility_status || 'hidden'}`);
-    lines.push(completionLine(profileSnapshot));
+    lines.push(activationProgressLine(profileSnapshot));
     lines.push(readinessLine(profileSnapshot));
     lines.push(`Skills: ${formatSkillSummary(profileSnapshot)}`);
     lines.push(homeNextStepLine(profileSnapshot));
@@ -589,9 +626,11 @@ export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot
   if (!isLinkedInConnected) {
     rows.push([{ text: '🔐 Connect LinkedIn', url: buildLinkedInStartUrl({ appBaseUrl, telegramUserId }) }]);
   } else if (persistenceEnabled) {
-    const profileLabel = profileSnapshot?.completion?.isReady ? '🧩 Edit profile' : '🧩 Complete profile';
+    const activation = getProfileActivationState(profileSnapshot || {});
+    const profileLabel = activation.isReady ? '🧩 Edit profile' : '➡️ Continue setup';
+    const profileCallback = activation.isReady ? 'p:menu' : 'p:next';
     rows.push([
-      { text: profileLabel, callback_data: 'p:menu' },
+      { text: profileLabel, callback_data: profileCallback },
       { text: '🌐 Browse directory', callback_data: 'dir:list:0' }
     ]);
   }
@@ -750,41 +789,34 @@ export function renderPricingKeyboard({ pricingState = null } = {}) {
 
 export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabled = false, notice = null } = {}) {
   const lines = [
-    '🧩 Profile editor',
+    '🧩 Profile setup',
     ''
   ];
 
   if (!persistenceEnabled) {
-    lines.push('Profile editing is unavailable right now.');
+    lines.push('Profile setup is unavailable right now.');
   } else if (!profileSnapshot?.linkedin_sub) {
-    lines.push('Connect LinkedIn first, then return here to complete your profile.');
+    lines.push('Connect LinkedIn first. Intro Deck uses the account connection for basic identity only; the professional card is completed by you.');
   } else {
-    lines.push('🔗 LinkedIn');
-    lines.push(`• Connected as: ${profileSnapshot.linkedin_name || profileSnapshot.display_name || 'LinkedIn user'}`);
-    const linkedInImportLine = linkedinIdentityImportLine(profileSnapshot);
-    if (linkedInImportLine) {
-      lines.push(`• ${linkedInImportLine.replace(/^LinkedIn import:\s*/i, '')}`);
-    }
-    lines.push(...buildLinkedInIdentityDetailLines(profileSnapshot, { includeEmail: true }));
-    lines.push('• These LinkedIn basics are stored privately. Only your card fields below appear on your listed profile.');
-    lines.push('• LinkedIn does not verify the professional fields you enter on your card.');
+    const activation = getProfileActivationState(profileSnapshot);
+    lines.push(`LinkedIn connected as: ${profileSnapshot.linkedin_name || profileSnapshot.display_name || 'LinkedIn user'}`);
+    lines.push('Professional card details are member-provided.');
+    lines.push('LinkedIn does not verify the professional fields you enter on your card.');
     lines.push('');
-
-    lines.push('🪪 Your card');
-    lines.push(`• Public card name: ${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || '—')}`);
-    lines.push(`• Profile status: ${profileSnapshot.profile_state || 'draft'}`);
+    lines.push(`📊 ${activationProgressLine(profileSnapshot)}`);
+    lines.push(activationNextStepLine(profileSnapshot));
+    lines.push('');
+    lines.push('Required for listing');
+    lines.push(...buildActivationStepLines(profileSnapshot));
+    lines.push('');
+    lines.push('Directory status');
     lines.push(`• Visibility: ${profileSnapshot.visibility_status || 'hidden'}`);
     lines.push(`• ${readinessLine(profileSnapshot)}`);
-    lines.push(`• ${completionLine(profileSnapshot)}`);
+    if (activation.isReady && !activation.isListed) {
+      lines.push('• Preview the public card before publishing it.');
+    }
     lines.push('');
-
-    lines.push('🔒 Contact');
-    lines.push(`• Hidden Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`);
-    lines.push(`• Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
-    lines.push('');
-
-    lines.push('✍️ Card fields');
-    lines.push(...buildFieldStatusLines(profileSnapshot));
+    lines.push('Optional details and contact settings are kept on a separate screen.');
   }
 
   if (notice) {
@@ -811,29 +843,23 @@ export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = 
     return buildInlineKeyboard(rows);
   }
 
-  const visibilityLabel = profileSnapshot?.visibility_status === 'listed' ? '🙈 Hide from directory' : '🌐 List in directory';
+  const activation = getProfileActivationState(profileSnapshot);
+  const primaryButton = activation.isReady
+    ? { text: activation.isListed ? '👁 Review listed profile' : '👁 Preview & publish', callback_data: 'p:prev' }
+    : { text: '➡️ Continue setup', callback_data: 'p:next' };
 
   return buildInlineKeyboard([
+    [primaryButton],
     [
       { text: '✏️ Display name', callback_data: 'p:ed:dn' },
       { text: '✏️ Headline', callback_data: 'p:ed:hl' }
     ],
     [
-      { text: '🏢 Company', callback_data: 'p:ed:co' },
-      { text: '📍 City', callback_data: 'p:ed:ci' }
-    ],
-    [
       { text: '🏷 Industry', callback_data: 'p:ed:in' },
       { text: '📝 About', callback_data: 'p:ed:ab' }
     ],
-    [
-      { text: '🔗 LinkedIn URL', callback_data: 'p:ed:li' },
-      { text: '🔐 Telegram', callback_data: 'p:ed:tg' }
-    ],
     [{ text: '🧠 Skills', callback_data: 'p:sk' }],
-    [{ text: '💳 Contact mode', callback_data: 'p:cm' }],
-    [{ text: '👁 Preview card', callback_data: 'p:prev' }],
-    [{ text: visibilityLabel, callback_data: 'p:vis' }],
+    [{ text: '⚙️ Optional details & contact', callback_data: 'p:opt' }],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
   ]);
 }
@@ -849,6 +875,7 @@ export function renderProfilePreviewText({ profileSnapshot = null, persistenceEn
   } else if (!profileSnapshot?.linkedin_sub) {
     lines.push('Connect LinkedIn first before previewing your profile.');
   } else {
+    const activation = getProfileActivationState(profileSnapshot);
     lines.push('🪪 Public card');
     lines.push(`${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'Unnamed profile')}`);
     lines.push(toDisplayValue(profileSnapshot.headline_user));
@@ -859,27 +886,23 @@ export function renderProfilePreviewText({ profileSnapshot = null, persistenceEn
     lines.push(`🧠 Skills: ${formatSkillSummary(profileSnapshot)}`);
     lines.push(`🔗 Public LinkedIn URL: ${toDisplayValue(profileSnapshot.linkedin_public_url)}`);
     lines.push('');
-
-    lines.push('🔒 Contact & status');
-    lines.push(`• Hidden Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`);
-    lines.push(`• Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
-    lines.push(`• Visibility: ${toDisplayValue(profileSnapshot.visibility_status)}`);
-    lines.push(`• State: ${toDisplayValue(profileSnapshot.profile_state)}`);
-    lines.push('');
-
     lines.push('📝 About');
     lines.push(truncate(profileSnapshot.about_user, 320));
     lines.push('');
-
-    lines.push('📊 Directory readiness');
+    lines.push('🔒 Not shown publicly');
+    lines.push(`• Hidden Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`);
+    lines.push(`• Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
+    lines.push('');
+    lines.push(`📊 ${activationProgressLine(profileSnapshot)}`);
     lines.push(`• ${readinessLine(profileSnapshot)}`);
 
-    const identityLines = buildLinkedInIdentityDetailLines(profileSnapshot, { includeEmail: true });
-    if (identityLines.length) {
-      lines.push('');
-      lines.push('🔗 LinkedIn basics synced privately');
-      lines.push(...identityLines);
-      lines.push('• These LinkedIn basics are stored privately and do not replace your public card fields automatically, except the initial card name seed.');
+    if (!activation.isReady) {
+      lines.push(`• ${activationNextStepLine(profileSnapshot)}`);
+      lines.push('• Publishing remains locked until every required step is complete.');
+    } else if (activation.isListed) {
+      lines.push('• This card is currently visible in the directory.');
+    } else {
+      lines.push('• Ready to publish. Publishing makes this card visible to bot users; private contact details remain hidden.');
     }
   }
 
@@ -891,8 +914,77 @@ export function renderProfilePreviewText({ profileSnapshot = null, persistenceEn
   return lines.join('\n');
 }
 
-export function renderProfilePreviewKeyboard() {
+export function renderProfilePreviewKeyboard({ profileSnapshot = null, persistenceEnabled = true } = {}) {
+  const rows = [];
+  const activation = getProfileActivationState(profileSnapshot || {});
+
+  if (persistenceEnabled && profileSnapshot?.linkedin_sub) {
+    if (!activation.isReady) {
+      rows.push([{ text: '➡️ Continue setup', callback_data: 'p:next' }]);
+    } else if (activation.isListed) {
+      rows.push([{ text: '🙈 Hide from directory', callback_data: 'p:vis' }]);
+    } else {
+      rows.push([{ text: '🌐 Publish in directory', callback_data: 'p:pub' }]);
+    }
+    rows.push([{ text: '⚙️ Optional details & contact', callback_data: 'p:opt' }]);
+  }
+
+  rows.push([
+    { text: '↩️ Back to profile', callback_data: 'p:menu' },
+    { text: '🏠 Home', callback_data: 'home:root' }
+  ]);
+
+  return buildInlineKeyboard(rows);
+}
+
+export function renderProfileOptionalText({ profileSnapshot = null, persistenceEnabled = false, notice = null } = {}) {
+  const lines = [
+    '⚙️ Optional profile details',
+    '',
+    'These fields improve your card or contact options, but they are not required to publish the profile.',
+    ''
+  ];
+
+  if (!persistenceEnabled) {
+    lines.push('Optional profile editing is unavailable right now.');
+  } else if (!profileSnapshot?.linkedin_sub) {
+    lines.push('Connect LinkedIn first before editing optional profile details.');
+  } else {
+    lines.push(...buildOptionalFieldStatusLines(profileSnapshot));
+    lines.push('');
+    lines.push(`Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
+    lines.push('Hidden Telegram username stays private and is revealed only after an approved supported contact request.');
+  }
+
+  if (notice) {
+    lines.push('');
+    lines.push(notice);
+  }
+
+  return lines.join('\n');
+}
+
+export function renderProfileOptionalKeyboard({ profileSnapshot = null, persistenceEnabled = false } = {}) {
+  if (!persistenceEnabled || !profileSnapshot?.linkedin_sub) {
+    return buildInlineKeyboard([
+      [
+        { text: '↩️ Back to profile', callback_data: 'p:menu' },
+        { text: '🏠 Home', callback_data: 'home:root' }
+      ]
+    ]);
+  }
+
   return buildInlineKeyboard([
+    [
+      { text: '🏢 Company', callback_data: 'p:ed:co' },
+      { text: '📍 City', callback_data: 'p:ed:ci' }
+    ],
+    [
+      { text: '🔗 LinkedIn URL', callback_data: 'p:ed:li' },
+      { text: '🔐 Telegram', callback_data: 'p:ed:tg' }
+    ],
+    [{ text: '💳 Contact mode', callback_data: 'p:cm' }],
+    [{ text: '👁 Preview card', callback_data: 'p:prev' }],
     [
       { text: '↩️ Back to profile', callback_data: 'p:menu' },
       { text: '🏠 Home', callback_data: 'home:root' }
@@ -993,10 +1085,17 @@ export function renderProfileSkillsKeyboard({ profileSnapshot = null } = {}) {
     skillRows.push(chunk);
   }
 
+  const activation = getProfileActivationState(profileSnapshot || {});
+  const nextRow = activation.isReady
+    ? [{ text: activation.isListed ? '👁 Review listed profile' : '👁 Preview & publish', callback_data: 'p:prev' }]
+    : activation.nextStep?.kind !== 'skills'
+      ? [{ text: '➡️ Continue setup', callback_data: 'p:next' }]
+      : null;
+
   return buildInlineKeyboard([
     ...skillRows,
     [{ text: '🧹 Clear skills', callback_data: 'p:sk:clr' }],
-    [{ text: '👁 Preview card', callback_data: 'p:prev' }],
+    ...(nextRow ? [nextRow] : []),
     [
       { text: '↩️ Back to profile', callback_data: 'p:menu' },
       { text: '🏠 Home', callback_data: 'home:root' }
@@ -1008,14 +1107,19 @@ export function renderProfileSavedNotice({ fieldLabel, profileSnapshot }) {
   return [
     `✅ ${fieldLabel} saved.`,
     '',
-    completionLine(profileSnapshot),
-    readinessLine(profileSnapshot)
+    activationProgressLine(profileSnapshot),
+    activationNextStepLine(profileSnapshot)
   ].join('\n');
 }
 
-export function renderProfileSavedKeyboard() {
+export function renderProfileSavedKeyboard({ profileSnapshot = null } = {}) {
+  const activation = getProfileActivationState(profileSnapshot || {});
+  const primaryButton = activation.isReady
+    ? { text: activation.isListed ? '👁 Review listed profile' : '👁 Preview & publish', callback_data: 'p:prev' }
+    : { text: '➡️ Continue setup', callback_data: 'p:next' };
+
   return buildInlineKeyboard([
-    [{ text: '👁 Preview card', callback_data: 'p:prev' }],
+    [primaryButton],
     [
       { text: '↩️ Back to profile', callback_data: 'p:menu' },
       { text: '🏠 Home', callback_data: 'home:root' }
@@ -1086,7 +1190,7 @@ export function renderDirectoryListKeyboard({ profiles = [], page = 0, hasPrev =
 
   if (!profiles.length && viewerProfile?.linkedin_sub) {
     if (!viewerProfile?.completion?.isReady) {
-      rows.push([{ text: '🧩 Complete my profile', callback_data: 'p:menu' }]);
+      rows.push([{ text: '➡️ Continue profile setup', callback_data: 'p:next' }]);
     } else if (viewerProfile?.visibility_status !== 'listed' && filterSummary.isDefault) {
       rows.push([{ text: '🌍 List my profile', callback_data: 'p:vis' }]);
     } else {

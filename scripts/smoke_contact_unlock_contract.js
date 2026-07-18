@@ -7,7 +7,7 @@ import {
   renderContactUnlockDetailKeyboard,
   renderContactUnlockDetailText,
   renderDirectoryCardKeyboard,
-  renderProfileMenuKeyboard,
+  renderProfileOptionalKeyboard,
   renderProfilePreviewText
 } from '../src/lib/telegram/render.js';
 
@@ -15,7 +15,7 @@ assert.equal(normalizeTelegramUsername('@rustam_dev'), 'rustam_dev');
 assert.equal(normalizeTelegramUsername('https://t.me/Rustam_Dev'), 'Rustam_Dev');
 assert.equal(getContactModeLabel('paid_unlock_requires_approval'), 'Direct contact by paid request');
 
-const profileKeyboard = renderProfileMenuKeyboard({
+const profileKeyboard = renderProfileOptionalKeyboard({
   persistenceEnabled: true,
   profileSnapshot: { linkedin_sub: 'sub', visibility_status: 'hidden' }
 });

@@ -3,13 +3,14 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP054
-- Phase: Positioning and Discovery Truth Alignment on top of live-deployed STEP053A
-- Primary mode: STANDARD / PRODUCT CONTRACT / COPY CONSISTENCY / DISCOVERY TRUTH
-- Runtime status: STEP053A is live-deployed with health/config confirmed at artifact `b67371385030bef8ef528fb13eb7ffcc86933b7f`; STEP054 is source-implemented and awaits deploy verification
+- Current STEP: STEP055
+- Phase: Guided Activation Spine on top of live-deployed STEP054
+- Primary mode: STANDARD / TELEGRAM UX / PROFILE ACTIVATION / NAVIGATION
+- Runtime status: STEP054 is live-deployed at artifact `c3e9294c43a357992f663c772093df4892e7721f`; STEP055 is source-implemented and awaits deploy verification
 
 ## What exists now
 
+- STEP055 guided activation: exact next required step, progress, separate optional details, preview-before-publish, and explicit publish/hide callbacks
 - STEP054 positioning canon: listed member profiles, LinkedIn-connected account identity, member-provided professional claims, and approval-based contact
 - STEP053A reproducible staging preflight, isolated PostgreSQL runtime harness, and operator-assisted Telegram Stars evidence verifier
 - canonical runtime release marker shared by health and admin surfaces
@@ -43,6 +44,11 @@
 
 ## Current truth
 
+- STEP055 uses one canonical activation resolver across Home, Profile setup, saved-field, Skills, and Preview surfaces
+- Required activation steps are LinkedIn, display name, headline, industry, about, and at least one skill
+- Optional company, city, public LinkedIn URL, hidden Telegram username, and contact mode are separated from the required setup path
+- Hidden-to-listed publication is available only from the preview surface through `p:pub`; legacy `p:vis` can only hide and cannot publish
+- STEP055 changes no schema, LinkedIn, payment, entitlement, intro, DM, or contact-state machine
 - STEP054 removes stronger-than-mechanism claims from active landing, Telegram, legal, README, and BotFather-facing copy
 - LinkedIn sign-in connects basic account identity; it does not verify member-entered roles, companies, skills, experience, or expertise
 - Active, listed profile cards are visible to bot users; private contact details remain hidden by default and contact stays approval-based
@@ -89,7 +95,7 @@
 
 ## Next recommended step
 
-- deploy STEP054 and verify `/api/health?full=1` reports `STEP054`; then check landing hero/FAQ, Telegram home/Help/directory/profile copy, Privacy/Terms, and apply the BotFather text from `doc/80_STEP054_BOTFATHER_PROFILE_COPY.md`
+- deploy STEP055 and verify `/api/health?full=1` reports `STEP055`; then manually test incomplete profile → next field → skills → preview → publish → hide in Telegram
 
 ## STEP039.1 delta
 
@@ -336,3 +342,16 @@
 1. Apply migration `027` in staging after a duplicate-charge preflight.
 2. Run Node 20 + PostgreSQL + Telegram Stars runtime acceptance, including duplicate/stale callback and Pro concurrency cases.
 3. STEP054 proceeded after operator-confirmed STEP053A health/config; remaining payment/concurrency scenarios stay tracked as partial runtime evidence rather than blocking copy alignment.
+
+## STEP055 delta
+
+- Profile editor replaced by a guided setup spine with one primary next action.
+- Activation progress is canonical and deterministic: LinkedIn + four required fields + skills.
+- Optional details/contact settings moved to a separate surface.
+- Field prompts now use edit-in-place where Telegram permits.
+- Incomplete previews cannot publish; ready hidden previews expose `p:pub`; listed previews expose hide only.
+- Explicit visibility writes replace the old toggle path in runtime routing.
+- Package version: `0.52.0`.
+- Node 20 full smoke: `70/83` PASS versus STEP054 `69/82`, with the same 13 inherited failures and one new passing STEP055 contract.
+- No migration required.
+- Live status not confirmed — manual verification required.

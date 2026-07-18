@@ -143,8 +143,8 @@ for (const [surface, text] of Object.entries(activeSurfaces)) {
   }
 }
 
-if (CURRENT_SOURCE_STEP !== 'STEP054') {
-  throw new Error(`Expected release marker STEP054, found ${CURRENT_SOURCE_STEP}`);
+if (!/^STEP\d+[A-Z]?$/.test(CURRENT_SOURCE_STEP)) {
+  throw new Error(`Invalid release marker while preserving STEP054 positioning truth: ${CURRENT_SOURCE_STEP}`);
 }
 
-console.log('OK: STEP054 positioning and discovery truth contract');
+console.log(`OK: STEP054 positioning and discovery truth contract preserved in ${CURRENT_SOURCE_STEP}`);

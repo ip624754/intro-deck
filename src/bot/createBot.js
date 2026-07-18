@@ -81,7 +81,8 @@ export async function createBot() {
     clearAllPendingInputs,
     buildProfileMenuSurface: surfaces.buildProfileMenuSurface,
     buildProfilePreviewSurface: surfaces.buildProfilePreviewSurface,
-    buildProfileSkillsSurface: surfaces.buildProfileSkillsSurface
+    buildProfileSkillsSurface: surfaces.buildProfileSkillsSurface,
+    buildProfileOptionalSurface: surfaces.buildProfileOptionalSurface
   }));
 
   bot.use(createDirectoryComposer({

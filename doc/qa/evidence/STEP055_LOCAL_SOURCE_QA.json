@@ -1,0 +1,30 @@
+{
+  "step": "STEP055",
+  "packageVersion": "0.52.0",
+  "node": "v20.20.2",
+  "baseline": {
+    "step": "STEP054",
+    "fullZipSha256": "003e4cc33ba7f213c51704cf7e9a76f53d7a0aafb69b88ccf2d4a784f65a48cc",
+    "smoke": { "pass": 69, "fail": 13, "total": 82 }
+  },
+  "current": {
+    "sourceStep": "STEP055",
+    "smoke": { "pass": 70, "fail": 13, "total": 83 },
+    "newFailures": [],
+    "newPassingContracts": ["smoke:guided-activation"]
+  },
+  "verified": [
+    "syntax",
+    "guided activation resolver",
+    "required/optional surface separation",
+    "preview-gated publication routing",
+    "explicit hide routing",
+    "profile/storage/router compatibility",
+    "positioning truth preservation"
+  ],
+  "notVerified": [
+    "Vercel deployment",
+    "live Telegram activation flow",
+    "live stale callback behavior"
+  ]
+}

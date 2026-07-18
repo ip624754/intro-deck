@@ -283,49 +283,73 @@ export async function toggleProfileContactModeForTelegramUser({ telegramUserId }
   });
 }
 
-export async function toggleProfileVisibilityForTelegramUser({ telegramUserId }) {
+async function setProfileVisibilityWithClient(client, { telegramUserId, visibilityStatus }) {
+  const profile = await getProfileSnapshotByTelegramUserId(client, telegramUserId);
+  if (!profile?.user_id) {
+    return {
+      persistenceEnabled: true,
+      changed: false,
+      blocked: false,
+      profile: null,
+      reason: 'profile_missing'
+    };
+  }
+
+  if (!['hidden', 'listed'].includes(visibilityStatus)) {
+    throw new Error(`Unsupported visibility status: ${visibilityStatus}`);
+  }
+
+  if (visibilityStatus === 'listed' && !profile.completion?.isReady) {
+    return {
+      persistenceEnabled: true,
+      changed: false,
+      blocked: true,
+      profile,
+      reason: 'profile_not_ready_to_list'
+    };
+  }
+
+  if (profile.visibility_status === visibilityStatus) {
+    return {
+      persistenceEnabled: true,
+      changed: false,
+      blocked: false,
+      profile,
+      reason: 'visibility_unchanged'
+    };
+  }
+
+  const updatedProfile = await setProfileVisibility(client, {
+    userId: profile.user_id,
+    visibilityStatus
+  });
+  const inviteRewardResult = visibilityStatus === 'listed'
+    ? await maybeCreatePendingInviteRewardForActivationWithClient(client, { userId: profile.user_id })
+    : null;
+
+  return {
+    persistenceEnabled: true,
+    changed: true,
+    blocked: false,
+    profile: updatedProfile,
+    inviteRewardResult,
+    reason: visibilityStatus === 'listed' ? 'profile_published' : 'profile_hidden'
+  };
+}
+
+export async function setProfileVisibilityForTelegramUser({ telegramUserId, visibilityStatus }) {
   if (!isDatabaseConfigured()) {
     return {
       persistenceEnabled: false,
       changed: false,
+      blocked: false,
+      profile: null,
       reason: 'DATABASE_URL is not configured'
     };
   }
 
-  return withDbTransaction(async (client) => {
-    const profile = await getProfileSnapshotByTelegramUserId(client, telegramUserId);
-    if (!profile?.user_id) {
-      return {
-        persistenceEnabled: true,
-        changed: false,
-        reason: 'profile_missing'
-      };
-    }
-
-    if (!profile.completion?.isReady) {
-      return {
-        persistenceEnabled: true,
-        changed: false,
-        blocked: true,
-        profile,
-        reason: 'profile_not_ready_to_list'
-      };
-    }
-
-    const nextVisibility = profile.visibility_status === 'listed' ? 'hidden' : 'listed';
-    const updatedProfile = await setProfileVisibility(client, {
-      userId: profile.user_id,
-      visibilityStatus: nextVisibility
-    });
-    const inviteRewardResult = await maybeCreatePendingInviteRewardForActivationWithClient(client, { userId: profile.user_id });
-
-    return {
-      persistenceEnabled: true,
-      changed: true,
-      blocked: false,
-      profile: updatedProfile,
-      inviteRewardResult,
-      reason: 'visibility_toggled'
-    };
-  });
+  return withDbTransaction((client) => setProfileVisibilityWithClient(client, {
+    telegramUserId,
+    visibilityStatus
+  }));
 }

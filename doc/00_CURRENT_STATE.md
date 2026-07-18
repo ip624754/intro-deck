@@ -4,12 +4,17 @@
 Intro Deck
 
 ## Current source baseline
-STEP054 — Positioning and Discovery Truth Alignment
+STEP055 — Guided Activation Spine
 
 ## Layer
-STANDARD / product contract / copy consistency / discovery truth
+STANDARD / Telegram UX / profile activation / navigation
 
 ## Source-confirmed
+- STEP055 defines one deterministic activation sequence: LinkedIn, display name, headline, industry, about, and at least one skill.
+- Home, profile setup, saved-field, skills, and preview surfaces share the canonical activation resolver.
+- Optional company, city, public LinkedIn URL, hidden Telegram username, and contact mode live on a separate surface.
+- Publishing is preview-gated in routing: `p:pub` lists a ready hidden profile; `p:vis` only hides.
+- Existing profile field/session repositories are reused; no new schema or parallel profile core is introduced.
 - STEP054 defines Intro Deck as a Telegram-native directory of active, listed member profiles with approval-based contact paths.
 - LinkedIn sign-in connects basic account identity; member-entered professional claims are not verified by LinkedIn or Intro Deck unless explicitly stated.
 - Listed profile cards are visible to bot users; private contact details remain hidden by default.
@@ -90,10 +95,10 @@ Pending reward accrual check is now re-run after:
 - docs canon and artifact protocol
 
 ## Live truth boundary
-- STEP053A deployed health/config: operator-confirmed live at artifact `b67371385030bef8ef528fb13eb7ffcc86933b7f`
-- STEP054 source-confirmed: yes
-- STEP054 live-confirmed: no
-- BotFather STEP054 profile copy: not applied/verified in this workspace
+- STEP054 deployed health/config: operator-confirmed live at artifact `c3e9294c43a357992f663c772093df4892e7721f`
+- STEP055 source-confirmed: yes
+- STEP055 live-confirmed: no
+- BotFather STEP054 profile copy: operator action not verified in this workspace
 
 ## Redeem truth now in source
 - starter catalog:
@@ -242,3 +247,24 @@ STEP053A source implementation does not make STEP053 staging-accepted. A valid `
 - Canon: LinkedIn-connected account identity + member-provided professional profile + listed cards visible to bot users + approval-based private contact.
 - No database, callback, payment, entitlement, or contact state-machine changes.
 - Next: deploy, verify live surfaces, apply BotFather copy, then proceed to STEP055 guided activation.
+
+## STEP055 delta
+
+### Source-confirmed
+- canonical activation resolver and next-action contract live in `src/lib/profile/contract.js`;
+- profile setup uses one primary `Continue setup` action until ready;
+- saved-field and skills surfaces route to the next missing requirement;
+- ready hidden profiles must pass through Preview before `p:pub`;
+- stale legacy `p:vis` no longer lists hidden profiles; it is hide-only;
+- optional fields/contact settings are isolated on `p:opt`;
+- explicit visibility setter reuses the existing canonical profile repository.
+
+### QA truth
+- Node `20.20.2`: `npm run check` PASS;
+- dedicated `smoke:guided-activation` PASS;
+- full inventory: `70/83` PASS versus STEP054 `69/82`;
+- inherited failures remain exactly the same 13; new failures: none;
+- no migration required.
+
+### Next
+Deploy STEP055, confirm `/api/health?full=1` reports STEP055, then manually exercise the activation path in `@introdeckbot`.
