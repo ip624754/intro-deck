@@ -3,9 +3,9 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP053 — Contact Contract and Payment Honesty Lock
-- Current mode: HEAVY / CONTACT CONSENT / TELEGRAM STARS HONESTY / ABUSE HARDENING
-- Current focus: enforce an authoritative contact contract, honest request-delivery economics, bounded Pro outreach, and auditable/replay-resistant critical transitions without creating a second money core.
+- Current baseline: STEP053A — Staging Runtime Acceptance Pack
+- Current mode: HEAVY / STAGING ACCEPTANCE / POSTGRESQL CONCURRENCY / TELEGRAM STARS EVIDENCE
+- Current focus: make STEP053 staging-verifiable through fail-closed preflight, isolated PostgreSQL runtime scenarios, and artifact-bound Telegram/operator evidence.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
@@ -15,6 +15,7 @@
 - STEP053 bounded combined Pro outreach allowance and paid fallback exist in source.
 - STEP053 pair/payment/allowance locks, checkout authorization, replay checks, policy snapshots, and contact audit events exist in source.
 - migration `027_contact_contract_payment_honesty.sql` exists and is required for STEP053.
+- STEP053A staging acceptance scripts, database fingerprint guard, isolated fixture runner, evidence manifest, and runbook exist in source.
 
 - mature operator/admin layer exists in source
 - STEP040 Russian admin analytics drilldowns exist in source
@@ -32,12 +33,17 @@
 - homepage/privacy/terms now point to the refreshed OG master asset in source
 - STEP050J schema reality check now exists in source: profile/directory reads are schema-compatible again, while hidden Telegram username writes and direct-contact unlock flows explicitly require STEP046 migration `019_contact_unlock_requests.sql`.
 
+## Locally verified
+
+- syntax/smoke can be run from repo;
+- docs canon exists;
+- STEP053A syntax and dedicated source contract pass locally on Node `20.20.2`;
+- full Node 20 inventory is `68/81` PASS versus STEP053 `67/80`, with the same 13 inherited failures;
+- missing-target, wrong-database-fingerprint, and artifact-mismatch paths fail closed.
+
 ## Live-confirmed
 
-- syntax/smoke can be run from repo
-- docs canon exists
-- source-level STEP050J checks pass locally
-- STEP053 source and selected contract checks pass locally on Node 22.16.0
+None in this workspace. **live status not confirmed — manual verification required**
 
 ## Inference
 
@@ -46,8 +52,7 @@
 
 ## Blocked / unconfirmed
 
-- Node 20 runtime was not available in the implementation workspace.
-- PostgreSQL migration and transaction/concurrency behavior were not executed locally.
+- PostgreSQL migration and transaction/concurrency behavior were not executed locally; STEP053A now provides the runner but not the runtime verdict.
 - live Telegram pre-checkout, Stars charge, stale callback, and duplicate delivery proof are not closed.
 - no automatic refund engine exists for decline/no reply.
 
@@ -73,6 +78,8 @@ When contract certainty is missing, say exactly:
 - `doc/spec/STEP046_PRIVATE_TELEGRAM_HANDLE_AND_PAID_CONTACT_UNLOCK_V1.md`
 - `doc/spec/STEP047_MEMBER_DM_RELAY_V1.md`
 - `doc/spec/STEP053_CONTACT_CONTRACT_AND_PAYMENT_HONESTY_LOCK.md`
+- `doc/spec/STEP053A_STAGING_RUNTIME_ACCEPTANCE_PACK.md`
+- `doc/77_STEP053A_STAGING_RUNTIME_ACCEPTANCE_RUNBOOK.md`
 - `doc/spec/STEP049B_LANDING_IMPLEMENTATION.md`
 - `doc/spec/STEP049C_OG_SOCIAL_METADATA_UPLIFT.md`
 - `doc/spec/STEP049D_FINAL_POLISH_MOBILE_LEGAL_CONSISTENCY.md`
@@ -177,3 +184,34 @@ Before migration `027`, audit existing Telegram/provider charge IDs for duplicat
 
 ### Next action
 Run staging migration + Node 20/PostgreSQL/Telegram Stars acceptance before STEP054.
+
+## STEP053A handoff delta
+
+### Acceptance commands
+```bash
+npm run step053a:preflight
+npm run step053a:database
+npm run step053a:evidence:init -- runtime_evidence/step053a/manual-evidence.json
+npm run step053a:evidence:verify -- runtime_evidence/step053a/manual-evidence.json
+```
+
+### Safety guards
+- only `STEP053A_TARGET=staging` is accepted;
+- mutation requires `STEP053A_MUTATION_ACK=ALLOW_STEP053A_STAGING_FIXTURES`;
+- mutation also requires `STEP053A_DATABASE_ACK` equal to the preflight fingerprint;
+- both automated phases require `STEP053A_ARTIFACT_SHA`, and deployed health/manual evidence must match it;
+- Node 20 is mandatory for acceptance;
+- fixture cleanup failure is a failed run;
+- no production mode or production bypass exists.
+
+### Truth boundary
+- source pack: implemented;
+- local Node 20 syntax/source QA: PASS;
+- local fail-closed target/fingerprint guards: PASS;
+- Node 20 staging preflight against real staging services: not run;
+- PostgreSQL acceptance scenarios: not run;
+- Telegram Stars/manual scenarios: not run;
+- staging GO report: not generated.
+
+### Next action
+Deploy the exact FULL artifact to staging, run the complete STEP053A runbook, archive evidence, then proceed to STEP054 only after a GO report.

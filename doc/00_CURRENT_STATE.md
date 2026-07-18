@@ -4,10 +4,10 @@
 Intro Deck
 
 ## Current source baseline
-STEP053 — Contact Contract and Payment Honesty Lock
+STEP053A — Staging Runtime Acceptance Pack
 
 ## Layer
-HEAVY / contact consent / Telegram Stars honesty / abuse hardening
+HEAVY / staging acceptance / PostgreSQL concurrency / Telegram Stars evidence
 
 ## Source-confirmed
 - STEP053 makes `contact_mode` authoritative for new paid direct-contact and DM permission requests.
@@ -181,7 +181,7 @@ Founder manual pass in Telegram on nested invite/admin views, then only a real m
 PRO_OUTREACH_DAILY_LIMIT=10
 CONTACT_REQUEST_RETRY_COOLDOWN_DAYS=30
 PAYMENT_CHECKOUT_AUTH_TTL_MINUTES=30
-PAYMENT_CHECKOUT_RETRY_LOCK_SECONDS=120
+PAYMENT_CHECKOUT_RETRY_LOCK_SECONDS=1800
 ```
 
 ### Schema truth
@@ -201,3 +201,30 @@ PAYMENT_CHECKOUT_RETRY_LOCK_SECONDS=120
 1. Stage migration `027` with duplicate-charge preflight.
 2. Run the STEP053 runtime acceptance pack on Node 20 and PostgreSQL.
 3. Continue to STEP054 — Positioning and Discovery Truth Alignment only after runtime proof.
+
+## STEP053A — Staging Runtime Acceptance Pack
+
+### Source-confirmed delta
+- read-only staging preflight validates Node 20, PostgreSQL schema/indexes, payment-charge ownership, impossible financial states, advisory locks, Telegram bot/webhook state, and deployed health;
+- mutating database scenarios require an exact staging target, mutation ACK, and database fingerprint ACK;
+- isolated fixtures exercise canonical contact, DM, receipt, subscription, and Pro allowance repositories;
+- concurrent transactions cover one-winner pre-checkout authorization and the configured Pro limit/N+1 boundary;
+- fixture cleanup and residual-row verification are mandatory acceptance checks;
+- Telegram Stars/manual callback truth is captured through a 13-scenario evidence manifest and strict validator;
+- runtime evidence is ignored by Git and must be archived separately;
+- preflight, database runtime, deployed health, and manual evidence are bound to one exact artifact SHA and one database fingerprint.
+
+### Local QA truth
+- Node `20.20.2`: syntax and dedicated STEP053A source smoke PASS;
+- full Node 20 inventory is `68/81` PASS versus STEP053 `67/80`, with the same 13 inherited failures;
+- evidence-template, strict verifier, missing-target guard, and wrong-fingerprint guard are locally verified;
+- PostgreSQL staging runtime, deployed health, Telegram webhook, and real Stars flows remain not verified in this workspace.
+
+### Release boundary
+STEP053A source implementation does not make STEP053 staging-accepted. A valid `STEP053A_STAGING_ACCEPTANCE_REPORT.md` tied to the exact deployed artifact is required.
+
+## Next recommended step after STEP053A
+1. Deploy the STEP053A artifact to staging on Node 20.
+2. Run `step053a:preflight` and `step053a:database`.
+3. Complete all 13 Telegram/operator-assisted scenarios and generate the staging acceptance report.
+4. After GO, continue to STEP054 — Positioning and Discovery Truth Alignment.

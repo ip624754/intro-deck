@@ -1,3 +1,4 @@
+import { CURRENT_SOURCE_STEP, getRuntimeArtifactSha } from '../src/config/release.js';
 import {
   getNotificationOpsConfig,
   getNotificationRetryConfig,
@@ -14,8 +15,9 @@ export default async function handler(req, res) {
   const operatorConfig = getOperatorConfig();
   res.status(200).json({
     ok: true,
-    step: 'STEP049K',
-    docsStep: 'STEP049K',
+    step: CURRENT_SOURCE_STEP,
+    docsStep: CURRENT_SOURCE_STEP,
+    artifactSha: getRuntimeArtifactSha(),
     service: 'linkedin-telegram-directory-bot',
     flags,
     persistence: {

@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "step": "STEP053A",
+  "evidenceType": "local-source-qa",
+  "generatedAt": "2026-07-18T06:50:19Z",
+  "truthBoundary": "This evidence does not prove staging PostgreSQL, deployed Telegram, Telegram Stars, or production behavior.",
+  "baseline": {
+    "artifact": "IntroDeck_STEP053_FULL_2026-07-18.zip",
+    "sha256": "57dd99e433b43e1fea697c00a87598ca2bf572cc80bc078e228389bcff7ae493",
+    "node": "v20.20.2",
+    "smokes": {
+      "pass": 67,
+      "fail": 13,
+      "total": 80
+    }
+  },
+  "current": {
+    "packageVersion": "0.50.1",
+    "node": "v20.20.2",
+    "npm": "10.9.2",
+    "checks": {
+      "npmRunCheck": "PASS",
+      "smokeStep053aPack": "PASS",
+      "npmAuditHigh": "PASS_0_VULNERABILITIES",
+      "gitDiffCheck": "PASS",
+      "healthArtifactAnchorUnit": "PASS",
+      "missingTargetGuard": "PASS_FAIL_CLOSED",
+      "wrongDatabaseFingerprintGuard": "PASS_FAIL_CLOSED",
+      "evidenceValidatorPositiveSynthetic": "PASS_VALIDATOR_MECHANICS_ONLY",
+      "evidenceValidatorArtifactMismatch": "PASS_REJECTED",
+      "fixtureCleanupExactPrefixGuard": "PASS_SOURCE_CONTRACT"
+    },
+    "smokes": {
+      "pass": 68,
+      "fail": 13,
+      "total": 81,
+      "failed": [
+        "smoke:admin-allowlist",
+        "smoke:admin-intros",
+        "smoke:admin-polish",
+        "smoke:admin-productivity",
+        "smoke:admin-runbook-freeze",
+        "smoke:admin-russian-layer",
+        "smoke:admin-search",
+        "smoke:admin-user-card",
+        "smoke:admin-users",
+        "smoke:broadcast-idempotency",
+        "smoke:code-split",
+        "smoke:env",
+        "smoke:profile-session-schema"
+      ]
+    },
+    "comparison": {
+      "newFailures": [],
+      "resolvedFailures": [],
+      "additionalPassingSmoke": "smoke:step053a-pack"
+    }
+  },
+  "notVerified": [
+    "real staging PostgreSQL schema and migration 027",
+    "PostgreSQL concurrency and advisory locks against staging",
+    "deployed staging health endpoint",
+    "staging Telegram getMe and webhook state",
+    "real Telegram pre-checkout and successful-payment callbacks",
+    "Telegram Stars charge and duplicate update delivery",
+    "operator-assisted 13-scenario staging evidence",
+    "artifact-bound staging GO report"
+  ]
+}

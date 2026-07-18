@@ -1,3 +1,4 @@
+import { CURRENT_SOURCE_STEP } from '../config/release.js';
 import { Bot } from 'grammy';
 import { getAppConfig, getTelegramConfig } from '../config/env.js';
 import { createContactUnlockComposer } from './composers/contactUnlockComposer.js';
@@ -31,7 +32,7 @@ export async function createBot() {
   const bot = new Bot(botToken);
 
   const surfaces = createSurfaceBuilders({ appBaseUrl, invitePhotoFileId });
-  const adminSurfaces = createAdminSurfaceBuilders({ currentStep: 'STEP052.5' });
+  const adminSurfaces = createAdminSurfaceBuilders({ currentStep: CURRENT_SOURCE_STEP });
 
 
   bot.use(createInviteComposer({

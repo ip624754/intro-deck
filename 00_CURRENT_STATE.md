@@ -3,13 +3,15 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP053
-- Phase: Contact Contract and Payment Honesty Lock on top of the STEP052.8.1 invite/admin clarity baseline
-- Primary mode: HEAVY / CONTACT CONSENT / TELEGRAM STARS HONESTY / ABUSE HARDENING
-- Runtime status: STEP053 implemented at source level on top of STEP052.8.1; local source checks pass, but migration `027`, PostgreSQL transaction behavior, Telegram pre-checkout/payment callbacks, and live Node 20 runtime remain unconfirmed — manual verification required
+- Current STEP: STEP053A
+- Phase: Staging Runtime Acceptance Pack on top of STEP053 Contact Contract and Payment Honesty Lock
+- Primary mode: HEAVY / STAGING ACCEPTANCE / POSTGRESQL CONCURRENCY / TELEGRAM STARS EVIDENCE
+- Runtime status: STEP053A acceptance tooling is implemented and source-verified on Node 20; PostgreSQL staging, deployed health, Telegram webhook, and real Stars scenarios remain unconfirmed until the generated runtime evidence pack passes
 
 ## What exists now
 
+- STEP053A reproducible staging preflight, isolated PostgreSQL runtime harness, and operator-assisted Telegram Stars evidence verifier
+- canonical runtime release marker shared by health and admin surfaces
 - LinkedIn OIDC identity bootstrap
 - Telegram profile completion, skills, browse, search, intro flow
 - operator `/ops` / `/admin` entrypoints with allowlist gating
@@ -40,6 +42,8 @@
 
 ## Current truth
 
+- STEP053A is an acceptance pack, not a staging PASS claim; only complete Node 20 + PostgreSQL + Telegram evidence can produce `GO`
+- mutating fixture tests require exact staging target, mutation ACK, database fingerprint ACK, and artifact SHA; automated and manual evidence must share that anchor
 - STEP053 makes `contact_mode` authoritative for new paid direct-contact and DM permission requests
 - STEP053 defines Stars as a non-refundable request-delivery fee on decline/no reply; approval/contact/reply are not guaranteed
 - STEP053 bounds Pro outreach with one combined rolling 24-hour allowance and preserves the canonical paid fallback

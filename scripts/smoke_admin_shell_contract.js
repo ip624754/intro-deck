@@ -35,8 +35,8 @@ for (const fragment of ['adm:home:funnel:', 'adm:ops:funnel:', 'adm:comms:funnel
 }
 
 const createBotSource = readFileSync(new URL('../src/bot/createBot.js', import.meta.url), 'utf8');
-if (!createBotSource.includes("currentStep: 'STEP")) {
-  throw new Error('Bot factory must wire admin surfaces with an explicit step marker');
+if (!createBotSource.includes("import { CURRENT_SOURCE_STEP } from '../config/release.js'") || !createBotSource.includes('currentStep: CURRENT_SOURCE_STEP')) {
+  throw new Error('Bot factory must wire admin surfaces to the canonical release step marker');
 }
 
 console.log('OK: admin shell contract');
