@@ -151,6 +151,16 @@ function buildInvitePhotoUrl(appBaseUrl) {
 }
 
 export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) {
+  function getLinkedInVerificationSurfaceAccess(telegramUserId) {
+    const verificationConfig = getLinkedInVerificationConfig();
+    const ownerEligible = verificationConfig.mode === 'lite'
+      || (verificationConfig.mode === 'development' && isOperatorTelegramUser(telegramUserId));
+    return {
+      ...verificationConfig,
+      enabled: verificationConfig.enabled && ownerEligible
+    };
+  }
+
   async function buildHomeSurface(ctx, homeExtraNotice = null) {
     const storeResult = await touchTelegramUserAndLoadProfile({
       telegramUserId: ctx.from.id,
@@ -255,12 +265,7 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
       : { persistenceEnabled: false, notice: null };
     const activeNotice = noticeMatchesProfile(adminNoticeResult.notice, state.profile);
     const combinedNotice = [activeNotice, notice].filter(Boolean).join('\n\n') || null;
-    const verificationConfig = getLinkedInVerificationConfig();
-    const linkedinVerificationAccess = {
-      enabled: verificationConfig.mode === 'lite'
-        || (verificationConfig.mode === 'development' && isOperatorTelegramUser(ctx.from.id)),
-      mode: verificationConfig.mode
-    };
+    const linkedinVerificationAccess = getLinkedInVerificationSurfaceAccess(ctx.from.id);
     const linkedinVerificationLaunchTicket = linkedinVerificationAccess.enabled
       ? buildSignedLinkedInLaunchTicket({
           telegramUserId: ctx.from.id,
@@ -299,10 +304,12 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
       };
     });
 
+    const linkedinVerificationAccess = getLinkedInVerificationSurfaceAccess(ctx.from.id);
     return {
       text: renderProfilePreviewText({
         profileSnapshot: state.profile,
         persistenceEnabled: state.persistenceEnabled,
+        linkedinVerificationConfig: linkedinVerificationAccess,
         notice
       }),
       reply_markup: renderProfilePreviewKeyboard({
@@ -425,10 +432,12 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
       };
     });
 
+    const linkedinVerificationConfig = getLinkedInVerificationConfig();
     return {
       text: renderDirectoryCardText({
         profileSnapshot: state.profile,
         persistenceEnabled: state.persistenceEnabled,
+        linkedinVerificationConfig,
         notice
       }),
       reply_markup: renderDirectoryCardKeyboard({ profileSnapshot: state.profile, page })

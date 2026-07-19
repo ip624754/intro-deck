@@ -7,6 +7,7 @@ import {
 } from '../lib/profile/contract.js';
 import { decorateProfileSnapshot } from './profileRepo.js';
 import { getSchemaCompat, selectHiddenTelegramUsername } from './schemaCompat.js';
+import { buildLinkedInVerificationSnapshotSql } from './linkedinVerificationRepo.js';
 
 function buildIndustrySqlCondition(selectedIndustrySlug, params) {
   const normalizedIndustrySlug = normalizeDirectoryIndustryFilter(selectedIndustrySlug);
@@ -138,6 +139,7 @@ export async function listListedProfilesPage(client, {
 
   const compat = await getSchemaCompat(client);
   const hiddenTelegramSelect = selectHiddenTelegramUsername('mp', compat);
+  const verification = buildLinkedInVerificationSnapshotSql(compat, { accountAlias: 'la', snapshotAlias: 'liv' });
 
   const countResult = await client.query(
     `
@@ -145,6 +147,7 @@ export async function listListedProfilesPage(client, {
       from member_profiles mp
       join users u on u.id = mp.user_id
       left join linkedin_accounts la on la.user_id = u.id
+      ${verification.join}
       where ${whereBuilder.whereClause}
     `,
     whereBuilder.params
@@ -163,6 +166,7 @@ export async function listListedProfilesPage(client, {
         la.full_name as linkedin_name,
         la.email as linkedin_email,
         la.picture_url as linkedin_picture_url,
+        ${verification.select},
         mp.id as profile_id,
         mp.display_name,
         mp.headline_user,
@@ -180,6 +184,7 @@ export async function listListedProfilesPage(client, {
       from member_profiles mp
       join users u on u.id = mp.user_id
       left join linkedin_accounts la on la.user_id = u.id
+      ${verification.join}
       where ${whereBuilder.whereClause}
       order by mp.updated_at desc, mp.id desc
       limit $${whereBuilder.params.length + 1} offset $${whereBuilder.params.length + 2}
@@ -225,6 +230,7 @@ export async function listListedProfilesPage(client, {
 export async function getListedProfileCardById(client, { profileId, viewerTelegramUserId = null }) {
   const compat = await getSchemaCompat(client);
   const hiddenTelegramSelect = selectHiddenTelegramUsername('mp', compat);
+  const verification = buildLinkedInVerificationSnapshotSql(compat, { accountAlias: 'la', snapshotAlias: 'liv' });
   const result = await client.query(
     `
       select
@@ -235,6 +241,7 @@ export async function getListedProfileCardById(client, { profileId, viewerTelegr
         la.full_name as linkedin_name,
         la.email as linkedin_email,
         la.picture_url as linkedin_picture_url,
+        ${verification.select},
         mp.id as profile_id,
         mp.display_name,
         mp.headline_user,
@@ -252,6 +259,7 @@ export async function getListedProfileCardById(client, { profileId, viewerTelegr
       from member_profiles mp
       join users u on u.id = mp.user_id
       left join linkedin_accounts la on la.user_id = u.id
+      ${verification.join}
       where mp.id = $1
         and mp.visibility_status = 'listed'
         and mp.profile_state = 'active'

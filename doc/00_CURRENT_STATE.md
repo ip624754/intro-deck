@@ -4,12 +4,21 @@
 Intro Deck
 
 ## Current source baseline
-STEP058A — Verified on LinkedIn Development Integration
+STEP058B — Verified Badges and Trust Surfaces
 
 ## Layer
-HEAVY / OAuth / external trust signals / data minimization
+HEAVY / external trust claims / badge eligibility / fail-closed surfaces
 
 ## Source-confirmed
+- STEP058B introduces a canonical trust resolver for snapshot freshness, exact category badges, public eligibility, and fail-closed reasons.
+- Public badge eligibility requires Lite mode, explicit feature enablement, a fresh Lite snapshot, and at least one LinkedIn category.
+- Development snapshots remain private and cannot appear in the public directory.
+- Directory cards show only exact identity/workplace category wording; professional card claims remain member-provided.
+- Owner preview exposes a private badge preview and the exact gate that blocks public display.
+- Admin user cards expose read-only trust diagnostics without changing verification data.
+- Current `r_verify_details` is the default verification scope; legacy `r_verify` remains accepted.
+- STEP058B adds no schema migration and does not change OIDC, payment, contact, entitlement, or invite state machines.
+
 - STEP058A adds a gated Development/Lite Verified on LinkedIn client for `/identityMe` and `/verificationReport`.
 - Development mode requests `r_profile_basicinfo` and `r_verify` only for configured Intro Deck operators; LinkedIn remains the app-admin access authority.
 - Category-only `IDENTITY` and `WORKPLACE` snapshots are stored after migration `028_linkedin_verified_development.sql`.

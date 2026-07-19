@@ -3,12 +3,21 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP058A
-- Phase: Verified on LinkedIn Development integration on top of live-deployed STEP057
-- Primary mode: HEAVY / OAUTH / EXTERNAL TRUST SIGNALS / DATA MINIMIZATION
-- Runtime status: STEP057 is operator-confirmed live at artifact `615d4014f3463bb40b6ec46c47d3e0879a670b55`; STEP058A is source-implemented and awaits migration 028, deployment, and Development-admin verification evidence
+- Current STEP: STEP058B
+- Phase: Verified badges and fail-closed trust surfaces on top of live-deployed STEP058A
+- Primary mode: HEAVY / EXTERNAL TRUST CLAIMS / BADGE ELIGIBILITY / FAIL-CLOSED SURFACES
+- Runtime status: STEP058A is operator-confirmed live at artifact `781c9fb89c4aa870388108f0436e301a7140c106`; its first Development sync returned `linkedin_verified_sync_failed`; STEP058B is source-implemented and awaits deploy plus a successful Development snapshot
 
 ## What exists now
+
+- STEP058B adds one canonical LinkedIn trust resolver shared by owner, preview, directory, health, and admin surfaces.
+- Public badges are fail-closed and require all gates: `mode=lite`, explicit `LINKEDIN_VERIFIED_PUBLIC_BADGES_ENABLED=1`, a fresh snapshot, at least one verified category, and `source_tier=lite`.
+- Development snapshots remain private and can only render a private badge preview for eligible testers.
+- Directory cards can render only exact category badges: `Identity verified on LinkedIn` and/or `Workplace verified on LinkedIn`.
+- Role, company, skills, experience, bio, seniority, and expertise remain member-provided even when a category badge is present.
+- Verification sync failures now report a safe endpoint/status/code diagnosis without exposing OAuth tokens or raw provider payloads.
+- The current LinkedIn standard scope `r_verify_details` is the default; legacy `r_verify` remains accepted for existing app configurations.
+- No database migration or state-machine change is introduced by STEP058B.
 
 - STEP058A adds a gated Verified on LinkedIn Development integration for configured Intro Deck operators that are also LinkedIn developer-app administrators.
 - Verification uses category-only `IDENTITY` and `WORKPLACE` signals from `/identityMe` + `/verificationReport`; public badges remain disabled.
@@ -16,8 +25,9 @@
 - New OIDC persistence stores no access, refresh, or ID token values.
 - A private Profile surface shows category status and provides explicit manual refresh; normal members retain the existing base OIDC flow.
 - Role, company, title, seniority, skills, experience, expertise, and bio remain member-provided.
-- STEP058A source QA on Node `22.16.0`: `npm run check` PASS; dedicated contract PASS; full inventory `73/86` PASS versus STEP057 `72/85`, with the same 13 inherited failures and no new failures.
-- Canonical Node 20 execution, migration 028, live LinkedIn Development API responses, and private Telegram verification UX are not yet verified.
+- STEP058B canonical Node `20.20.2` QA: dependency install, `npm run check`, dedicated STEP058A/STEP058B contracts, positioning compatibility, and `npm audit` PASS.
+- Full STEP058B inventory: `74/87` PASS versus STEP058A `73/86`, with the same 13 inherited failures, one new passing trust-surface contract, and new failures `0`.
+- STEP058A is operator-confirmed deployed and migration 028/config are live; the first Development verification attempt returned `linkedin_verified_sync_failed`. Successful `/identityMe`, `/verificationReport`, and category snapshot evidence remain not verified.
 
 - STEP057 production-safe read-only preflight, exact artifact binding, Telegram webhook diagnostics, PostgreSQL invariant checks, and operator-assisted core-loop verdict pack
 
@@ -56,6 +66,12 @@
 - STEP051.5 restores the broken `Plans` surface by shipping the missing pricing text/keyboard render layer, so `⭐ Plans`, `/plans`, and `plans:root` no longer fail on `renderPricingText is not a function`
 
 ## Current truth
+
+- STEP058B source readiness does not make a failed Development sync into verification evidence.
+- Development mode can never enable a public badge, even if the public-badge env flag is set.
+- A stale, missing, failed, non-Lite, category-empty, or materially future-dated snapshot is not public-badge eligible.
+- A prior successful snapshot remains authoritative until replaced by another successful snapshot; failed refreshes do not erase it.
+- Public badge activation remains blocked until LinkedIn Lite approval and an explicit operator enablement.
 
 - STEP058A is Development testing only; it is not broad production verification coverage.
 - `LINKEDIN_VERIFIED_MODE=development` requests verification scopes only for configured Intro Deck operator Telegram IDs; LinkedIn still enforces developer-app administrator eligibility.

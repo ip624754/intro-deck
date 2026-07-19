@@ -6,12 +6,13 @@ const ALLOWED_VERIFICATION_CATEGORIES = new Set([
 ]);
 
 export class LinkedInVerifiedApiError extends Error {
-  constructor(message, { status = null, code = null, payload = null } = {}) {
+  constructor(message, { status = null, code = null, payload = null, endpoint = null } = {}) {
     super(message);
     this.name = 'LinkedInVerifiedApiError';
     this.status = status;
     this.code = code;
     this.payload = payload;
+    this.endpoint = endpoint;
   }
 }
 
@@ -52,7 +53,7 @@ function determineVerificationState({ categories, verificationUrl }) {
   return 'no_category_or_url';
 }
 
-async function fetchLinkedInRestJson({ endpoint, accessToken, apiVersion, timeoutMs }) {
+async function fetchLinkedInRestJson({ endpoint, endpointName, accessToken, apiVersion, timeoutMs }) {
   const response = await fetch(endpoint, {
     method: 'GET',
     headers: {
@@ -72,7 +73,8 @@ async function fetchLinkedInRestJson({ endpoint, accessToken, apiVersion, timeou
       {
         status: response.status,
         code: serviceCode ? String(serviceCode) : null,
-        payload
+        payload,
+        endpoint: endpointName || null
       }
     );
   }
@@ -83,6 +85,7 @@ async function fetchLinkedInRestJson({ endpoint, accessToken, apiVersion, timeou
 export async function fetchLinkedInIdentityMe({ accessToken, apiVersion, timeoutMs }) {
   return fetchLinkedInRestJson({
     endpoint: 'https://api.linkedin.com/rest/identityMe',
+    endpointName: 'identityMe',
     accessToken,
     apiVersion,
     timeoutMs
@@ -96,6 +99,7 @@ export async function fetchLinkedInVerificationReport({ accessToken, apiVersion,
 
   return fetchLinkedInRestJson({
     endpoint: endpoint.toString(),
+    endpointName: 'verificationReport',
     accessToken,
     apiVersion,
     timeoutMs
@@ -161,6 +165,15 @@ function classifyUnavailableReason(error) {
   }
   if (error?.status === 403) {
     return 'linkedin_verified_scope_or_development_admin_required';
+  }
+  if (error?.status === 400) {
+    return 'linkedin_verified_bad_request_or_version';
+  }
+  if (error?.status === 404) {
+    return 'linkedin_verified_member_unavailable';
+  }
+  if (error?.status === 426) {
+    return 'linkedin_verified_api_version_deprecated';
   }
   if (error?.status === 429) {
     return 'linkedin_verified_rate_limited';
@@ -232,6 +245,7 @@ export async function syncVerifiedOnLinkedIn({ accessToken, verificationConfig }
         name: error?.name || 'Error',
         status: Number.isFinite(Number(error?.status)) ? Number(error.status) : null,
         code: error?.code || null,
+        endpoint: error?.endpoint || null,
         message: error?.message || String(error)
       }
     };

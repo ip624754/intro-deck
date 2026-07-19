@@ -3,12 +3,22 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP058A — Verified on LinkedIn Development Integration
-- Current mode: HEAVY / OAUTH / EXTERNAL TRUST SIGNALS / DATA MINIMIZATION
-- Current focus: validate category-only LinkedIn identity/workplace verification with developer-app administrators while preserving base OIDC and keeping public badges disabled.
+- Current baseline: STEP058B — Verified Badges and Trust Surfaces
+- Current mode: HEAVY / EXTERNAL TRUST CLAIMS / BADGE ELIGIBILITY / FAIL-CLOSED SURFACES
+- Current focus: ship trust surfaces and future badge rendering while keeping all public claims fail-closed until a fresh Lite snapshot and explicit operator enablement exist.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP058B canonical trust policy exists across owner, preview, directory, health, and admin surfaces.
+- Public badges require Lite mode, explicit flag, fresh Lite snapshot, and at least one verified category.
+- Missing, stale, category-empty, Development-tier, or materially future-dated snapshots fail closed.
+- Development snapshots and badge previews remain private.
+- Exact public wording is limited to Identity verified on LinkedIn and Workplace verified on LinkedIn.
+- Professional role, company, skills, experience, seniority, bio, and expertise remain member-provided.
+- Safe sync diagnostics now distinguish bad request/version, deprecated version, scope/admin denial, timeout, rate limit, member unavailable, and provider failure.
+- No migration is required for STEP058B.
+- STEP058A is live-deployed, but the first operator Development attempt returned `linkedin_verified_sync_failed`; real category snapshot evidence remains not verified.
 
 - STEP058A requests Verified on LinkedIn scopes only for eligible Development testers or all members after an explicit Lite mode switch.
 - The integration calls `/identityMe` and `/verificationReport`, cross-checks app-scoped member IDs, and stores only category-level trust facts.
@@ -75,16 +85,16 @@
 - STEP055 dedicated guided-activation contract remains green on Node `20.20.2`;
 - STEP056 dedicated contact-rail contract remains green;
 - STEP057 readiness contract was made forward-compatible with later source steps;
-- STEP058A `npm run check` and dedicated Verified on LinkedIn contract PASS on Node `22.16.0`;
-- full STEP058A inventory is `73/86` PASS versus STEP057 `72/85`, with the same 13 inherited failures, one new passing STEP058A contract, and new failures `0`;
-- canonical Node 20 execution is not verified in this workspace;
+- STEP058B canonical Node `20.20.2` dependency install, `npm run check`, STEP058A compatibility, STEP058B trust-surface contract, positioning compatibility, and `npm audit` PASS;
+- full STEP058B inventory is `74/87` PASS versus STEP058A `73/86`, with the same 13 inherited failures, one new passing STEP058B contract, and new failures `0`;
 - missing-target, wrong-database-fingerprint, and artifact-mismatch paths fail closed.
 
 ## Live-confirmed
 
 - Production `/api/health?full=1` operator-confirmed STEP057 at artifact `615d4014f3463bb40b6ec46c47d3e0879a670b55`.
 - STEP057 production read-only preflight returned WARN only for local Node 24 and empty directory supply; artifact, webhook, PostgreSQL, migration 027, impossible states, notification health, and policy checks passed.
-- STEP058A deployment, migration 028, LinkedIn Development API response, and private Telegram verification surface are not yet live-confirmed.
+- STEP058A deployment/config and migration 028 are operator-confirmed live at artifact `781c9fb89c4aa870388108f0436e301a7140c106`; the private callback returned `linkedin_verified_sync_failed`. Successful verification API/category snapshot evidence is not confirmed.
+- STEP058B deployment is not yet confirmed.
 
 - Production `/api/health?full=1` operator-confirmed STEP056 with artifact `7beaa0657c72dcedf423b17b3c998fc0ea67a6db`.
 - STEP057 deployment, automated preflight, and manual core-loop verdict are not yet confirmed.
@@ -126,6 +136,9 @@ When contract certainty is missing, say exactly:
 - `doc/81_LINKEDIN_TRUST_AND_DISTRIBUTION_ROADMAP.md`
 - `doc/spec/STEP058A_VERIFIED_ON_LINKEDIN_DEVELOPMENT_INTEGRATION.md`
 - `doc/82_STEP058A_OPERATOR_ROLLOUT.md`
+- `doc/spec/STEP058B_VERIFIED_BADGES_AND_TRUST_SURFACES.md`
+- `doc/83_STEP058B_OPERATOR_ROLLOUT.md`
+- `doc/qa/STEP058B_QA_REPORT.md`
 - `doc/00_CURRENT_STATE.md`
 - `doc/spec/STEP045_LINKEDIN_IDENTITY_AUTO_SEED_UPLIFT.md`
 - `doc/spec/STEP046_PRIVATE_TELEGRAM_HANDLE_AND_PAID_CONTACT_UNLOCK_V1.md`
@@ -292,3 +305,28 @@ Deploy STEP054, verify live positioning surfaces and BotFather copy, then procee
 - No migration.
 - Node 20 QA: `70/83` PASS, same 13 inherited failures, new failures 0.
 - Live status not confirmed — manual verification required.
+
+
+## STEP058B handoff delta
+
+### Source-confirmed
+- one canonical trust resolver controls owner, preview, public directory, admin, and health semantics;
+- Development mode can never display public badges;
+- public eligibility requires Lite mode, explicit enablement, fresh Lite-source snapshot, at least one category, and a sane timestamp;
+- exact public labels are limited to Identity verified on LinkedIn and Workplace verified on LinkedIn;
+- professional card claims remain member-provided;
+- sync failures now expose only private endpoint/status/code diagnostics.
+
+### QA truth
+- package: `0.56.0`;
+- Node `20.20.2`, npm `10.9.2`;
+- `npm ci`, `npm run check`, dedicated STEP058A/STEP058B contracts, positioning contract, and `npm audit` PASS;
+- full inventory: `74/87` PASS versus STEP058A `73/86`;
+- inherited failures remain exactly 13; new failures: `0`;
+- no migration required.
+
+### Live boundary
+- STEP058A deployment/config and migration 028 are live-confirmed;
+- the first Development sync failed with `linkedin_verified_sync_failed`;
+- STEP058B does not create or infer a verified category from that failure;
+- STEP058B deployment, successful category snapshot, Lite approval, and public badge rendering remain unconfirmed.

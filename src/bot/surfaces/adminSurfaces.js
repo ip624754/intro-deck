@@ -1,4 +1,5 @@
-import { getOperatorConfig, getPublicFlags, getRuntimeGuardConfig } from '../../config/env.js';
+import { getLinkedInVerificationConfig, getOperatorConfig, getPublicFlags, getRuntimeGuardConfig } from '../../config/env.js';
+import { describeLinkedInPublicBadgeGate, describeLinkedInTrustSnapshotStatus, resolveLinkedInTrustState } from '../../lib/linkedin/trust.js';
 import { ADMIN_AUDIT_SEGMENTS, ADMIN_BROADCAST_AUDIENCES, ADMIN_BROADCAST_TEMPLATES, ADMIN_DELIVERY_SEGMENTS, ADMIN_DIRECT_MESSAGE_TEMPLATES, ADMIN_INTRO_SEGMENTS, ADMIN_NOTICE_AUDIENCES, ADMIN_NOTICE_TEMPLATES, ADMIN_QUALITY_SEGMENTS, ADMIN_SEARCH_SCOPES, ADMIN_USER_SEGMENTS, normalizeAdminAuditSegment, normalizeAdminBroadcastAudience, normalizeAdminBroadcastTemplate, normalizeAdminDeliverySegment, normalizeAdminIntroSegment, normalizeAdminNoticeAudience, normalizeAdminNoticeTemplate, normalizeAdminQualitySegment, normalizeAdminSearchScope, normalizeAdminUserSegment } from '../../db/adminRepo.js';
 function buildInlineKeyboard(rows = []) {
   return { inline_keyboard: rows.filter((row) => Array.isArray(row) && row.length > 0) };
@@ -930,12 +931,19 @@ function buildAdminUserCardText({ card = null, notice = null } = {}) {
   if (!card) {
     return ['🪪 Карточка пользователя', '', notice || '⚠️ Пользователь не найден.'].join('\n');
   }
+  const trust = resolveLinkedInTrustState({
+    profileSnapshot: card,
+    verificationConfig: getLinkedInVerificationConfig()
+  });
   const lines = [
     '🪪 Карточка пользователя',
     '',
     `Telegram: ${toDisplayValue(card.telegram_username ? `@${card.telegram_username}` : null, `id ${card.telegram_user_id}`)}`,
     `Display name: ${toDisplayValue(card.display_name, card.linkedin_name || '—')}`,
     `LinkedIn: ${card.linkedin_sub ? `connected • ${toDisplayValue(card.linkedin_name)}` : 'not connected'}`,
+    `LinkedIn trust: identity ${trust.identityVerified ? 'yes' : 'no'} • workplace ${trust.workplaceVerified ? 'yes' : 'no'}`,
+    `Trust snapshot: ${describeLinkedInTrustSnapshotStatus(trust)}`,
+    `Public badge: ${trust.publicBadgeEligible ? 'eligible' : describeLinkedInPublicBadgeGate(trust)}`,
     `Profile: ${profileReadinessLabel(card)}`,
     `Listing: ${card.profile_id ? formatShortStatus(card.visibility_status, 'hidden') : '—'}`,
     `Skills: ${card.skills?.length || 0}`,

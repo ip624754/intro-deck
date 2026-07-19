@@ -298,3 +298,8 @@ OPTIONAL  EEA Member Data Portability enrichment
 - https://learn.microsoft.com/en-us/linkedin/consumer/integrations/verified-on-linkedin/guides/verification-url
 - https://learn.microsoft.com/en-us/linkedin/consumer/integrations/self-serve/share-on-linkedin
 - https://learn.microsoft.com/en-us/linkedin/dma/member-data-portability/member-data-portability-3rd-party/
+
+
+## STEP058B — Verified badges and trust surfaces
+
+Implemented as a fail-closed presentation layer. Public badges remain blocked until Lite approval, explicit enablement, and a fresh Lite snapshot. Development snapshots are private testing evidence only.

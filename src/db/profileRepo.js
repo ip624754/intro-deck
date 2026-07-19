@@ -6,6 +6,7 @@ import {
   REQUIRED_PROFILE_FIELD_KEYS
 } from '../lib/profile/contract.js';
 import { getSchemaCompat, selectHiddenTelegramUsername } from './schemaCompat.js';
+import { buildLinkedInVerificationSnapshotSql } from './linkedinVerificationRepo.js';
 
 function firstNonEmpty(...values) {
   for (const value of values) {
@@ -64,30 +65,10 @@ export async function decorateProfileSnapshot(client, snapshot) {
 }
 
 function buildProfileSnapshotSelect(hiddenTelegramSelect, compat) {
-  const verificationSelect = compat?.hasLinkedInVerificationSnapshotsTable
-    ? `liv.identity_verified as linkedin_identity_verified,
-        liv.workplace_verified as linkedin_workplace_verified,
-        liv.verification_state as linkedin_verification_state,
-        liv.verification_url_offered as linkedin_verification_url_offered,
-        liv.source_tier as linkedin_verification_source_tier,
-        liv.identity_api_version as linkedin_verification_identity_api_version,
-        liv.report_api_version as linkedin_verification_report_api_version,
-        liv.profile_last_refreshed_at as linkedin_profile_last_refreshed_at,
-        liv.synced_at as linkedin_verification_synced_at,
-        true as linkedin_verification_schema_ready`
-    : `false as linkedin_identity_verified,
-        false as linkedin_workplace_verified,
-        null::text as linkedin_verification_state,
-        false as linkedin_verification_url_offered,
-        null::text as linkedin_verification_source_tier,
-        null::text as linkedin_verification_identity_api_version,
-        null::text as linkedin_verification_report_api_version,
-        null::timestamptz as linkedin_profile_last_refreshed_at,
-        null::timestamptz as linkedin_verification_synced_at,
-        false as linkedin_verification_schema_ready`;
-  const verificationJoin = compat?.hasLinkedInVerificationSnapshotsTable
-    ? 'left join linkedin_verification_snapshots liv on liv.linkedin_account_id = la.id'
-    : '';
+  const verification = buildLinkedInVerificationSnapshotSql(compat, {
+    accountAlias: 'la',
+    snapshotAlias: 'liv'
+  });
 
   return `
       select
@@ -104,7 +85,7 @@ function buildProfileSnapshotSelect(hiddenTelegramSelect, compat) {
         la.picture_url as linkedin_picture_url,
         la.locale as linkedin_locale,
         la.last_refresh_at as linkedin_last_refresh_at,
-        ${verificationSelect},
+        ${verification.select},
         mp.id as profile_id,
         mp.display_name,
         mp.headline_user,
@@ -121,7 +102,7 @@ function buildProfileSnapshotSelect(hiddenTelegramSelect, compat) {
         mp.updated_at
       from users u
       left join linkedin_accounts la on la.user_id = u.id
-      ${verificationJoin}
+      ${verification.join}
       left join member_profiles mp on mp.user_id = u.id
     `;
 }

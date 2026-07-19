@@ -8,6 +8,7 @@ import {
   verifySignedState
 } from '../../../src/lib/linkedin/oidc.js';
 import { buildVerificationSnapshotSummary, syncVerifiedOnLinkedIn } from '../../../src/lib/linkedin/verified.js';
+import { describeLinkedInVerificationSyncReason } from '../../../src/lib/linkedin/trust.js';
 import {
   buildConnectedSummary,
   buildIdentityImportSummary,
@@ -110,7 +111,8 @@ function safeVerificationTransferPayload(verificationSync) {
     error: verificationSync.error
       ? {
           status: verificationSync.error.status || null,
-          code: verificationSync.error.code || null
+          code: verificationSync.error.code || null,
+          endpoint: verificationSync.error.endpoint || null
         }
       : null
   };
@@ -145,7 +147,10 @@ function buildVerificationMessageLines({ verificationSync, persistResult }) {
       lines.push('• Snapshot fetched, but migration 028 is required before it can be stored.');
     }
   } else {
-    lines.push(`• Sync unavailable: ${verificationSync.reason || 'unknown reason'}.`);
+    lines.push(`• ${describeLinkedInVerificationSyncReason(verificationSync.reason, verificationSync.error)}`);
+    if (verificationSync.error?.endpoint) {
+      lines.push(`• Failed API: ${verificationSync.error.endpoint}`);
+    }
     lines.push('• Your normal LinkedIn connection remains active.');
   }
   lines.push('• Development mode is limited to LinkedIn developer-app administrators.');

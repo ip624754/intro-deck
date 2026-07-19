@@ -59,7 +59,11 @@ export default async function handler(req, res) {
       categoryOnly: linkedInVerification.mode === 'development' || linkedInVerification.mode === 'lite',
       identityApiVersion: linkedInVerification.identityApiVersion,
       reportApiVersion: linkedInVerification.reportApiVersion,
-      publicBadgesEnabled: false
+      verificationScope: linkedInVerification.verificationScope,
+      publicBadgeRequested: linkedInVerification.publicBadgeRequested,
+      publicBadgesEnabled: linkedInVerification.publicBadgesEnabled,
+      publicBadgeMaxAgeDays: linkedInVerification.publicBadgeMaxAgeDays,
+      publicBadgePolicy: 'lite_plus_explicit_flag_plus_fresh_lite_snapshot'
     }
   });
 }

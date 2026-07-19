@@ -1,0 +1,544 @@
+{
+  "total": 87,
+  "pass": 74,
+  "fail": 13,
+  "failures": [
+    "smoke:env",
+    "smoke:code-split",
+    "smoke:profile-session-schema",
+    "smoke:admin-allowlist",
+    "smoke:admin-users",
+    "smoke:admin-user-card",
+    "smoke:admin-intros",
+    "smoke:broadcast-idempotency",
+    "smoke:admin-polish",
+    "smoke:admin-productivity",
+    "smoke:admin-search",
+    "smoke:admin-russian-layer",
+    "smoke:admin-runbook-freeze"
+  ],
+  "results": [
+    {
+      "name": "smoke:env",
+      "status": "FAIL",
+      "durationSeconds": 0.208,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_env_contract.js:27\n    throw new Error(`Missing ${key} in .env.example`);\n          ^\n\nError: Missing CRON_SECRET in .env.example\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_env_contract.js:27:11\n    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:auth",
+      "status": "PASS",
+      "durationSeconds": 0.233,
+      "outputTail": "OK: linkedin auth contract baseline"
+    },
+    {
+      "name": "smoke:router",
+      "status": "PASS",
+      "durationSeconds": 0.22,
+      "outputTail": "OK: router baseline contract"
+    },
+    {
+      "name": "smoke:storage",
+      "status": "PASS",
+      "durationSeconds": 0.217,
+      "outputTail": "OK: storage contract baseline"
+    },
+    {
+      "name": "smoke:profile",
+      "status": "PASS",
+      "durationSeconds": 0.202,
+      "outputTail": "OK: profile edit contract baseline"
+    },
+    {
+      "name": "smoke:skills",
+      "status": "PASS",
+      "durationSeconds": 0.206,
+      "outputTail": "OK: skills selection contract baseline"
+    },
+    {
+      "name": "smoke:directory",
+      "status": "PASS",
+      "durationSeconds": 0.239,
+      "outputTail": "OK: directory browse contract baseline"
+    },
+    {
+      "name": "smoke:filters",
+      "status": "PASS",
+      "durationSeconds": 0.231,
+      "outputTail": "OK: directory filters contract baseline"
+    },
+    {
+      "name": "smoke:search",
+      "status": "PASS",
+      "durationSeconds": 0.231,
+      "outputTail": "OK: directory search contract baseline"
+    },
+    {
+      "name": "smoke:outbound",
+      "status": "PASS",
+      "durationSeconds": 0.205,
+      "outputTail": "OK: profile card outbound contract honors STEP014 contact rules"
+    },
+    {
+      "name": "smoke:intro",
+      "status": "PASS",
+      "durationSeconds": 0.197,
+      "outputTail": "OK: intro request persistence baseline"
+    },
+    {
+      "name": "smoke:webhook",
+      "status": "PASS",
+      "durationSeconds": 0.198,
+      "outputTail": "OK: webhook secret guard baseline"
+    },
+    {
+      "name": "smoke:intro-actions",
+      "status": "PASS",
+      "durationSeconds": 0.194,
+      "outputTail": "OK: intro inbox actions baseline"
+    },
+    {
+      "name": "smoke:intro-decisions",
+      "status": "PASS",
+      "durationSeconds": 0.207,
+      "outputTail": "OK: intro decision persistence baseline"
+    },
+    {
+      "name": "smoke:intro-contact",
+      "status": "PASS",
+      "durationSeconds": 0.219,
+      "outputTail": "OK: intro contact contract baseline"
+    },
+    {
+      "name": "smoke:intro-detail",
+      "status": "PASS",
+      "durationSeconds": 0.197,
+      "outputTail": "OK: intro detail surfaces baseline"
+    },
+    {
+      "name": "smoke:guards",
+      "status": "PASS",
+      "durationSeconds": 0.201,
+      "outputTail": "OK: anti-abuse / retry / dedupe hardening baseline"
+    },
+    {
+      "name": "smoke:intro-retention",
+      "status": "PASS",
+      "durationSeconds": 0.227,
+      "outputTail": "OK: intro retention / history safety baseline"
+    },
+    {
+      "name": "smoke:code-split",
+      "status": "FAIL",
+      "durationSeconds": 0.216,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_code_split_contract.js:10\n  throw new Error(`createBot.js should stay slim after STEP018; got ${lineCount} lines`);\n        ^\n\nError: createBot.js should stay slim after STEP018; got 172 lines\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_code_split_contract.js:10:9\n    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:data-split",
+      "status": "PASS",
+      "durationSeconds": 0.218,
+      "outputTail": "OK: directoryRepo extraction baseline"
+    },
+    {
+      "name": "smoke:receipts",
+      "status": "PASS",
+      "durationSeconds": 0.215,
+      "outputTail": "OK: notification / receipt layer baseline"
+    },
+    {
+      "name": "smoke:notification-retry",
+      "status": "PASS",
+      "durationSeconds": 0.202,
+      "outputTail": "OK: notification retry baseline contract"
+    },
+    {
+      "name": "smoke:notification-history",
+      "status": "PASS",
+      "durationSeconds": 0.226,
+      "outputTail": "OK: receipt history / operator diagnostics baseline contract"
+    },
+    {
+      "name": "smoke:ops",
+      "status": "PASS",
+      "durationSeconds": 0.228,
+      "outputTail": "OK: lightweight operator/admin shell + diagnostics surface contract"
+    },
+    {
+      "name": "smoke:cron",
+      "status": "PASS",
+      "durationSeconds": 0.19,
+      "outputTail": "OK: cron compatibility contract"
+    },
+    {
+      "name": "smoke:legal",
+      "status": "PASS",
+      "durationSeconds": 0.209,
+      "outputTail": "OK: public legal surfaces contract"
+    },
+    {
+      "name": "smoke:bot-init",
+      "status": "PASS",
+      "durationSeconds": 0.2,
+      "outputTail": "OK: telegram bot init contract present"
+    },
+    {
+      "name": "smoke:commands",
+      "status": "PASS",
+      "durationSeconds": 0.214,
+      "outputTail": "OK: command contract cleanup baseline"
+    },
+    {
+      "name": "smoke:help-surface-compat",
+      "status": "PASS",
+      "durationSeconds": 0.277,
+      "outputTail": "OK: help surface render compat"
+    },
+    {
+      "name": "smoke:oauth-routes",
+      "status": "PASS",
+      "durationSeconds": 0.216,
+      "outputTail": "OK: oauth route relative imports resolve to existing files"
+    },
+    {
+      "name": "smoke:profile-session-schema",
+      "status": "FAIL",
+      "durationSeconds": 0.218,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_profile_edit_session_schema_contract.js:17\n    throw new Error(`STEP025 migration must allow field key: ${fieldKey}`);\n          ^\n\nError: STEP025 migration must allow field key: tg\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_profile_edit_session_schema_contract.js:17:11\n    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:product-surfaces",
+      "status": "PASS",
+      "durationSeconds": 0.207,
+      "outputTail": "OK: product surface copy and navigation contract"
+    },
+    {
+      "name": "smoke:profile-render-compat",
+      "status": "PASS",
+      "durationSeconds": 0.186,
+      "outputTail": "OK: profile render export compatibility holds"
+    },
+    {
+      "name": "smoke:help-fallback",
+      "status": "PASS",
+      "durationSeconds": 0.189,
+      "outputTail": "OK: help fallback callback contract"
+    },
+    {
+      "name": "smoke:linkedin-callback-diagnostics",
+      "status": "PASS",
+      "durationSeconds": 0.211,
+      "outputTail": "OK: linkedin callback diagnostics contract"
+    },
+    {
+      "name": "smoke:linkedin-relink-transfer",
+      "status": "PASS",
+      "durationSeconds": 0.219,
+      "outputTail": "OK: linkedin relink transfer contract"
+    },
+    {
+      "name": "smoke:linkedin-identity-transfer",
+      "status": "PASS",
+      "durationSeconds": 0.224,
+      "outputTail": "OK: linkedin identity store transfer contract"
+    },
+    {
+      "name": "smoke:linkedin-seed",
+      "status": "PASS",
+      "durationSeconds": 0.243,
+      "outputTail": "OK: linkedin identity auto-seed contract"
+    },
+    {
+      "name": "smoke:linkedin-profile-seed-sql",
+      "status": "PASS",
+      "durationSeconds": 0.27,
+      "outputTail": "OK: linkedin profile seed SQL contract"
+    },
+    {
+      "name": "smoke:admin-shell",
+      "status": "PASS",
+      "durationSeconds": 0.27,
+      "outputTail": "OK: admin shell contract"
+    },
+    {
+      "name": "smoke:admin-allowlist",
+      "status": "FAIL",
+      "durationSeconds": 0.254,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_allowlist_gate.js:18\n  throw new Error('Operator-only denial surface must use product-safe copy');\n        ^\n\nError: Operator-only denial surface must use product-safe copy\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_allowlist_gate.js:18:9\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:admin-users",
+      "status": "FAIL",
+      "durationSeconds": 0.268,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_users_contract.js:39\n  throw new Error('Users surface must expose the Users title');\n        ^\n\nError: Users surface must expose the Users title\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_users_contract.js:39:9\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:admin-user-card",
+      "status": "FAIL",
+      "durationSeconds": 0.254,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_user_card_contract.js:30\n  throw new Error('User card surface must expose the User Card title');\n        ^\n\nError: User card surface must expose the User Card title\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_user_card_contract.js:30:9\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:notice",
+      "status": "PASS",
+      "durationSeconds": 0.269,
+      "outputTail": "OK: notice contract"
+    },
+    {
+      "name": "smoke:broadcast",
+      "status": "PASS",
+      "durationSeconds": 0.241,
+      "outputTail": "OK: broadcast composer uplift contract"
+    },
+    {
+      "name": "smoke:outbox",
+      "status": "PASS",
+      "durationSeconds": 0.22,
+      "outputTail": "OK: outbox contract"
+    },
+    {
+      "name": "smoke:admin-intros",
+      "status": "FAIL",
+      "durationSeconds": 0.227,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_intros_contract.js:32\n  throw new Error('Admin intros surface must expose the Intros title');\n        ^\n\nError: Admin intros surface must expose the Intros title\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_intros_contract.js:32:9\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:admin-delivery",
+      "status": "PASS",
+      "durationSeconds": 0.229,
+      "outputTail": "OK: admin delivery contract"
+    },
+    {
+      "name": "smoke:admin-quality",
+      "status": "PASS",
+      "durationSeconds": 0.219,
+      "outputTail": "OK: admin quality contract"
+    },
+    {
+      "name": "smoke:audit-detail",
+      "status": "PASS",
+      "durationSeconds": 0.232,
+      "outputTail": "OK: audit detail contract"
+    },
+    {
+      "name": "smoke:direct-message",
+      "status": "PASS",
+      "durationSeconds": 0.23,
+      "outputTail": "OK: direct message contract"
+    },
+    {
+      "name": "smoke:broadcast-batching",
+      "status": "PASS",
+      "durationSeconds": 0.202,
+      "outputTail": "OK: broadcast batching contract"
+    },
+    {
+      "name": "smoke:broadcast-idempotency",
+      "status": "FAIL",
+      "durationSeconds": 0.189,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_broadcast_idempotency_contract.js:11\n    throw new Error(`Broadcast idempotency flow missing ${fragment}`);\n          ^\n\nError: Broadcast idempotency flow missing const batch = await withDbClient(async (client) => listAdminBroadcastDeliveryBatch(client, { outboxId: prep.outboxId, limit: prep.batchSize }));\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_broadcast_idempotency_contract.js:11:11\n    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:admin-polish",
+      "status": "FAIL",
+      "durationSeconds": 0.207,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_polish_contract.js:9\n    throw new Error(`Admin home missing polished Russian fragment: ${fragment}`);\n          ^\n\nError: Admin home missing polished Russian fragment: Сначала раздел, затем тревоги\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_polish_contract.js:9:11\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:admin-counters",
+      "status": "PASS",
+      "durationSeconds": 0.205,
+      "outputTail": "OK: admin counters contract"
+    },
+    {
+      "name": "smoke:admin-segmentation",
+      "status": "PASS",
+      "durationSeconds": 0.205,
+      "outputTail": "OK: admin segmentation contract"
+    },
+    {
+      "name": "smoke:admin-productivity",
+      "status": "FAIL",
+      "durationSeconds": 0.229,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_productivity_contract.js:19\n    throw new Error(`Admin home missing quick action: ${callback}`);\n          ^\n\nError: Admin home missing quick action: adm:usr:list\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_productivity_contract.js:19:11\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:admin-trends",
+      "status": "PASS",
+      "durationSeconds": 0.218,
+      "outputTail": "OK: admin trends contract"
+    },
+    {
+      "name": "smoke:notice-targeting",
+      "status": "PASS",
+      "durationSeconds": 0.232,
+      "outputTail": "OK: notice targeting contract"
+    },
+    {
+      "name": "smoke:admin-templates",
+      "status": "PASS",
+      "durationSeconds": 0.241,
+      "outputTail": "OK: admin templates contract"
+    },
+    {
+      "name": "smoke:admin-search",
+      "status": "FAIL",
+      "durationSeconds": 0.269,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_search_contract.js:23\n    throw new Error(`Admin home missing search shortcut: ${callback}`);\n          ^\n\nError: Admin home missing search shortcut: adm:search:users\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_search_contract.js:23:11\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:admin-search-results",
+      "status": "PASS",
+      "durationSeconds": 0.28,
+      "outputTail": "OK: admin search results contract"
+    },
+    {
+      "name": "smoke:founder-admin-visibility",
+      "status": "PASS",
+      "durationSeconds": 0.235,
+      "outputTail": "OK: founder-only admin entry visibility contract"
+    },
+    {
+      "name": "smoke:admin-funnel-drilldowns",
+      "status": "PASS",
+      "durationSeconds": 0.267,
+      "outputTail": "OK: admin funnel drilldowns contract"
+    },
+    {
+      "name": "smoke:admin-russian-layer",
+      "status": "FAIL",
+      "durationSeconds": 0.223,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_russian_layer.js:6\n    throw new Error(`Admin surface layer missing Russian fragment: ${fragment}`);\n          ^\n\nError: Admin surface layer missing Russian fragment: Охват уведомления\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_russian_layer.js:6:11\n    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:admin-bulk-actions",
+      "status": "PASS",
+      "durationSeconds": 0.268,
+      "outputTail": "OK: admin bulk actions contract"
+    },
+    {
+      "name": "smoke:admin-runbook-freeze",
+      "status": "FAIL",
+      "durationSeconds": 0.24,
+      "outputTail": "file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_runbook_freeze_contract.js:31\n  throw new Error('Runbook surface missing launch ops copy');\n        ^\n\nError: Runbook surface missing launch ops copy\n    at file:///mnt/data/work_step058b/intro-deck-main/scripts/smoke_admin_runbook_freeze_contract.js:31:9\n\nNode.js v20.20.2"
+    },
+    {
+      "name": "smoke:admin-live-verification",
+      "status": "PASS",
+      "durationSeconds": 0.261,
+      "outputTail": "OK: admin live verification / rehearsal contract"
+    },
+    {
+      "name": "smoke:contact-unlock",
+      "status": "PASS",
+      "durationSeconds": 0.247,
+      "outputTail": "OK: contact unlock render and contract"
+    },
+    {
+      "name": "smoke:contact-unlock-payments",
+      "status": "PASS",
+      "durationSeconds": 0.221,
+      "outputTail": "OK: contact unlock payment payload contract"
+    },
+    {
+      "name": "smoke:dm-relay",
+      "status": "PASS",
+      "durationSeconds": 0.195,
+      "outputTail": "OK: dm relay contract"
+    },
+    {
+      "name": "smoke:dm-payments",
+      "status": "PASS",
+      "durationSeconds": 0.196,
+      "outputTail": "OK: dm payment contract"
+    },
+    {
+      "name": "smoke:schema-compat",
+      "status": "PASS",
+      "durationSeconds": 0.201,
+      "outputTail": ""
+    },
+    {
+      "name": "smoke:landing",
+      "status": "PASS",
+      "durationSeconds": 0.198,
+      "outputTail": "landing contract smoke passed"
+    },
+    {
+      "name": "smoke:og-social",
+      "status": "PASS",
+      "durationSeconds": 0.22,
+      "outputTail": "og/social metadata smoke passed"
+    },
+    {
+      "name": "smoke:landing-polish",
+      "status": "PASS",
+      "durationSeconds": 0.23,
+      "outputTail": "landing polish contract smoke passed"
+    },
+    {
+      "name": "smoke:invite",
+      "status": "PASS",
+      "durationSeconds": 0.252,
+      "outputTail": "OK: invite contract"
+    },
+    {
+      "name": "smoke:invite-rewards-foundation",
+      "status": "PASS",
+      "durationSeconds": 0.199,
+      "outputTail": ""
+    },
+    {
+      "name": "smoke:invite-rewards-read",
+      "status": "PASS",
+      "durationSeconds": 0.195,
+      "outputTail": ""
+    },
+    {
+      "name": "smoke:contact-contract",
+      "status": "PASS",
+      "durationSeconds": 0.233,
+      "outputTail": "OK: STEP053 contact contract and payment honesty"
+    },
+    {
+      "name": "smoke:step053a-pack",
+      "status": "PASS",
+      "durationSeconds": 0.306,
+      "outputTail": "OK: STEP053A staging runtime acceptance pack contract"
+    },
+    {
+      "name": "smoke:positioning-truth",
+      "status": "PASS",
+      "durationSeconds": 0.202,
+      "outputTail": "OK: STEP054 positioning and discovery truth contract preserved in STEP058B"
+    },
+    {
+      "name": "smoke:guided-activation",
+      "status": "PASS",
+      "durationSeconds": 0.258,
+      "outputTail": "OK: STEP055 guided activation spine contract"
+    },
+    {
+      "name": "smoke:contact-rail",
+      "status": "PASS",
+      "durationSeconds": 0.27,
+      "outputTail": "OK: STEP056 core contact rail simplification"
+    },
+    {
+      "name": "smoke:step057-readiness",
+      "status": "PASS",
+      "durationSeconds": 0.281,
+      "outputTail": "OK: STEP057 production readiness and core-loop acceptance pack"
+    },
+    {
+      "name": "smoke:linkedin-verified-dev",
+      "status": "PASS",
+      "durationSeconds": 0.335,
+      "outputTail": "OK: STEP058A Verified on LinkedIn Development integration contract"
+    },
+    {
+      "name": "smoke:linkedin-trust-surfaces",
+      "status": "PASS",
+      "durationSeconds": 0.269,
+      "outputTail": "OK: STEP058B Verified badges and trust surfaces contract"
+    }
+  ]
+}

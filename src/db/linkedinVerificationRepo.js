@@ -67,3 +67,38 @@ export async function getLinkedInVerificationSnapshotByAccountId(client, linkedi
 
   return result.rows[0] || null;
 }
+
+export function buildLinkedInVerificationSnapshotSql(compat, {
+  accountAlias = 'la',
+  snapshotAlias = 'liv'
+} = {}) {
+  if (!compat?.hasLinkedInVerificationSnapshotsTable) {
+    return {
+      select: `false as linkedin_identity_verified,
+        false as linkedin_workplace_verified,
+        null::text as linkedin_verification_state,
+        false as linkedin_verification_url_offered,
+        null::text as linkedin_verification_source_tier,
+        null::text as linkedin_verification_identity_api_version,
+        null::text as linkedin_verification_report_api_version,
+        null::timestamptz as linkedin_profile_last_refreshed_at,
+        null::timestamptz as linkedin_verification_synced_at,
+        false as linkedin_verification_schema_ready`,
+      join: ''
+    };
+  }
+
+  return {
+    select: `${snapshotAlias}.identity_verified as linkedin_identity_verified,
+        ${snapshotAlias}.workplace_verified as linkedin_workplace_verified,
+        ${snapshotAlias}.verification_state as linkedin_verification_state,
+        ${snapshotAlias}.verification_url_offered as linkedin_verification_url_offered,
+        ${snapshotAlias}.source_tier as linkedin_verification_source_tier,
+        ${snapshotAlias}.identity_api_version as linkedin_verification_identity_api_version,
+        ${snapshotAlias}.report_api_version as linkedin_verification_report_api_version,
+        ${snapshotAlias}.profile_last_refreshed_at as linkedin_profile_last_refreshed_at,
+        ${snapshotAlias}.synced_at as linkedin_verification_synced_at,
+        true as linkedin_verification_schema_ready`,
+    join: `left join linkedin_verification_snapshots ${snapshotAlias} on ${snapshotAlias}.linkedin_account_id = ${accountAlias}.id`
+  };
+}

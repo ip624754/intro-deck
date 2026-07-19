@@ -117,11 +117,12 @@ const privateText = renderProfileMenuText({
 });
 for (const fragment of [
   'Verified on LinkedIn • Development testing',
-  'This private status is visible only to you during STEP058A.',
+  'Private trust status. Development data is not shown as a public badge.',
+  'Snapshot: fresh verified-category snapshot',
   'Identity: confirmed by LinkedIn',
   'Workplace: confirmed by LinkedIn',
-  'Role, company, skills, bio, and experience remain member-provided.',
-  'Public trust badges remain disabled until STEP058B and Lite approval.'
+  'Public badge: Blocked: LinkedIn Lite approval is required for public badges.',
+  'Role, company, skills, bio, and experience remain member-provided.'
 ]) {
   assert.equal(privateText.includes(fragment), true, `private verification surface missing: ${fragment}`);
 }
@@ -217,13 +218,13 @@ for (const required of [
 ]) {
   assert.equal(migration.includes(required), true, `migration missing ${required}`);
 }
-assert.equal(profileRepo.includes('linkedin_verification_schema_ready'), true);
+assert.equal(profileRepo.includes('buildLinkedInVerificationSnapshotSql'), true);
 assert.equal(health.includes('identityApiVersion: linkedInVerification.identityApiVersion'), true);
 assert.equal(health.includes('reportApiVersion: linkedInVerification.reportApiVersion'), true);
 assert.equal(privacy.includes('category-level verification result'), true);
 assert.equal(privacy.includes('access tokens, refresh tokens, and ID tokens are not retained'), true);
 assert.equal(terms.includes('not a background check'), true);
 assert.equal(terms.includes('employment screening tool'), true);
-assert.equal(CURRENT_SOURCE_STEP, 'STEP058A');
+assert.equal(['STEP058A', 'STEP058B'].includes(CURRENT_SOURCE_STEP), true);
 
 console.log('OK: STEP058A Verified on LinkedIn Development integration contract');

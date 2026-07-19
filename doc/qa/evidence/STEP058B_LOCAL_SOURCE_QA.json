@@ -1,0 +1,97 @@
+{
+  "step": "STEP058B",
+  "date": "2026-07-19",
+  "packageVersion": "0.56.0",
+  "baselineStep": "STEP058A",
+  "baselineTree": "a874f6a557653f7f41f7c6a71f939e08c20b83bf",
+  "environment": {
+    "node": "20.20.2",
+    "npm": "10.9.2"
+  },
+  "checks": {
+    "npmCiIgnoreScripts": "PASS",
+    "npmCheck": "PASS",
+    "dedicatedSmoke": "PASS",
+    "step058aCompatibility": "PASS",
+    "positioningCompatibility": "PASS",
+    "npmAuditHigh": "PASS_0_VULNERABILITIES",
+    "gitDiffCheck": "PASS"
+  },
+  "smokeSummary": {
+    "total": 87,
+    "pass": 74,
+    "fail": 13,
+    "failures": [
+      "smoke:env",
+      "smoke:code-split",
+      "smoke:profile-session-schema",
+      "smoke:admin-allowlist",
+      "smoke:admin-users",
+      "smoke:admin-user-card",
+      "smoke:admin-intros",
+      "smoke:broadcast-idempotency",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-search",
+      "smoke:admin-russian-layer",
+      "smoke:admin-runbook-freeze"
+    ]
+  },
+  "comparison": {
+    "baseline": {
+      "step": "STEP058A",
+      "total": 86,
+      "pass": 73,
+      "fail": 13,
+      "failures": [
+        "smoke:env",
+        "smoke:code-split",
+        "smoke:profile-session-schema",
+        "smoke:admin-allowlist",
+        "smoke:admin-users",
+        "smoke:admin-user-card",
+        "smoke:admin-intros",
+        "smoke:broadcast-idempotency",
+        "smoke:admin-polish",
+        "smoke:admin-productivity",
+        "smoke:admin-search",
+        "smoke:admin-russian-layer",
+        "smoke:admin-runbook-freeze"
+      ]
+    },
+    "target": {
+      "step": "STEP058B",
+      "total": 87,
+      "pass": 74,
+      "fail": 13,
+      "failures": [
+        "smoke:env",
+        "smoke:code-split",
+        "smoke:profile-session-schema",
+        "smoke:admin-allowlist",
+        "smoke:admin-users",
+        "smoke:admin-user-card",
+        "smoke:admin-intros",
+        "smoke:broadcast-idempotency",
+        "smoke:admin-polish",
+        "smoke:admin-productivity",
+        "smoke:admin-search",
+        "smoke:admin-russian-layer",
+        "smoke:admin-runbook-freeze"
+      ]
+    },
+    "newPassingContracts": [
+      "smoke:linkedin-trust-surfaces"
+    ],
+    "newFailures": [],
+    "resolvedFailures": [],
+    "failureSetUnchanged": true
+  },
+  "liveEvidence": {
+    "step058aDeployment": "OPERATOR_CONFIRMED",
+    "step058aVerificationSync": "FAILED_linkedin_verified_sync_failed",
+    "step058bDeployment": "NOT_VERIFIED",
+    "successfulCategorySnapshot": "NOT_VERIFIED",
+    "liteApproval": "NOT_VERIFIED"
+  }
+}

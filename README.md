@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP058A baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP058B baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
@@ -34,6 +34,7 @@ A Telegram-first professional directory:
 - STEP056 — core contact rail simplification
 - STEP057 — production readiness and core-loop acceptance
 - STEP058A — Verified on LinkedIn Development integration
+- STEP058B — Verified badges and fail-closed trust surfaces
 
 ## Core docs
 
@@ -63,20 +64,22 @@ A Telegram-first professional directory:
 - `npm run smoke:contact-rail`
 - `npm run smoke:step057-readiness`
 - `npm run smoke:linkedin-verified-dev`
+- `npm run smoke:linkedin-trust-surfaces`
 - `npm run step057:preflight`
 
 
-## STEP058A operator rollout
+## STEP058B trust-surface rollout
 
 1. Apply `migrations/028_linkedin_verified_development.sql`.
 2. Keep public badges disabled.
 3. Set `LINKEDIN_VERIFIED_MODE=development` only after the migration is applied.
-4. Configure `LINKEDIN_VERIFIED_SCOPES=r_profile_basicinfo r_verify`.
+4. Configure `LINKEDIN_VERIFIED_SCOPES=r_profile_basicinfo r_verify_details` (legacy `r_verify` remains accepted).
 5. Configure `LINKEDIN_VERIFIED_IDENTITY_API_VERSION=202510.03` and `LINKEDIN_VERIFIED_REPORT_API_VERSION=202510`.
 6. Redeploy and test Profile → Refresh LinkedIn verification with a LinkedIn developer-app administrator that is also an Intro Deck operator.
+7. Keep `LINKEDIN_VERIFIED_PUBLIC_BADGES_ENABLED=0` in Development. Public badges require Lite mode, explicit enablement, and a fresh Lite snapshot.
 
-Development mode is testing-only. `IDENTITY` and `WORKPLACE` are category-level trust signals; they do not verify member-entered role, title, seniority, skills, experience, or expertise.
+Development mode is testing-only. `IDENTITY` and `WORKPLACE` are separate category-level trust signals; they do not verify member-entered role, title, seniority, skills, experience, or expertise. STEP058B implements the future public badge surface but keeps it fail-closed outside Lite.
 
-Operator runbook: `doc/82_STEP058A_OPERATOR_ROLLOUT.md`.
+Operator runbooks: `doc/82_STEP058A_OPERATOR_ROLLOUT.md` and `doc/83_STEP058B_OPERATOR_ROLLOUT.md`.
 
 Roadmap: `doc/81_LINKEDIN_TRUST_AND_DISTRIBUTION_ROADMAP.md`.

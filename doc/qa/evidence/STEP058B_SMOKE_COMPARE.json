@@ -1,0 +1,50 @@
+{
+  "baseline": {
+    "step": "STEP058A",
+    "total": 86,
+    "pass": 73,
+    "fail": 13,
+    "failures": [
+      "smoke:env",
+      "smoke:code-split",
+      "smoke:profile-session-schema",
+      "smoke:admin-allowlist",
+      "smoke:admin-users",
+      "smoke:admin-user-card",
+      "smoke:admin-intros",
+      "smoke:broadcast-idempotency",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-search",
+      "smoke:admin-russian-layer",
+      "smoke:admin-runbook-freeze"
+    ]
+  },
+  "target": {
+    "step": "STEP058B",
+    "total": 87,
+    "pass": 74,
+    "fail": 13,
+    "failures": [
+      "smoke:env",
+      "smoke:code-split",
+      "smoke:profile-session-schema",
+      "smoke:admin-allowlist",
+      "smoke:admin-users",
+      "smoke:admin-user-card",
+      "smoke:admin-intros",
+      "smoke:broadcast-idempotency",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-search",
+      "smoke:admin-russian-layer",
+      "smoke:admin-runbook-freeze"
+    ]
+  },
+  "newPassingContracts": [
+    "smoke:linkedin-trust-surfaces"
+  ],
+  "newFailures": [],
+  "resolvedFailures": [],
+  "failureSetUnchanged": true
+}

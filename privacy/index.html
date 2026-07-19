@@ -94,8 +94,9 @@
           <p>
             Intro Deck stores only the category-level verification result needed for the trust feature. It does not store a LinkedIn verification URL,
             government identity document, verified legal name, verification method, or raw verification evidence in the Development or Lite integration.
-            LinkedIn access tokens, refresh tokens, and ID tokens are not retained by this feature. During STEP058A, verification status is a private
-            development surface for eligible operator accounts; public badges remain disabled.
+            LinkedIn access tokens, refresh tokens, and ID tokens are not retained by this feature. Public badges are fail-closed: they require LinkedIn
+            Lite mode, an explicit operator feature flag, and a fresh Lite snapshot within the configured age limit. Development snapshots remain private
+            testing evidence and are never displayed as public badges.
           </p>
         </section>
 

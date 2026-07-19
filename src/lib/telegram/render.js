@@ -14,6 +14,12 @@ import {
   canOpenPaidContactRail,
   getContactRequestCoverageLabel
 } from '../contact/contract.js';
+import {
+  buildLinkedInPublicBadgeLines,
+  describeLinkedInPublicBadgeGate,
+  describeLinkedInTrustSnapshotStatus,
+  resolveLinkedInTrustState
+} from '../linkedin/trust.js';
 
 function buildInlineKeyboard(rows) {
   return {
@@ -580,33 +586,62 @@ function formatVerificationSyncedAt(value) {
 function buildLinkedInVerificationPrivateLines(profileSnapshot, access) {
   if (!access?.enabled) return [];
 
+  const trust = resolveLinkedInTrustState({
+    profileSnapshot,
+    verificationConfig: access
+  });
   const tierLabel = access.mode === 'development' ? 'Development testing' : 'Lite';
   const lines = [
     '',
     `🛡 Verified on LinkedIn • ${tierLabel}`,
-    'This private status is visible only to you during STEP058A.'
+    access.mode === 'development'
+      ? 'Private trust status. Development data is not shown as a public badge.'
+      : 'Private trust status and public badge eligibility.'
   ];
 
-  if (!profileSnapshot?.linkedin_verification_schema_ready) {
-    lines.push('• Snapshot storage: migration 028 required');
-    lines.push('• Public trust badges remain disabled.');
-    return lines;
+  lines.push(`• Snapshot: ${describeLinkedInTrustSnapshotStatus(trust)}`);
+  if (trust.syncedAt) lines.push(`• Last synced: ${formatVerificationSyncedAt(trust.syncedAt)}`);
+  lines.push(`• Identity: ${trust.identityVerified ? 'confirmed by LinkedIn' : 'not present'}`);
+  lines.push(`• Workplace: ${trust.workplaceVerified ? 'confirmed by LinkedIn' : 'not present'}`);
+  if (trust.verificationUrlOffered && !trust.hasVerifiedCategory) {
+    lines.push('• LinkedIn reported that a verification action may be available. Refresh to request a new completion URL.');
   }
-
-  if (!profileSnapshot?.linkedin_verification_synced_at) {
-    lines.push('• Identity: not synced');
-    lines.push('• Workplace: not synced');
-    lines.push('• Use Refresh LinkedIn verification below.');
-    lines.push('• Public trust badges remain disabled.');
-    return lines;
-  }
-
-  lines.push(`• Identity: ${profileSnapshot.linkedin_identity_verified ? 'confirmed by LinkedIn' : 'not present'}`);
-  lines.push(`• Workplace: ${profileSnapshot.linkedin_workplace_verified ? 'confirmed by LinkedIn' : 'not present'}`);
-  lines.push(`• Snapshot: ${formatVerificationSyncedAt(profileSnapshot.linkedin_verification_synced_at)}`);
+  lines.push(`• Public badge: ${trust.publicBadgeEligible ? 'eligible' : describeLinkedInPublicBadgeGate(trust)}`);
   lines.push('• Role, company, skills, bio, and experience remain member-provided.');
-  lines.push('• Public trust badges remain disabled until STEP058B and Lite approval.');
   return lines;
+}
+
+function buildLinkedInTrustPreviewLines(profileSnapshot, verificationConfig) {
+  if (!verificationConfig?.enabled) return [];
+
+  const trust = resolveLinkedInTrustState({ profileSnapshot, verificationConfig });
+  const lines = ['', '🛡 LinkedIn trust'];
+  const badges = buildLinkedInPublicBadgeLines(trust);
+  if (badges.length) {
+    lines.push(...badges);
+    lines.push(`Synced: ${formatVerificationSyncedAt(trust.syncedAt)}`);
+  } else if (trust.hasVerifiedCategory) {
+    lines.push('🧪 Private badge preview');
+    if (trust.identityVerified) lines.push('• Identity verified on LinkedIn');
+    if (trust.workplaceVerified) lines.push('• Workplace verified on LinkedIn');
+    lines.push(`• ${describeLinkedInPublicBadgeGate(trust)}`);
+  } else {
+    lines.push(`• ${describeLinkedInTrustSnapshotStatus(trust)}`);
+    lines.push(`• ${describeLinkedInPublicBadgeGate(trust)}`);
+  }
+  lines.push('• Professional card details remain member-provided.');
+  return lines;
+}
+
+function buildLinkedInPublicTrustLines(profileSnapshot, verificationConfig) {
+  const trust = resolveLinkedInTrustState({ profileSnapshot, verificationConfig });
+  const badges = buildLinkedInPublicBadgeLines(trust);
+  if (!badges.length) return [];
+  return [
+    '',
+    ...badges,
+    'Role, company, skills, and expertise remain member-provided.'
+  ];
 }
 
 export function renderHomeText({ profileSnapshot = null, persistenceEnabled = false, directoryStats = null, introInboxStats = null, isOperator = false, notice = null } = {}) {
@@ -712,7 +747,12 @@ export function renderHelpText() {
     '• open Contact inbox for requests and private chats',
     '• use /contact to return to that hub',
     '• open plans / Pro status',
-    '• invite professional contacts'
+    '• invite professional contacts',
+    '',
+    'LinkedIn trust signals:',
+    '• Identity verified and Workplace verified are separate LinkedIn categories.',
+    '• A badge never verifies the role, company text, skills, bio, experience, or expertise entered on the Intro Deck card.',
+    '• Public badges require LinkedIn Lite mode, an explicit feature flag, and a fresh Lite snapshot.'
   ].join('\n');
 }
 
@@ -914,7 +954,7 @@ export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = 
   return buildInlineKeyboard(rows);
 }
 
-export function renderProfilePreviewText({ profileSnapshot = null, persistenceEnabled = false, notice = null } = {}) {
+export function renderProfilePreviewText({ profileSnapshot = null, persistenceEnabled = false, linkedinVerificationConfig = null, notice = null } = {}) {
   const lines = [
     '👁 Profile preview',
     ''
@@ -938,6 +978,7 @@ export function renderProfilePreviewText({ profileSnapshot = null, persistenceEn
     lines.push('');
     lines.push('📝 About');
     lines.push(truncate(profileSnapshot.about_user, 320));
+    lines.push(...buildLinkedInTrustPreviewLines(profileSnapshot, linkedinVerificationConfig));
     lines.push('');
     lines.push('🔒 Not shown publicly');
     lines.push(`• Hidden Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`);
@@ -1252,7 +1293,7 @@ export function renderDirectoryListKeyboard({ profiles = [], page = 0, hasPrev =
   return buildInlineKeyboard(rows);
 }
 
-export function renderDirectoryCardText({ profileSnapshot = null, persistenceEnabled = false, notice = null } = {}) {
+export function renderDirectoryCardText({ profileSnapshot = null, persistenceEnabled = false, linkedinVerificationConfig = null, notice = null } = {}) {
   const lines = [
     '👤 Directory profile',
     ''
@@ -1265,6 +1306,7 @@ export function renderDirectoryCardText({ profileSnapshot = null, persistenceEna
   } else {
     lines.push(`${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'Unnamed profile')}${profileSnapshot.is_viewer ? ' • you' : ''}`);
     lines.push(toDisplayValue(profileSnapshot.headline_user));
+    lines.push(...buildLinkedInPublicTrustLines(profileSnapshot, linkedinVerificationConfig));
     lines.push('');
     lines.push('Profile details: member-provided');
     lines.push(`Company: ${toDisplayValue(profileSnapshot.company_user)}`);
