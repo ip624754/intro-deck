@@ -12,6 +12,46 @@ function createSignature(payloadToken, secret) {
   return crypto.createHmac('sha256', secret).update(payloadToken).digest('base64url');
 }
 
+
+export function buildSignedLinkedInLaunchTicket({
+  telegramUserId,
+  purpose = 'verification_refresh',
+  ttlSeconds = 300,
+  secret
+}) {
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    kind: 'linkedin_launch_ticket',
+    telegramUserId: String(telegramUserId),
+    purpose,
+    iat: now,
+    exp: now + ttlSeconds,
+    nonce: crypto.randomBytes(12).toString('hex')
+  };
+  const payloadToken = base64UrlJson(payload);
+  const signature = createSignature(payloadToken, secret);
+  return `${payloadToken}.${signature}`;
+}
+
+export function verifySignedLinkedInLaunchTicket(ticket, secret) {
+  if (!ticket || !ticket.includes('.')) {
+    throw new Error('Missing or malformed LinkedIn launch ticket');
+  }
+  const [payloadToken, signature] = ticket.split('.', 2);
+  const expectedSignature = createSignature(payloadToken, secret);
+  const provided = Buffer.from(signature, 'utf8');
+  const expected = Buffer.from(expectedSignature, 'utf8');
+  if (provided.length !== expected.length || !crypto.timingSafeEqual(provided, expected)) {
+    throw new Error('Invalid LinkedIn launch ticket signature');
+  }
+  const payload = parseBase64UrlJson(payloadToken);
+  const now = Math.floor(Date.now() / 1000);
+  if (payload.kind !== 'linkedin_launch_ticket' || !payload.exp || payload.exp < now) {
+    throw new Error('Expired or invalid LinkedIn launch ticket');
+  }
+  return payload;
+}
+
 export async function fetchOidcDiscovery(oidcDiscoveryUrl) {
   const response = await fetch(oidcDiscoveryUrl, {
     method: 'GET',
@@ -25,12 +65,28 @@ export async function fetchOidcDiscovery(oidcDiscoveryUrl) {
   return response.json();
 }
 
-export function buildSignedState({ telegramUserId, telegramUsername = null, returnTo = '/menu', ttlSeconds, secret }) {
+export function buildSignedState({
+  telegramUserId,
+  telegramUsername = null,
+  returnTo = '/menu',
+  purpose = 'connect',
+  verificationRequested = false,
+  verificationMode = 'off',
+  ttlSeconds,
+  secret
+}) {
+  const normalizedPurpose = ['connect', 'verification_refresh'].includes(purpose) ? purpose : 'connect';
+  const normalizedVerificationMode = ['off', 'development', 'lite'].includes(verificationMode)
+    ? verificationMode
+    : 'off';
   const now = Math.floor(Date.now() / 1000);
   const payload = {
     telegramUserId: String(telegramUserId),
     telegramUsername: telegramUsername ? String(telegramUsername) : null,
     returnTo,
+    purpose: normalizedPurpose,
+    verificationRequested: Boolean(verificationRequested),
+    verificationMode: normalizedVerificationMode,
     iat: now,
     exp: now + ttlSeconds,
     nonce: crypto.randomBytes(12).toString('hex')

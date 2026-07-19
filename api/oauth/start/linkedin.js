@@ -1,5 +1,5 @@
-import { getLinkedInConfig } from '../../../src/config/env.js';
-import { buildAuthorizeUrl, buildSignedState, fetchOidcDiscovery } from '../../../src/lib/linkedin/oidc.js';
+import { getLinkedInConfig, getLinkedInVerificationConfig, isOperatorTelegramUser } from '../../../src/config/env.js';
+import { buildAuthorizeUrl, buildSignedState, fetchOidcDiscovery, verifySignedLinkedInLaunchTicket } from '../../../src/lib/linkedin/oidc.js';
 
 function escapeHtml(input) {
   return String(input)
@@ -44,6 +44,8 @@ export default async function handler(req, res) {
   const telegramUserId = url.searchParams.get('tg_id');
   const returnTo = url.searchParams.get('ret') || '/menu';
   const redirect = url.searchParams.get('redirect') !== '0';
+  const purpose = url.searchParams.get('purpose') === 'verification_refresh' ? 'verification_refresh' : 'connect';
+  const launchTicket = url.searchParams.get('ticket');
 
   if (!telegramUserId || !/^\d+$/.test(telegramUserId)) {
     return res.status(400).send(renderHtml({
@@ -54,10 +56,50 @@ export default async function handler(req, res) {
 
   try {
     const { clientId, redirectUri, stateSecret, stateTtlSeconds, oidcDiscoveryUrl, scopes } = getLinkedInConfig();
+    const verificationConfig = getLinkedInVerificationConfig();
+    const verificationEligible = verificationConfig.mode === 'lite'
+      || (verificationConfig.mode === 'development' && isOperatorTelegramUser(telegramUserId));
+    let verificationRequested = false;
+
+    if (purpose === 'verification_refresh') {
+      let ticketPayload;
+      try {
+        ticketPayload = verifySignedLinkedInLaunchTicket(launchTicket, stateSecret);
+      } catch {
+        return res.status(403).send(renderHtml({
+          title: 'LinkedIn verification link expired',
+          body: '<h1>Verification link expired</h1><p>Return to your Intro Deck profile and open a fresh verification link.</p>'
+        }));
+      }
+      if (ticketPayload.telegramUserId !== String(telegramUserId) || ticketPayload.purpose !== purpose) {
+        return res.status(403).send(renderHtml({
+          title: 'LinkedIn verification link rejected',
+          body: '<h1>Verification link rejected</h1><p>Return to your Intro Deck profile and open a fresh verification link.</p>'
+        }));
+      }
+      verificationRequested = verificationEligible;
+    }
+
+    if (purpose === 'verification_refresh' && !verificationRequested) {
+      return res.status(403).send(renderHtml({
+        title: 'LinkedIn verification unavailable',
+        body: verificationConfig.mode === 'development'
+          ? '<h1>Verification testing is limited</h1><p>Development access is available only to configured Intro Deck operator accounts that are also LinkedIn developer-app administrators.</p>'
+          : '<h1>Verification is not enabled</h1><p>Verified on LinkedIn is not enabled for this environment.</p>'
+      }));
+    }
+
+    const requestedScopes = [...new Set([
+      ...scopes,
+      ...(verificationRequested ? verificationConfig.scopes : [])
+    ])];
     const discovery = await fetchOidcDiscovery(oidcDiscoveryUrl);
     const state = buildSignedState({
       telegramUserId,
       returnTo,
+      purpose,
+      verificationRequested,
+      verificationMode: verificationRequested ? verificationConfig.mode : 'off',
       ttlSeconds: stateTtlSeconds,
       secret: stateSecret
     });
@@ -66,7 +108,7 @@ export default async function handler(req, res) {
       discovery,
       clientId,
       redirectUri,
-      scopes,
+      scopes: requestedScopes,
       state
     });
 

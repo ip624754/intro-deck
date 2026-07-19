@@ -559,11 +559,54 @@ function introStatusNote(item) {
   return 'Intro decision state is visible here.';
 }
 
-export function buildLinkedInStartUrl({ appBaseUrl, telegramUserId, returnTo = '/menu' }) {
+export function buildLinkedInStartUrl({ appBaseUrl, telegramUserId, returnTo = '/menu', purpose = 'connect', launchTicket = null }) {
   const url = new URL('/api/oauth/start/linkedin', appBaseUrl);
   url.searchParams.set('tg_id', String(telegramUserId));
   url.searchParams.set('ret', returnTo);
+  if (purpose === 'verification_refresh') {
+    url.searchParams.set('purpose', 'verification_refresh');
+    if (launchTicket) url.searchParams.set('ticket', launchTicket);
+  }
   return url.toString();
+}
+
+function formatVerificationSyncedAt(value) {
+  if (!value) return 'not synced yet';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'unknown';
+  return date.toISOString().slice(0, 10);
+}
+
+function buildLinkedInVerificationPrivateLines(profileSnapshot, access) {
+  if (!access?.enabled) return [];
+
+  const tierLabel = access.mode === 'development' ? 'Development testing' : 'Lite';
+  const lines = [
+    '',
+    `🛡 Verified on LinkedIn • ${tierLabel}`,
+    'This private status is visible only to you during STEP058A.'
+  ];
+
+  if (!profileSnapshot?.linkedin_verification_schema_ready) {
+    lines.push('• Snapshot storage: migration 028 required');
+    lines.push('• Public trust badges remain disabled.');
+    return lines;
+  }
+
+  if (!profileSnapshot?.linkedin_verification_synced_at) {
+    lines.push('• Identity: not synced');
+    lines.push('• Workplace: not synced');
+    lines.push('• Use Refresh LinkedIn verification below.');
+    lines.push('• Public trust badges remain disabled.');
+    return lines;
+  }
+
+  lines.push(`• Identity: ${profileSnapshot.linkedin_identity_verified ? 'confirmed by LinkedIn' : 'not present'}`);
+  lines.push(`• Workplace: ${profileSnapshot.linkedin_workplace_verified ? 'confirmed by LinkedIn' : 'not present'}`);
+  lines.push(`• Snapshot: ${formatVerificationSyncedAt(profileSnapshot.linkedin_verification_synced_at)}`);
+  lines.push('• Role, company, skills, bio, and experience remain member-provided.');
+  lines.push('• Public trust badges remain disabled until STEP058B and Lite approval.');
+  return lines;
 }
 
 export function renderHomeText({ profileSnapshot = null, persistenceEnabled = false, directoryStats = null, introInboxStats = null, isOperator = false, notice = null } = {}) {
@@ -778,7 +821,7 @@ export function renderPricingKeyboard({ pricingState = null } = {}) {
   return buildInlineKeyboard(rows);
 }
 
-export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabled = false, notice = null } = {}) {
+export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabled = false, linkedinVerificationAccess = null, notice = null } = {}) {
   const lines = [
     '🧩 Profile setup',
     ''
@@ -808,6 +851,7 @@ export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabl
     }
     lines.push('');
     lines.push('Optional details and contact settings are kept on a separate screen.');
+    lines.push(...buildLinkedInVerificationPrivateLines(profileSnapshot, linkedinVerificationAccess));
   }
 
   if (notice) {
@@ -818,7 +862,7 @@ export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabl
   return lines.join('\n');
 }
 
-export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = null, profileSnapshot = null, persistenceEnabled = false } = {}) {
+export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = null, profileSnapshot = null, persistenceEnabled = false, linkedinVerificationAccess = null, linkedinVerificationLaunchTicket = null } = {}) {
   if (!persistenceEnabled) {
     return buildInlineKeyboard([
       [{ text: '🏠 Home', callback_data: 'home:root' }]
@@ -839,7 +883,7 @@ export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = 
     ? { text: activation.isListed ? '👁 Review listed profile' : '👁 Preview & publish', callback_data: 'p:prev' }
     : { text: '➡️ Continue setup', callback_data: 'p:next' };
 
-  return buildInlineKeyboard([
+  const rows = [
     [primaryButton],
     [
       { text: '✏️ Display name', callback_data: 'p:ed:dn' },
@@ -850,9 +894,24 @@ export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = 
       { text: '📝 About', callback_data: 'p:ed:ab' }
     ],
     [{ text: '🧠 Skills', callback_data: 'p:sk' }],
-    [{ text: '⚙️ Optional details & contact', callback_data: 'p:opt' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
-  ]);
+    [{ text: '⚙️ Optional details & contact', callback_data: 'p:opt' }]
+  ];
+
+  if (linkedinVerificationAccess?.enabled && linkedinVerificationLaunchTicket && appBaseUrl && telegramUserId) {
+    rows.push([{
+      text: '🛡 Refresh LinkedIn verification',
+      url: buildLinkedInStartUrl({
+        appBaseUrl,
+        telegramUserId,
+        returnTo: '/profile',
+        purpose: 'verification_refresh',
+        launchTicket: linkedinVerificationLaunchTicket
+      })
+    }]);
+  }
+
+  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  return buildInlineKeyboard(rows);
 }
 
 export function renderProfilePreviewText({ profileSnapshot = null, persistenceEnabled = false, notice = null } = {}) {

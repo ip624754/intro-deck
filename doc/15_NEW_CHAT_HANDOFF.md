@@ -3,12 +3,21 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP057 — Production Readiness and Core Loop Acceptance
-- Current mode: HEAVY / PRODUCTION READINESS / RUNTIME TRUTH / CORE LOOP
-- Current focus: produce an artifact-bound, production-safe readiness verdict for the real Telegram core loop without production fixtures or broad operational ceremony.
+- Current baseline: STEP058A — Verified on LinkedIn Development Integration
+- Current mode: HEAVY / OAUTH / EXTERNAL TRUST SIGNALS / DATA MINIMIZATION
+- Current focus: validate category-only LinkedIn identity/workplace verification with developer-app administrators while preserving base OIDC and keeping public badges disabled.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP058A requests Verified on LinkedIn scopes only for eligible Development testers or all members after an explicit Lite mode switch.
+- The integration calls `/identityMe` and `/verificationReport`, cross-checks app-scoped member IDs, and stores only category-level trust facts.
+- Migration 028 adds `linkedin_verification_snapshots`, a unique app-member index, and historical OAuth-token scrubbing.
+- New OIDC persistence retains non-secret token metadata only; access, refresh, and ID token values are not stored.
+- Single-use verification URLs remain transient and are never written to the database or audit trail.
+- Verification failures preserve normal OIDC and do not overwrite the previous snapshot.
+- Private Profile status and manual refresh exist for eligible testers; public directory badges remain disabled until STEP058B and Lite approval.
+- Professional role, company, title, seniority, skills, experience, expertise, and biography remain member-provided.
 
 - STEP057 read-only production preflight exists and binds health, Telegram, PostgreSQL, and evidence to one exact production artifact SHA.
 - STEP057 PostgreSQL diagnostics run inside `BEGIN READ ONLY` and create no fixtures.
@@ -64,11 +73,18 @@
 - STEP053A syntax and dedicated source contract passed locally on Node `20.20.2`;
 - STEP054 positioning truth contract remains green under STEP055;
 - STEP055 dedicated guided-activation contract remains green on Node `20.20.2`;
-- STEP056 dedicated contact-rail contract passes on Node `20.20.2`;
-- full Node 20 inventory is `71/84` PASS versus STEP055 `70/83`, with the same 13 inherited failures and one new passing STEP056 contract;
+- STEP056 dedicated contact-rail contract remains green;
+- STEP057 readiness contract was made forward-compatible with later source steps;
+- STEP058A `npm run check` and dedicated Verified on LinkedIn contract PASS on Node `22.16.0`;
+- full STEP058A inventory is `73/86` PASS versus STEP057 `72/85`, with the same 13 inherited failures, one new passing STEP058A contract, and new failures `0`;
+- canonical Node 20 execution is not verified in this workspace;
 - missing-target, wrong-database-fingerprint, and artifact-mismatch paths fail closed.
 
 ## Live-confirmed
+
+- Production `/api/health?full=1` operator-confirmed STEP057 at artifact `615d4014f3463bb40b6ec46c47d3e0879a670b55`.
+- STEP057 production read-only preflight returned WARN only for local Node 24 and empty directory supply; artifact, webhook, PostgreSQL, migration 027, impossible states, notification health, and policy checks passed.
+- STEP058A deployment, migration 028, LinkedIn Development API response, and private Telegram verification surface are not yet live-confirmed.
 
 - Production `/api/health?full=1` operator-confirmed STEP056 with artifact `7beaa0657c72dcedf423b17b3c998fc0ea67a6db`.
 - STEP057 deployment, automated preflight, and manual core-loop verdict are not yet confirmed.
@@ -107,6 +123,9 @@ When contract certainty is missing, say exactly:
 
 ## Key source docs
 
+- `doc/81_LINKEDIN_TRUST_AND_DISTRIBUTION_ROADMAP.md`
+- `doc/spec/STEP058A_VERIFIED_ON_LINKEDIN_DEVELOPMENT_INTEGRATION.md`
+- `doc/82_STEP058A_OPERATOR_ROLLOUT.md`
 - `doc/00_CURRENT_STATE.md`
 - `doc/spec/STEP045_LINKEDIN_IDENTITY_AUTO_SEED_UPLIFT.md`
 - `doc/spec/STEP046_PRIVATE_TELEGRAM_HANDLE_AND_PAID_CONTACT_UNLOCK_V1.md`

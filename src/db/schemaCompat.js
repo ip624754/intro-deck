@@ -72,7 +72,13 @@ export async function getSchemaCompat(client) {
         from information_schema.tables
         where table_schema = current_schema()
           and table_name = 'contact_unlock_events'
-      ) as has_contact_unlock_events_table
+      ) as has_contact_unlock_events_table,
+      exists (
+        select 1
+        from information_schema.tables
+        where table_schema = current_schema()
+          and table_name = 'linkedin_verification_snapshots'
+      ) as has_linkedin_verification_snapshots_table
   `);
 
   const compat = {
@@ -85,7 +91,8 @@ export async function getSchemaCompat(client) {
     dmThreadsHasContactPolicySnapshot: Boolean(result.rows[0]?.dm_threads_has_contact_policy_snapshot),
     dmThreadsHasProCovered: Boolean(result.rows[0]?.dm_threads_has_pro_covered),
     dmThreadsHasCheckoutAuthorizedAt: Boolean(result.rows[0]?.dm_threads_has_checkout_authorized_at),
-    hasContactUnlockEventsTable: Boolean(result.rows[0]?.has_contact_unlock_events_table)
+    hasContactUnlockEventsTable: Boolean(result.rows[0]?.has_contact_unlock_events_table),
+    hasLinkedInVerificationSnapshotsTable: Boolean(result.rows[0]?.has_linkedin_verification_snapshots_table)
   };
 
   schemaCompatCache.set(client, compat);

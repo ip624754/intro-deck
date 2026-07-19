@@ -1,5 +1,6 @@
 import { CURRENT_SOURCE_STEP, getRuntimeArtifactSha } from '../src/config/release.js';
 import {
+  getLinkedInVerificationConfig,
   getNotificationOpsConfig,
   getNotificationRetryConfig,
   getOperatorConfig,
@@ -13,6 +14,7 @@ export default async function handler(req, res) {
   const notificationRetry = getNotificationRetryConfig();
   const notificationOps = getNotificationOpsConfig();
   const operatorConfig = getOperatorConfig();
+  const linkedInVerification = getLinkedInVerificationConfig();
   res.status(200).json({
     ok: true,
     step: CURRENT_SOURCE_STEP,
@@ -50,6 +52,14 @@ export default async function handler(req, res) {
     operatorDiagnosticsSurface: {
       enabled: flags.operatorDiagnosticsSurfaceConfigured,
       operatorCount: operatorConfig.operatorTelegramUserIds.length
+    },
+    linkedInVerification: {
+      enabled: linkedInVerification.enabled,
+      mode: linkedInVerification.mode,
+      categoryOnly: linkedInVerification.mode === 'development' || linkedInVerification.mode === 'lite',
+      identityApiVersion: linkedInVerification.identityApiVersion,
+      reportApiVersion: linkedInVerification.reportApiVersion,
+      publicBadgesEnabled: false
     }
   });
 }

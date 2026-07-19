@@ -9,8 +9,9 @@ import { loadNotificationOperatorSurface } from '../../lib/storage/notificationS
 import { loadPricingSurfaceState } from '../../lib/storage/monetizationStore.js';
 import { loadInviteHistoryState, loadInviteRewardsSummaryState, loadInviteSurfaceState } from '../../lib/storage/inviteStore.js';
 import { loadProfileEditorState } from '../../lib/storage/profileEditStore.js';
-import { getPricingConfig, isOperatorTelegramUser } from '../../config/env.js';
+import { getLinkedInConfig, getLinkedInVerificationConfig, getPricingConfig, isOperatorTelegramUser } from '../../config/env.js';
 import { loadActiveAdminNotice } from '../../lib/storage/adminStore.js';
+import { buildSignedLinkedInLaunchTicket } from '../../lib/linkedin/oidc.js';
 
 
 function fallbackRenderHelpText() {
@@ -254,18 +255,34 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
       : { persistenceEnabled: false, notice: null };
     const activeNotice = noticeMatchesProfile(adminNoticeResult.notice, state.profile);
     const combinedNotice = [activeNotice, notice].filter(Boolean).join('\n\n') || null;
+    const verificationConfig = getLinkedInVerificationConfig();
+    const linkedinVerificationAccess = {
+      enabled: verificationConfig.mode === 'lite'
+        || (verificationConfig.mode === 'development' && isOperatorTelegramUser(ctx.from.id)),
+      mode: verificationConfig.mode
+    };
+    const linkedinVerificationLaunchTicket = linkedinVerificationAccess.enabled
+      ? buildSignedLinkedInLaunchTicket({
+          telegramUserId: ctx.from.id,
+          purpose: 'verification_refresh',
+          secret: getLinkedInConfig().stateSecret
+        })
+      : null;
 
     return {
       text: renderProfileMenuText({
         profileSnapshot: state.profile,
         persistenceEnabled: state.persistenceEnabled,
+        linkedinVerificationAccess,
         notice: combinedNotice
       }),
       reply_markup: renderProfileMenuKeyboard({
         appBaseUrl,
         telegramUserId: ctx.from.id,
         profileSnapshot: state.profile,
-        persistenceEnabled: state.persistenceEnabled
+        persistenceEnabled: state.persistenceEnabled,
+        linkedinVerificationAccess,
+        linkedinVerificationLaunchTicket
       })
     };
   }

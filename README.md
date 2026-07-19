@@ -1,11 +1,11 @@
 # LinkedIn Telegram Directory Bot
 
-STEP057 baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP058A baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
 A Telegram-first professional directory:
-- LinkedIn OIDC for basic account identity; member-entered professional claims are not verified
+- LinkedIn OIDC for basic account identity plus a gated Verified on LinkedIn Development test rail; member-entered professional claims remain separate
 - self-managed profile completion inside Telegram
 - listed/active profile browse visible to bot users, with private contact details hidden by default
 - one canonical Request contact entry point with free intro, private-chat, or Telegram-contact outcomes
@@ -33,6 +33,7 @@ A Telegram-first professional directory:
 - STEP055 — guided profile activation spine
 - STEP056 — core contact rail simplification
 - STEP057 — production readiness and core-loop acceptance
+- STEP058A — Verified on LinkedIn Development integration
 
 ## Core docs
 
@@ -61,4 +62,21 @@ A Telegram-first professional directory:
 - `npm run smoke:guided-activation`
 - `npm run smoke:contact-rail`
 - `npm run smoke:step057-readiness`
+- `npm run smoke:linkedin-verified-dev`
 - `npm run step057:preflight`
+
+
+## STEP058A operator rollout
+
+1. Apply `migrations/028_linkedin_verified_development.sql`.
+2. Keep public badges disabled.
+3. Set `LINKEDIN_VERIFIED_MODE=development` only after the migration is applied.
+4. Configure `LINKEDIN_VERIFIED_SCOPES=r_profile_basicinfo r_verify`.
+5. Configure `LINKEDIN_VERIFIED_IDENTITY_API_VERSION=202510.03` and `LINKEDIN_VERIFIED_REPORT_API_VERSION=202510`.
+6. Redeploy and test Profile → Refresh LinkedIn verification with a LinkedIn developer-app administrator that is also an Intro Deck operator.
+
+Development mode is testing-only. `IDENTITY` and `WORKPLACE` are category-level trust signals; they do not verify member-entered role, title, seniority, skills, experience, or expertise.
+
+Operator runbook: `doc/82_STEP058A_OPERATOR_ROLLOUT.md`.
+
+Roadmap: `doc/81_LINKEDIN_TRUST_AND_DISTRIBUTION_ROADMAP.md`.

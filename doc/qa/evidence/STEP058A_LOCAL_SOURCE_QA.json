@@ -1,0 +1,105 @@
+{
+  "step": "STEP058A",
+  "date": "2026-07-19",
+  "mode": "HEAVY",
+  "riskScore": "12/12",
+  "baseline": {
+    "step": "STEP057",
+    "zipSha256": "ec61851692f1ef621fbf343a3154ae766e6a6b2e741f461b0a564cb45bce8e16",
+    "gitTree": "8c8e9945868316d9ea3e7aa1b99195f54690bfea"
+  },
+  "environment": {
+    "hostNode": "22.16.0",
+    "canonicalNode": "20.20.2",
+    "npm": "10.9.2",
+    "requiredNode": "20.x",
+    "node20Verified": true
+  },
+  "checks": {
+    "npmCi": "PASS_NODE20",
+    "syntax": "PASS",
+    "dedicatedSmoke": "PASS",
+    "step057ForwardCompatibility": "PASS",
+    "gitDiffCheck": "PASS",
+    "npmAudit": "BLOCKED_HTTP_502_OR_TIMEOUT",
+    "node20Syntax": "PASS",
+    "node20DedicatedSmoke": "PASS"
+  },
+  "smokeInventory": {
+    "total": 86,
+    "pass": 73,
+    "fail": 13,
+    "failures": [
+      "smoke:env",
+      "smoke:code-split",
+      "smoke:profile-session-schema",
+      "smoke:admin-allowlist",
+      "smoke:admin-users",
+      "smoke:admin-user-card",
+      "smoke:admin-intros",
+      "smoke:broadcast-idempotency",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-search",
+      "smoke:admin-russian-layer",
+      "smoke:admin-runbook-freeze"
+    ]
+  },
+  "smokeComparison": {
+    "baseline": {
+      "step": "STEP057",
+      "total": 85,
+      "pass": 72,
+      "fail": 13,
+      "failures": [
+        "smoke:env",
+        "smoke:code-split",
+        "smoke:profile-session-schema",
+        "smoke:admin-allowlist",
+        "smoke:admin-users",
+        "smoke:admin-user-card",
+        "smoke:admin-intros",
+        "smoke:broadcast-idempotency",
+        "smoke:admin-polish",
+        "smoke:admin-productivity",
+        "smoke:admin-search",
+        "smoke:admin-russian-layer",
+        "smoke:admin-runbook-freeze"
+      ]
+    },
+    "target": {
+      "step": "STEP058A",
+      "total": 86,
+      "pass": 73,
+      "fail": 13,
+      "failures": [
+        "smoke:env",
+        "smoke:code-split",
+        "smoke:profile-session-schema",
+        "smoke:admin-allowlist",
+        "smoke:admin-users",
+        "smoke:admin-user-card",
+        "smoke:admin-intros",
+        "smoke:broadcast-idempotency",
+        "smoke:admin-polish",
+        "smoke:admin-productivity",
+        "smoke:admin-search",
+        "smoke:admin-russian-layer",
+        "smoke:admin-runbook-freeze"
+      ]
+    },
+    "newPassingContracts": [
+      "smoke:linkedin-verified-dev"
+    ],
+    "newFailures": [],
+    "resolvedFailures": [],
+    "failureSetExpanded": false
+  },
+  "truthBoundary": {
+    "sourceVerified": true,
+    "migration028LiveVerified": false,
+    "linkedinDevelopmentApiLiveVerified": false,
+    "publicBadgesEnabled": false,
+    "liteApproved": false
+  }
+}

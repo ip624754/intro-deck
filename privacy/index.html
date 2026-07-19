@@ -69,7 +69,8 @@
           <h2>1. Information we process</h2>
           <ul>
             <li>Telegram identifiers and account metadata needed to operate the bot.</li>
-            <li>Basic LinkedIn account identity data received through the LinkedIn authorization flow, such as name, photo, locale, or email when available.</li>
+            <li>Basic LinkedIn account identity data received through the LinkedIn authorization flow, such as name, photo, locale, email, or public profile URL when available.</li>
+            <li>When Verified on LinkedIn is enabled and you authorize it, category-only verification signals such as <code>IDENTITY</code> or <code>WORKPLACE</code>, the source tier, API version, and synchronization timestamps.</li>
             <li>Member-provided profile information you add or edit inside the bot, such as display name, headline, company, city, about, skills, and listing status.</li>
             <li>Intro request records, direct-contact state, and DM workflow state needed to run the product.</li>
             <li>Operational data such as notification receipts, retry metadata, anti-abuse guards, purchase receipts, and security logs.</li>
@@ -80,6 +81,7 @@
           <h2>2. Why we process this information</h2>
           <ul>
             <li>To connect a LinkedIn account identity through sign-in. This does not verify member-entered professional claims.</li>
+            <li>To show an explicit LinkedIn identity or workplace verification signal when LinkedIn returns that category and the applicable product mode allows the signal to be displayed.</li>
             <li>To create and maintain user profiles and directory listings inside Telegram.</li>
             <li>To deliver intro requests, direct-contact requests, DM relay flows, and related decisions.</li>
             <li>To keep the service secure, prevent abuse, and maintain operational reliability.</li>
@@ -88,7 +90,17 @@
         </section>
 
         <section>
-          <h2>3. How visibility and contact access work</h2>
+          <h2>3. Verified on LinkedIn data boundaries</h2>
+          <p>
+            Intro Deck stores only the category-level verification result needed for the trust feature. It does not store a LinkedIn verification URL,
+            government identity document, verified legal name, verification method, or raw verification evidence in the Development or Lite integration.
+            LinkedIn access tokens, refresh tokens, and ID tokens are not retained by this feature. During STEP058A, verification status is a private
+            development surface for eligible operator accounts; public badges remain disabled.
+          </p>
+        </section>
+
+        <section>
+          <h2>4. How visibility and contact access work</h2>
           <p>
             Profiles are shown in the directory only when they are both active and listed. Those listed cards are visible to bot users.
             Member-entered professional fields are not verified by LinkedIn or Intro Deck unless explicitly stated. Contact details are not public by default,
@@ -97,7 +109,7 @@
         </section>
 
         <section>
-          <h2>4. Data sharing</h2>
+          <h2>5. Data sharing</h2>
           <p>
             Intro Deck does not sell personal information. Data is shared only as needed to operate the service, such as with infrastructure
             providers, LinkedIn for sign-in, and Telegram for bot delivery. Profile and workflow information may be shown to other users only
@@ -106,7 +118,7 @@
         </section>
 
         <section>
-          <h2>5. Retention and security</h2>
+          <h2>6. Retention and security</h2>
           <p>
             Intro Deck keeps operational and workflow data only for as long as reasonably needed to run the service, maintain history,
             support anti-abuse protections, and investigate failures. Security controls include webhook secret validation, protected operational
@@ -115,7 +127,7 @@
         </section>
 
         <section>
-          <h2>6. Your choices</h2>
+          <h2>7. Your choices</h2>
           <ul>
             <li>You may edit your profile fields inside the bot.</li>
             <li>You may control whether your profile is listed and active in the directory.</li>
@@ -125,7 +137,7 @@
         </section>
 
         <section>
-          <h2>7. Contact</h2>
+          <h2>8. Contact</h2>
           <p>
             For privacy questions or requests related to Intro Deck, contact the operator through the official Intro Deck LinkedIn page
             or the official Telegram bot at <a href="https://t.me/introdeckbot">@introdeckbot</a>.

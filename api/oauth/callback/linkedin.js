@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { getLinkedInConfig, getTelegramConfig } from '../../../src/config/env.js';
+import { getLinkedInConfig, getLinkedInVerificationConfig, getTelegramConfig } from '../../../src/config/env.js';
 import {
   exchangeCodeForToken,
   fetchOidcDiscovery,
@@ -7,6 +7,7 @@ import {
   validateIdToken,
   verifySignedState
 } from '../../../src/lib/linkedin/oidc.js';
+import { buildVerificationSnapshotSummary, syncVerifiedOnLinkedIn } from '../../../src/lib/linkedin/verified.js';
 import {
   buildConnectedSummary,
   buildIdentityImportSummary,
@@ -73,6 +74,83 @@ function describeError(error) {
   }
 
   return summary;
+}
+
+function safeVerificationTransferPayload(verificationSync) {
+  if (!verificationSync?.requested) {
+    return {
+      requested: false,
+      status: verificationSync?.status || 'not_requested',
+      reason: verificationSync?.reason || 'linkedin_verified_not_requested',
+      snapshot: null
+    };
+  }
+
+  const snapshot = verificationSync.snapshot
+    ? {
+        apiMemberId: verificationSync.snapshot.apiMemberId,
+        verificationCategories: verificationSync.snapshot.verificationCategories,
+        identityVerified: Boolean(verificationSync.snapshot.identityVerified),
+        workplaceVerified: Boolean(verificationSync.snapshot.workplaceVerified),
+        verificationState: verificationSync.snapshot.verificationState,
+        verificationUrlOffered: Boolean(verificationSync.snapshot.verificationUrlOffered),
+        sourceTier: verificationSync.snapshot.sourceTier,
+        identityApiVersion: verificationSync.snapshot.identityApiVersion,
+        reportApiVersion: verificationSync.snapshot.reportApiVersion,
+        profileLastRefreshedAt: verificationSync.snapshot.profileLastRefreshedAt || null,
+        syncedAt: verificationSync.snapshot.syncedAt
+      }
+    : null;
+
+  return {
+    requested: true,
+    status: verificationSync.status || 'unavailable',
+    reason: verificationSync.reason || 'linkedin_verified_sync_unavailable',
+    snapshot,
+    error: verificationSync.error
+      ? {
+          status: verificationSync.error.status || null,
+          code: verificationSync.error.code || null
+        }
+      : null
+  };
+}
+
+function safeVerificationUrl(value) {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' || !(url.hostname === 'linkedin.com' || url.hostname.endsWith('.linkedin.com'))) {
+      return null;
+    }
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function buildVerificationMessageLines({ verificationSync, persistResult }) {
+  if (!verificationSync?.requested) {
+    return [];
+  }
+
+  const lines = ['🛡 Verified on LinkedIn'];
+  if (verificationSync.status === 'success' && verificationSync.snapshot) {
+    lines.push(`• ${buildVerificationSnapshotSummary(verificationSync.snapshot)}`);
+    lines.push(`• Identity: ${verificationSync.snapshot.identityVerified ? 'confirmed by LinkedIn' : 'not present'}`);
+    lines.push(`• Workplace: ${verificationSync.snapshot.workplaceVerified ? 'confirmed by LinkedIn' : 'not present'}`);
+    if (persistResult?.verificationPersistence?.persisted) {
+      lines.push('• Category snapshot saved in Intro Deck.');
+    } else if (persistResult?.verificationPersistence?.reason === 'migration_028_required') {
+      lines.push('• Snapshot fetched, but migration 028 is required before it can be stored.');
+    }
+  } else {
+    lines.push(`• Sync unavailable: ${verificationSync.reason || 'unknown reason'}.`);
+    lines.push('• Your normal LinkedIn connection remains active.');
+  }
+  lines.push('• Development mode is limited to LinkedIn developer-app administrators.');
+  lines.push('• Role, company, skills, bio, and experience remain member-provided.');
+  return lines;
 }
 
 function base64UrlJson(input) {
@@ -142,7 +220,7 @@ function buildTransferConfirmationBody({ transferUrl, identity, previousTelegram
   `;
 }
 
-function buildTelegramConnectionMessage({ identity, persistResult }) {
+function buildTelegramConnectionMessage({ identity, persistResult, verificationSync }) {
   const successText = persistResult?.transferred
     ? '✅ LinkedIn connection moved to this Telegram account.'
     : '✅ LinkedIn connected.';
@@ -163,6 +241,12 @@ function buildTelegramConnectionMessage({ identity, persistResult }) {
 
   lines.push('✍️ Still editable in Telegram');
   lines.push(`• ${buildManualProfileFieldsReminder()}`);
+
+  const verificationLines = buildVerificationMessageLines({ verificationSync, persistResult });
+  if (verificationLines.length) {
+    lines.push('');
+    lines.push(...verificationLines);
+  }
   lines.push('');
 
   lines.push('➡️ Next');
@@ -173,18 +257,20 @@ function buildTelegramConnectionMessage({ identity, persistResult }) {
   return lines.join('\n');
 }
 
-async function notifyTelegramConnectionResult({ statePayload, identity, persistResult }) {
+async function notifyTelegramConnectionResult({ statePayload, identity, persistResult, verificationSync }) {
   const { botToken } = getTelegramConfig();
+  const rows = [];
+  const verificationUrl = safeVerificationUrl(verificationSync?.verificationUrl);
+  if (verificationUrl) {
+    rows.push([{ text: '🛡 Complete LinkedIn verification', url: verificationUrl }]);
+  }
+  rows.push([{ text: '🧩 Complete profile', callback_data: 'p:menu' }, { text: '🏠 Home', callback_data: 'home:root' }]);
 
   await sendTelegramMessage({
     botToken,
     chatId: statePayload.telegramUserId,
-    text: buildTelegramConnectionMessage({ identity, persistResult }),
-    replyMarkup: {
-      inline_keyboard: [
-        [{ text: '🧩 Complete profile', callback_data: 'p:menu' }, { text: '🏠 Home', callback_data: 'home:root' }]
-      ]
-    }
+    text: buildTelegramConnectionMessage({ identity, persistResult, verificationSync }),
+    replyMarkup: { inline_keyboard: rows }
   });
 }
 
@@ -215,7 +301,7 @@ async function notifyPreviousOwnerIfTransferred({ persistResult }) {
   });
 }
 
-function renderPersistenceSuccessPage({ identity, persistResult }) {
+function renderPersistenceSuccessPage({ identity, persistResult, verificationSync }) {
   const { botUsername } = getTelegramConfig();
   const title = persistResult?.transferred ? 'LinkedIn connection moved' : 'LinkedIn connected';
   const linkedInItems = [
@@ -250,6 +336,9 @@ function renderPersistenceSuccessPage({ identity, persistResult }) {
       : 'Your LinkedIn identity is connected. Review and finish your card in Telegram.',
     'Return to Telegram when you are ready.'
   ].map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+  const verificationLines = buildVerificationMessageLines({ verificationSync, persistResult });
+  const verificationItems = verificationLines.slice(1).map((item) => `<li>${escapeHtml(item.replace(/^•\s*/, ''))}</li>`).join('');
+  const verificationUrl = safeVerificationUrl(verificationSync?.verificationUrl);
   const botUrl = botUsername ? `https://t.me/${encodeURIComponent(botUsername.replace(/^@+/, ''))}` : null;
 
   return renderHtml({
@@ -266,24 +355,36 @@ function renderPersistenceSuccessPage({ identity, persistResult }) {
       <h2>Still editable in Telegram</h2>
       <ul>${editableItems}</ul>
 
+      ${verificationSync?.requested ? `<h2>Verified on LinkedIn</h2><ul>${verificationItems || '<li>Verification sync was not available.</li>'}</ul>` : ''}
+
       <h2>Next</h2>
       <ul>${nextItems}</ul>
 
       <div class="actions">
-        ${botUrl ? `<a class="button button-primary" href="${escapeHtml(botUrl)}">Open @${escapeHtml(botUsername.replace(/^@+/, ''))}</a>` : ''}
+        ${verificationUrl ? `<a class="button button-primary" href="${escapeHtml(verificationUrl)}">Complete LinkedIn verification</a>` : ''}
+        ${botUrl ? `<a class="button ${verificationUrl ? 'button-secondary' : 'button-primary'}" href="${escapeHtml(botUrl)}">Open @${escapeHtml(botUsername.replace(/^@+/, ''))}</a>` : ''}
         <a class="button button-secondary" href="/privacy/">Privacy</a>
       </div>
     `
   });
 }
 
-async function finalizePersistence({ statePayload, identity, rawTokenPayload, rawUserInfo, transferMode }) {
+async function finalizePersistence({
+  statePayload,
+  identity,
+  rawTokenPayload,
+  rawUserInfo,
+  verificationSync,
+  transferMode
+}) {
   const persistResult = await persistLinkedInIdentity({
     telegramUserId: statePayload.telegramUserId,
     telegramUsername: statePayload.telegramUsername || null,
     identity,
     rawTokenPayload,
     rawUserInfo,
+    verificationSnapshot: verificationSync?.snapshot || null,
+    verificationSync: safeVerificationTransferPayload(verificationSync),
     transferMode
   });
 
@@ -333,12 +434,13 @@ export default async function handler(req, res) {
         identity: transferPayload.identity,
         rawTokenPayload: null,
         rawUserInfo: null,
+        verificationSync: transferPayload.verificationSync || { requested: false, status: 'not_requested', snapshot: null },
         transferMode: 'confirm'
       });
 
       try {
         stage = 'notify_telegram';
-        await notifyTelegramConnectionResult({ statePayload, identity: transferPayload.identity, persistResult });
+        await notifyTelegramConnectionResult({ statePayload, identity: transferPayload.identity, persistResult, verificationSync: transferPayload.verificationSync });
       } catch (notifyError) {
         console.warn('[linkedin callback] telegram notify skipped', {
           stage: 'notify_telegram',
@@ -360,7 +462,8 @@ export default async function handler(req, res) {
 
       return res.status(200).send(renderPersistenceSuccessPage({
         identity: transferPayload.identity,
-        persistResult
+        persistResult,
+        verificationSync: transferPayload.verificationSync
       }));
     }
 
@@ -408,12 +511,39 @@ export default async function handler(req, res) {
     stage = 'extract_identity';
     const identity = pickLinkedInIdentityClaims({ idTokenClaims, userInfo });
 
+    let verificationSync = {
+      requested: false,
+      status: 'not_requested',
+      reason: 'linkedin_verified_not_requested',
+      snapshot: null,
+      verificationUrl: null
+    };
+    if (statePayload.verificationRequested) {
+      stage = 'fetch_linkedin_verification';
+      const verificationConfig = getLinkedInVerificationConfig();
+      if (!verificationConfig.enabled || verificationConfig.mode !== statePayload.verificationMode) {
+        verificationSync = {
+          requested: true,
+          status: 'unavailable',
+          reason: 'linkedin_verified_runtime_mode_changed',
+          snapshot: null,
+          verificationUrl: null
+        };
+      } else {
+        verificationSync = await syncVerifiedOnLinkedIn({
+          accessToken: tokenPayload.access_token,
+          verificationConfig
+        });
+      }
+    }
+
     stage = 'persist_identity';
     const persistResult = await finalizePersistence({
       statePayload,
       identity,
       rawTokenPayload: tokenPayload,
       rawUserInfo: userInfo,
+      verificationSync,
       transferMode: 'detect'
     });
 
@@ -426,6 +556,7 @@ export default async function handler(req, res) {
           telegramUsername: statePayload.telegramUsername || null,
           returnTo: statePayload.returnTo || '/menu',
           identity,
+          verificationSync: safeVerificationTransferPayload(verificationSync),
           previousUserId: persistResult.conflict.previousUserId,
           previousTelegramUserId: persistResult.conflict.previousTelegramUserId,
           previousTelegramUsername: persistResult.conflict.previousTelegramUsername
@@ -447,7 +578,7 @@ export default async function handler(req, res) {
 
     try {
       stage = 'notify_telegram';
-      await notifyTelegramConnectionResult({ statePayload, identity, persistResult });
+      await notifyTelegramConnectionResult({ statePayload, identity, persistResult, verificationSync });
     } catch (notifyError) {
       console.warn('[linkedin callback] telegram notify skipped', {
         stage: 'notify_telegram',
@@ -458,7 +589,8 @@ export default async function handler(req, res) {
 
     return res.status(200).send(renderPersistenceSuccessPage({
       identity,
-      persistResult
+      persistResult,
+      verificationSync
     }));
   } catch (callbackError) {
     console.error('[linkedin callback] failed', {

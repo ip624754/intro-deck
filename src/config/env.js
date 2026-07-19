@@ -1,5 +1,10 @@
 const DEFAULT_LINKEDIN_OIDC_DISCOVERY_URL = 'https://www.linkedin.com/oauth/.well-known/openid-configuration';
 const DEFAULT_LINKEDIN_SCOPES = 'openid profile';
+const DEFAULT_LINKEDIN_VERIFIED_MODE = 'off';
+const DEFAULT_LINKEDIN_VERIFIED_SCOPES = 'r_profile_basicinfo r_verify';
+const DEFAULT_LINKEDIN_VERIFIED_IDENTITY_API_VERSION = '202510.03';
+const DEFAULT_LINKEDIN_VERIFIED_REPORT_API_VERSION = '202510';
+const DEFAULT_LINKEDIN_VERIFIED_API_TIMEOUT_MS = 8000;
 const DEFAULT_STATE_TTL_SECONDS = 600;
 const DEFAULT_JWKS_CACHE_TTL_SECONDS = 3600;
 const DEFAULT_DATABASE_SSLMODE = 'require';
@@ -39,6 +44,21 @@ function readIntegerEnv(name, fallback) {
     throw new Error(`Invalid positive integer for ${name}: ${raw}`);
   }
   return parsed;
+}
+
+function readEnumEnv(name, fallback, allowedValues) {
+  const value = String(readEnv(name, fallback) || '').trim().toLowerCase();
+  if (!allowedValues.includes(value)) {
+    throw new Error(`${name} must be one of: ${allowedValues.join(', ')}`);
+  }
+  return value;
+}
+
+function parseScopes(value) {
+  return [...new Set(String(value || '')
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean))];
 }
 
 
@@ -102,9 +122,52 @@ export function getTelegramConfig() {
   };
 }
 
+export function getLinkedInVerificationConfig() {
+  const mode = readEnumEnv(
+    'LINKEDIN_VERIFIED_MODE',
+    DEFAULT_LINKEDIN_VERIFIED_MODE,
+    ['off', 'development', 'lite']
+  );
+
+  const scopes = parseScopes(readEnv('LINKEDIN_VERIFIED_SCOPES', DEFAULT_LINKEDIN_VERIFIED_SCOPES));
+  const requiredScopes = ['r_profile_basicinfo', 'r_verify'];
+  const missingScopes = mode === 'off' ? [] : requiredScopes.filter((scope) => !scopes.includes(scope));
+  if (missingScopes.length) {
+    throw new Error(`LINKEDIN_VERIFIED_SCOPES is missing required Development/Lite scopes: ${missingScopes.join(', ')}`);
+  }
+
+  const identityApiVersion = String(readEnv(
+    'LINKEDIN_VERIFIED_IDENTITY_API_VERSION',
+    DEFAULT_LINKEDIN_VERIFIED_IDENTITY_API_VERSION
+  ));
+  const reportApiVersion = String(readEnv(
+    'LINKEDIN_VERIFIED_REPORT_API_VERSION',
+    DEFAULT_LINKEDIN_VERIFIED_REPORT_API_VERSION
+  ));
+  if (!/^\d{6}(?:\.\d{2})?$/.test(identityApiVersion)) {
+    throw new Error('LINKEDIN_VERIFIED_IDENTITY_API_VERSION must use LinkedIn YYYYMM or YYYYMM.NN format');
+  }
+  if (!/^\d{6}$/.test(reportApiVersion)) {
+    throw new Error('LINKEDIN_VERIFIED_REPORT_API_VERSION must use LinkedIn YYYYMM format');
+  }
+
+  return {
+    mode,
+    enabled: mode !== 'off',
+    scopes,
+    requiredScopes,
+    identityApiVersion,
+    reportApiVersion,
+    timeoutMs: readBoundedIntegerEnv(
+      'LINKEDIN_VERIFIED_API_TIMEOUT_MS',
+      DEFAULT_LINKEDIN_VERIFIED_API_TIMEOUT_MS,
+      { min: 1000, max: 30000 }
+    )
+  };
+}
+
 export function getLinkedInConfig() {
-  const scopesRaw = readEnv('LINKEDIN_SCOPES', DEFAULT_LINKEDIN_SCOPES);
-  const scopes = scopesRaw.split(/\s+/).map((part) => part.trim()).filter(Boolean);
+  const scopes = parseScopes(readEnv('LINKEDIN_SCOPES', DEFAULT_LINKEDIN_SCOPES));
   const stateSecret = readRequiredEnv('LINKEDIN_STATE_SECRET');
 
   if (stateSecret.length < 32) {
@@ -236,9 +299,12 @@ export function getPublicFlags() {
       readEnv('LINKEDIN_STATE_SECRET')
   );
 
+  const linkedInVerification = getLinkedInVerificationConfig();
+
   return {
     dbConfigured: dbConfig.configured,
     linkedInConfigured,
+    linkedInVerificationConfigured: linkedInConfigured && linkedInVerification.enabled,
     telegramConfigured: Boolean(readEnv('TELEGRAM_BOT_TOKEN')),
     telegramWebhookSecretConfigured: Boolean(readEnv('TELEGRAM_WEBHOOK_SECRET')),
     runtimeGuardsConfigured: dbConfig.configured,

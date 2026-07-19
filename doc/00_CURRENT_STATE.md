@@ -4,12 +4,23 @@
 Intro Deck
 
 ## Current source baseline
-STEP056 — Core Contact Rail Simplification
+STEP058A — Verified on LinkedIn Development Integration
 
 ## Layer
-HEAVY / contact UX / payment orchestration / consent
+HEAVY / OAuth / external trust signals / data minimization
 
 ## Source-confirmed
+- STEP058A adds a gated Development/Lite Verified on LinkedIn client for `/identityMe` and `/verificationReport`.
+- Development mode requests `r_profile_basicinfo` and `r_verify` only for configured Intro Deck operators; LinkedIn remains the app-admin access authority.
+- Category-only `IDENTITY` and `WORKPLACE` snapshots are stored after migration `028_linkedin_verified_development.sql`.
+- Access, refresh, and ID token values plus single-use verification URLs are not persisted.
+- Existing snapshots are retained when a refresh is unavailable; base OIDC remains usable.
+- STEP058A exposes private tester status only; public badges, ranking, filters, and entitlements remain unchanged.
+- Member-entered professional claims remain member-provided.
+- `/identityMe` uses API version `202510.03`; `/verificationReport` uses API version `202510`.
+- STEP058A local source QA on Node `22.16.0`: syntax PASS, dedicated smoke PASS, full inventory `73/86` PASS versus STEP057 `72/85`, same 13 inherited failures, new failures `0`.
+- Node 20 execution and live LinkedIn API behavior remain not verified.
+
 - STEP056 exposes one canonical `🤝 Request contact` entry on every eligible non-self profile card.
 - `dir:contact:<profileId>:<page>` resolves current profile mode and renders one explicit options screen.
 - Intro-only profiles expose one free intro request; paid-contact profiles expose private-chat and Telegram-contact outcomes with exact Stars price or active Pro coverage.
@@ -102,9 +113,10 @@ Pending reward accrual check is now re-run after:
 - docs canon and artifact protocol
 
 ## Live truth boundary
-- STEP055 deployed health/config: operator-confirmed live at artifact `c582529c422915f5bf8b87364be47e957a9e9d71`
-- STEP056 source-confirmed: yes
-- STEP056 live-confirmed: no
+- STEP057 deployed health/config and read-only preflight: operator-confirmed at artifact `615d4014f3463bb40b6ec46c47d3e0879a670b55`
+- STEP058A source-confirmed: yes
+- STEP058A live-confirmed: no
+- migration 028 applied: no evidence yet
 - BotFather STEP054 profile copy: operator action not verified in this workspace
 
 ## Redeem truth now in source

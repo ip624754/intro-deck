@@ -3,12 +3,21 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP057
-- Phase: Production Readiness and Core Loop Acceptance on top of live-deployed STEP056
-- Primary mode: HEAVY / PRODUCTION READINESS / RUNTIME TRUTH / CORE LOOP
-- Runtime status: STEP056 is operator-confirmed live at artifact `7beaa0657c72dcedf423b17b3c998fc0ea67a6db`; STEP057 is source-implemented and awaits deploy/read-only acceptance evidence
+- Current STEP: STEP058A
+- Phase: Verified on LinkedIn Development integration on top of live-deployed STEP057
+- Primary mode: HEAVY / OAUTH / EXTERNAL TRUST SIGNALS / DATA MINIMIZATION
+- Runtime status: STEP057 is operator-confirmed live at artifact `615d4014f3463bb40b6ec46c47d3e0879a670b55`; STEP058A is source-implemented and awaits migration 028, deployment, and Development-admin verification evidence
 
 ## What exists now
+
+- STEP058A adds a gated Verified on LinkedIn Development integration for configured Intro Deck operators that are also LinkedIn developer-app administrators.
+- Verification uses category-only `IDENTITY` and `WORKPLACE` signals from `/identityMe` + `/verificationReport`; public badges remain disabled.
+- Migration `028_linkedin_verified_development.sql` stores minimized verification snapshots and scrubs historical raw OAuth token values.
+- New OIDC persistence stores no access, refresh, or ID token values.
+- A private Profile surface shows category status and provides explicit manual refresh; normal members retain the existing base OIDC flow.
+- Role, company, title, seniority, skills, experience, expertise, and bio remain member-provided.
+- STEP058A source QA on Node `22.16.0`: `npm run check` PASS; dedicated contract PASS; full inventory `73/86` PASS versus STEP057 `72/85`, with the same 13 inherited failures and no new failures.
+- Canonical Node 20 execution, migration 028, live LinkedIn Development API responses, and private Telegram verification UX are not yet verified.
 
 - STEP057 production-safe read-only preflight, exact artifact binding, Telegram webhook diagnostics, PostgreSQL invariant checks, and operator-assisted core-loop verdict pack
 
@@ -47,6 +56,12 @@
 - STEP051.5 restores the broken `Plans` surface by shipping the missing pricing text/keyboard render layer, so `⭐ Plans`, `/plans`, and `plans:root` no longer fail on `renderPricingText is not a function`
 
 ## Current truth
+
+- STEP058A is Development testing only; it is not broad production verification coverage.
+- `LINKEDIN_VERIFIED_MODE=development` requests verification scopes only for configured Intro Deck operator Telegram IDs; LinkedIn still enforces developer-app administrator eligibility.
+- Verification API failure does not break the base OIDC connection and does not erase a prior snapshot.
+- No public badge, rank, filter, payment advantage, or contact bypass is introduced.
+- Migration 028 is required before enabling Development mode.
 
 - STEP057 changes no product, payment, callback, entitlement, or database state machine; it adds only read-only production diagnostics and evidence governance
 - Automated preflight cannot mutate production and uses a PostgreSQL `READ ONLY` transaction

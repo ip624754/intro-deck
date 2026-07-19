@@ -79,7 +79,7 @@ const required = {
   ],
   'terms/index.html': [
     'LinkedIn sign-in connects an account identity',
-    'neither Intro Deck nor LinkedIn verifies member-entered professional fields',
+    'Those signals do not verify a member-entered title, role, seniority, skills, experience, expertise',
     'Listed profile cards may be browsed by bot users'
   ],
   'privacy/index.html': [
@@ -135,11 +135,20 @@ const forbidden = [
   /linkedin is used as the identity layer/i
 ];
 
-for (const [surface, text] of Object.entries(activeSurfaces)) {
+const marketingAndTelegramSurfaces = Object.entries(activeSurfaces)
+  .filter(([surface]) => !['privacy/index.html', 'terms/index.html'].includes(surface));
+
+for (const [surface, text] of marketingAndTelegramSurfaces) {
   for (const pattern of forbidden) {
     if (pattern.test(text)) {
       throw new Error(`${surface} contains forbidden STEP054 claim: ${pattern}`);
     }
+  }
+}
+
+for (const legalSurface of ['privacy/index.html', 'terms/index.html']) {
+  if (!activeSurfaces[legalSurface].includes('member-provided') && !activeSurfaces[legalSurface].includes('member-entered')) {
+    throw new Error(`${legalSurface} must preserve member-provided claims boundary`);
   }
 }
 

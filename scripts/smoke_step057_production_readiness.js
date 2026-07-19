@@ -28,7 +28,9 @@ for (const script of ['step057:preflight', 'step057:evidence:init', 'step057:evi
 for (const key of ['STEP057_TARGET', 'STEP057_BASE_URL', 'STEP057_ARTIFACT_SHA', 'STEP057_TELEGRAM_BOT_USERNAME', 'STEP057_EVIDENCE_DIR']) {
   assert.match(env, new RegExp(`^${key}=`, 'm'), `.env.example missing ${key}`);
 }
-assert.match(release, /CURRENT_SOURCE_STEP = 'STEP057'/);
+const sourceStep = release.match(/CURRENT_SOURCE_STEP = 'STEP(\d+)([A-Z]*)'/);
+assert.ok(sourceStep, 'Missing current STEP marker');
+assert.ok(Number(sourceStep[1]) >= 57, `STEP057 readiness pack must remain forward-compatible, got STEP${sourceStep[1]}${sourceStep[2] || ''}`);
 assert.match(health, /step: CURRENT_SOURCE_STEP/);
 assert.match(preflight, /begin read only/i);
 assert.match(preflight, /mutatingQueriesExecuted: false/);

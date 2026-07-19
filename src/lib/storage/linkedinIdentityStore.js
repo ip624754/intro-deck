@@ -9,15 +9,143 @@ import {
 } from '../../db/linkedinRepo.js';
 import { ensureProfileDraft, getProfileSnapshotByUserId, hideProfileListingByUserId } from '../../db/profileRepo.js';
 import { createAdminAuditEvent } from '../../db/adminRepo.js';
+import { getSchemaCompat } from '../../db/schemaCompat.js';
+import { upsertLinkedInVerificationSnapshot } from '../../db/linkedinVerificationRepo.js';
 import { maybeCreatePendingInviteRewardForActivationWithClient } from './inviteStore.js';
+
+function sanitizeTokenPayload(rawTokenPayload) {
+  if (!rawTokenPayload || typeof rawTokenPayload !== 'object') {
+    return null;
+  }
+
+  return {
+    token_type: rawTokenPayload.token_type || null,
+    expires_in: Number.isFinite(Number(rawTokenPayload.expires_in)) ? Number(rawTokenPayload.expires_in) : null,
+    refresh_token_expires_in: Number.isFinite(Number(rawTokenPayload.refresh_token_expires_in))
+      ? Number(rawTokenPayload.refresh_token_expires_in)
+      : null,
+    scope: rawTokenPayload.scope || null,
+    has_access_token: Boolean(rawTokenPayload.access_token),
+    has_refresh_token: Boolean(rawTokenPayload.refresh_token),
+    has_id_token: Boolean(rawTokenPayload.id_token)
+  };
+}
 
 function buildRawIdentityPayload({ identity, rawTokenPayload, rawUserInfo, source = 'linkedin_oidc' }) {
   return {
     source,
     identity,
-    token: rawTokenPayload || null,
+    token: sanitizeTokenPayload(rawTokenPayload),
     userinfo: rawUserInfo || null
   };
+}
+
+async function persistVerificationEvidenceWithinSavepoint(client, {
+  userId,
+  linkedinAccount,
+  verificationSnapshot = null,
+  verificationSync = null
+}) {
+  if (!verificationSync?.requested) {
+    return {
+      persisted: false,
+      status: verificationSync?.status || 'not_requested',
+      reason: verificationSync?.reason || 'linkedin_verified_not_requested'
+    };
+  }
+
+  const compat = await getSchemaCompat(client);
+  if (!compat.hasLinkedInVerificationSnapshotsTable) {
+    await createAdminAuditEvent(client, {
+      eventType: 'linkedin_verification_migration_required',
+      actorUserId: userId,
+      targetUserId: userId,
+      summary: 'Verified on LinkedIn snapshot could not be stored because migration 028 is missing.',
+      detail: {
+        syncStatus: verificationSync.status || null,
+        syncReason: verificationSync.reason || null
+      }
+    });
+    return {
+      persisted: false,
+      status: 'blocked',
+      reason: 'migration_028_required'
+    };
+  }
+
+  if (!verificationSnapshot) {
+    await createAdminAuditEvent(client, {
+      eventType: 'linkedin_verification_sync_unavailable',
+      actorUserId: userId,
+      targetUserId: userId,
+      summary: 'Verified on LinkedIn synchronization was unavailable; previous trust snapshot was not overwritten.',
+      detail: {
+        syncStatus: verificationSync.status || null,
+        syncReason: verificationSync.reason || null,
+        errorStatus: verificationSync.error?.status || null,
+        errorCode: verificationSync.error?.code || null
+      }
+    });
+    return {
+      persisted: false,
+      status: verificationSync.status || 'unavailable',
+      reason: verificationSync.reason || 'linkedin_verified_sync_unavailable'
+    };
+  }
+
+  const row = await upsertLinkedInVerificationSnapshot(client, {
+    linkedinAccountId: linkedinAccount.id,
+    snapshot: verificationSnapshot
+  });
+
+  await createAdminAuditEvent(client, {
+    eventType: 'linkedin_verification_snapshot_synced',
+    actorUserId: userId,
+    targetUserId: userId,
+    summary: 'Verified on LinkedIn category snapshot synchronized.',
+    detail: {
+      sourceTier: verificationSnapshot.sourceTier,
+      identityApiVersion: verificationSnapshot.identityApiVersion,
+      reportApiVersion: verificationSnapshot.reportApiVersion,
+      verificationState: verificationSnapshot.verificationState,
+      identityVerified: verificationSnapshot.identityVerified,
+      workplaceVerified: verificationSnapshot.workplaceVerified,
+      verificationUrlOffered: verificationSnapshot.verificationUrlOffered,
+      syncedAt: verificationSnapshot.syncedAt
+    }
+  });
+
+  return {
+    persisted: true,
+    status: 'success',
+    reason: 'linkedin_verified_snapshot_persisted',
+    snapshot: row
+  };
+}
+
+async function persistVerificationEvidence(client, input) {
+  const savepoint = 'linkedin_verification_optional';
+  await client.query(`savepoint ${savepoint}`);
+  try {
+    const result = await persistVerificationEvidenceWithinSavepoint(client, input);
+    await client.query(`release savepoint ${savepoint}`);
+    return result;
+  } catch (error) {
+    await client.query(`rollback to savepoint ${savepoint}`);
+    await client.query(`release savepoint ${savepoint}`);
+    console.warn('[linkedin verification] optional persistence rolled back', {
+      userId: input?.userId || null,
+      error: error?.message || String(error)
+    });
+    return {
+      persisted: false,
+      status: 'unavailable',
+      reason: 'linkedin_verification_optional_persistence_failed',
+      error: {
+        code: error?.code || null
+      }
+    };
+  }
 }
 
 function hasNonEmptyText(value) {
@@ -57,6 +185,8 @@ export async function persistLinkedInIdentity({
   identity,
   rawTokenPayload,
   rawUserInfo,
+  verificationSnapshot = null,
+  verificationSync = null,
   transferMode = 'detect'
 }) {
   if (!identity?.linkedinSub) {
@@ -132,6 +262,12 @@ export async function persistLinkedInIdentity({
         identity
       });
       const inviteRewardResult = await maybeCreatePendingInviteRewardForActivationWithClient(client, { userId: user.id });
+      const verificationPersistence = await persistVerificationEvidence(client, {
+        userId: user.id,
+        linkedinAccount,
+        verificationSnapshot,
+        verificationSync
+      });
 
       await createAdminAuditEvent(client, {
         eventType: 'linkedin_relink_transferred',
@@ -162,6 +298,7 @@ export async function persistLinkedInIdentity({
         profileSeed,
         identityImportedFields,
         inviteRewardResult,
+        verificationPersistence,
         previousOwner: {
           userId: existingBySub.user_id,
           telegramUserId: existingBySub.telegram_user_id,
@@ -196,6 +333,12 @@ export async function persistLinkedInIdentity({
       identity
     });
     const inviteRewardResult = await maybeCreatePendingInviteRewardForActivationWithClient(client, { userId: user.id });
+    const verificationPersistence = await persistVerificationEvidence(client, {
+      userId: user.id,
+      linkedinAccount,
+      verificationSnapshot,
+      verificationSync
+    });
 
     return {
       persisted: true,
@@ -207,7 +350,8 @@ export async function persistLinkedInIdentity({
       profileDraft,
       profileSeed,
       identityImportedFields,
-      inviteRewardResult
+      inviteRewardResult,
+      verificationPersistence
     };
   });
 }
