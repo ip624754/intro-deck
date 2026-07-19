@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP059 baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP060 baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
@@ -38,6 +38,7 @@ A Telegram-first professional directory:
 - STEP058B — Verified badges and fail-closed trust surfaces
 - STEP058B1 — verification compatibility + optional-config fail-safe
 - STEP059 — explicit user-approved Share Profile on LinkedIn
+- STEP060 — evidence-bound AI/news drafts with preview/edit and explicit one-post approval
 
 ## Core docs
 
@@ -70,6 +71,7 @@ A Telegram-first professional directory:
 - `npm run smoke:linkedin-trust-surfaces`
 - `npm run smoke:linkedin-verification-compat`
 - `npm run smoke:linkedin-share`
+- `npm run smoke:ai-news-drafts`
 - `npm run step057:preflight`
 
 
@@ -102,3 +104,19 @@ Roadmap: `doc/81_LINKEDIN_TRUST_AND_DISTRIBUTION_ROADMAP.md`.
 
 Operator runbook: `doc/86_STEP059_OPERATOR_ROLLOUT.md`.
 Lite upgrade pack: `doc/85_LINKEDIN_LITE_UPGRADE_APPLICATION_PACK.md`.
+
+
+## STEP060 AI/news drafts approval rollout
+
+1. Apply `migrations/030_ai_news_drafts_approval.sql` after migration 029.
+2. Start with `AI_NEWS_DRAFT_MODE=operator`; do not expose the feature broadly until provider/runtime evidence is accepted.
+3. Configure NewsData.io and OpenAI API keys as separate Vercel secrets. Never place either key in Telegram messages, logs, or evidence artifacts.
+4. Redeploy and confirm `/api/health?full=1` reports `STEP060`, valid providers, `explicitApprovalRequired=true`, and `automaticPublishing=false`.
+5. Test `/news`: choose a preset or custom topic → select a current source → generate → review/edit → approve → complete the existing STEP059 one-shot LinkedIn authorization.
+6. Confirm one approval produces at most one LinkedIn post and that provider-unknown outcomes remain blocked from automatic retry.
+7. Subscription access may control allowance, but it never authorizes automatic publishing.
+
+STEP060 is text-only. Source content is treated as untrusted prompt data. Media generation/upload, scheduling, background posting, organization posts, autonomous agents, and unattended subscriptions remain out of scope.
+
+Operator runbook: `doc/87_STEP060_OPERATOR_ROLLOUT.md`.
+STEP specification: `doc/spec/STEP060_AI_NEWS_DRAFTS_APPROVAL_FOUNDATION.md`.

@@ -694,7 +694,7 @@ export function renderHomeText({ profileSnapshot = null, persistenceEnabled = fa
   return lines.join('\n');
 }
 
-export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot = null, persistenceEnabled = false, isOperator = false }) {
+export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot = null, persistenceEnabled = false, isOperator = false, aiNewsVisible = false }) {
   const rows = [];
   const isLinkedInConnected = Boolean(profileSnapshot?.linkedin_sub);
 
@@ -722,7 +722,14 @@ export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot
       { text: '📨 Contact inbox', callback_data: 'contact:inbox' },
       { text: '⭐ Plans', callback_data: 'plans:root' }
     ]);
-    rows.push([{ text: '📨 Invite contacts', callback_data: 'invite:root' }]);
+    if (aiNewsVisible) {
+      rows.push([
+        { text: '🧠 News drafts', callback_data: 'news:home' },
+        { text: '📨 Invite contacts', callback_data: 'invite:root' }
+      ]);
+    } else {
+      rows.push([{ text: '📨 Invite contacts', callback_data: 'invite:root' }]);
+    }
   }
 
   rows.push([{ text: '❓ Help', callback_data: 'help:root' }]);
@@ -734,8 +741,8 @@ export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot
   return buildInlineKeyboard(rows);
 }
 
-export function renderHelpText() {
-  return [
+export function renderHelpText({ aiNewsVisible = false } = {}) {
+  const lines = [
     '❓ Help',
     '',
     'Use Intro Deck to connect a LinkedIn account, complete a member-provided professional card, browse listed profiles, and use one Contact flow to continue privately only after approval.',
@@ -748,7 +755,14 @@ export function renderHelpText() {
     '• use /contact to return to that hub',
     '• open plans / Pro status',
     '• invite professional contacts',
-    '• share your listed profile on LinkedIn with an exact preview and one explicit approval',
+    '• share your listed profile on LinkedIn with an exact preview and one explicit approval'
+  ];
+
+  if (aiNewsVisible) {
+    lines.push('• create an evidence-bound AI/news draft with /news, edit it, and approve each LinkedIn post separately');
+  }
+
+  lines.push(
     '',
     'LinkedIn trust signals:',
     '• Identity verified and Workplace verified are separate LinkedIn categories.',
@@ -759,22 +773,41 @@ export function renderHelpText() {
     '• use /share or Profile preview → Share profile on LinkedIn',
     '• Intro Deck shows the exact text before authorization',
     '• nothing is published automatically, and the OAuth access token is not stored'
-  ].join('\n');
+  );
+
+  if (aiNewsVisible) {
+    lines.push(
+      '',
+      'AI/news drafts:',
+      '• every draft is bound to a named source URL and saved evidence snapshot',
+      '• source content is treated as untrusted data, not as instructions to the AI',
+      '• you review and may replace the complete text before approval',
+      '• AI may not add unsupported numbers or quotations',
+      '• subscription access never authorizes background publishing'
+    );
+  }
+  return lines.join('\n');
 }
 
-export function renderHelpKeyboard() {
-  return buildInlineKeyboard([
+export function renderHelpKeyboard({ aiNewsVisible = false } = {}) {
+  const rows = [
     [
       { text: '🧩 Profile', callback_data: 'p:menu' },
       { text: '🌐 Browse directory', callback_data: 'dir:list:0' }
     ],
-    [{ text: '📨 Contact inbox', callback_data: 'contact:inbox' }],
+    [{ text: '📨 Contact inbox', callback_data: 'contact:inbox' }]
+  ];
+  if (aiNewsVisible) {
+    rows.push([{ text: '🧠 AI/news drafts', callback_data: 'news:home' }]);
+  }
+  rows.push(
     [
       { text: '⭐ Plans', callback_data: 'plans:root' },
       { text: '📨 Invite contacts', callback_data: 'invite:root' }
     ],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
-  ]);
+  );
+  return buildInlineKeyboard(rows);
 }
 
 function pricingReceiptLabel(receipt) {
@@ -2515,7 +2548,8 @@ export function renderOperatorDiagnosticsText({
   hotFailed = [],
   hotExhausted = [],
   notice = null,
-  allowed = true
+  allowed = true,
+  aiNewsConfig = null
 } = {}) {
   const lines = [
     '🛠 Operator diagnostics',
@@ -2568,6 +2602,19 @@ export function renderOperatorDiagnosticsText({
       lines.push('');
       lines.push('Recent exhausted:');
       lines.push(...(hotExhausted.length ? hotExhausted.map((item, index) => renderNotificationReceiptLine(item, index)) : ['— none']));
+    }
+  }
+
+  if (allowed && aiNewsConfig) {
+    lines.push('');
+    lines.push('AI/news drafts:');
+    lines.push(`• mode: ${aiNewsConfig.mode || 'off'}`);
+    lines.push(`• configuration: ${aiNewsConfig.configurationValid === false ? 'invalid / fail-safe disabled' : aiNewsConfig.enabled ? 'enabled' : 'disabled'}`);
+    lines.push(`• NewsData: ${aiNewsConfig.newsdata?.configured ? 'configured' : 'not configured'}`);
+    lines.push(`• OpenAI model: ${aiNewsConfig.openai?.model || 'not configured'}`);
+    lines.push('• automatic publishing: disabled');
+    if (aiNewsConfig.configurationError?.code) {
+      lines.push(`• config error: ${aiNewsConfig.configurationError.code}`);
     }
   }
 

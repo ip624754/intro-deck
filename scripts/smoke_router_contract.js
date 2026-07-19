@@ -97,6 +97,18 @@ if (JSON.stringify(homeRows.slice(0, expectedHomeRows.length)) !== JSON.stringif
 }
 
 
+
+const aiNewsKeyboard = renderHomeKeyboard({
+  appBaseUrl: 'https://example.com',
+  telegramUserId: 42,
+  profileSnapshot,
+  persistenceEnabled: true,
+  aiNewsVisible: true
+}).inline_keyboard;
+if (!JSON.stringify(aiNewsKeyboard).includes('news:home')) {
+  throw new Error('eligible home keyboard missing AI/news drafts entrypoint');
+}
+
 const disconnectedKeyboard = renderHomeKeyboard({
   appBaseUrl: 'https://example.com',
   telegramUserId: 42,
@@ -190,18 +202,19 @@ if (!skillsKeyboard.includes('p:sk:clr')) {
 
 console.log('OK: router baseline contract');
 
-const helpText = renderHelpText();
+const helpText = renderHelpText({ aiNewsVisible: true });
 if (!helpText.includes('Use Intro Deck to connect a LinkedIn account')) {
   throw new Error('help text missing product summary');
 }
-const helpKeyboardInline = renderHelpKeyboard().inline_keyboard;
+const helpKeyboardInline = renderHelpKeyboard({ aiNewsVisible: true }).inline_keyboard;
 const helpKeyboard = JSON.stringify(helpKeyboardInline);
-if (!helpKeyboard.includes('p:menu') || !helpKeyboard.includes('dir:list:0') || !helpKeyboard.includes('contact:inbox') || !helpKeyboard.includes('plans:root')) {
+if (!helpKeyboard.includes('p:menu') || !helpKeyboard.includes('dir:list:0') || !helpKeyboard.includes('contact:inbox') || !helpKeyboard.includes('news:home') || !helpKeyboard.includes('plans:root')) {
   throw new Error('help keyboard missing key entrypoints');
 }
 const expectedHelpRows = [
   'p:menu + dir:list:0',
   'contact:inbox',
+  'news:home',
   'plans:root + invite:root',
   'home:root'
 ];

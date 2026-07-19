@@ -1,0 +1,40 @@
+{
+  "step": "STEP060",
+  "packageVersion": "0.58.0",
+  "parentStep": "STEP059",
+  "environment": {
+    "node": "v20.20.2",
+    "npm": "10.9.2"
+  },
+  "verified": {
+    "npmCiIgnoreScripts": "PASS",
+    "npmCheck": "PASS",
+    "dedicatedSmoke": "PASS",
+    "linkedinShareCompatibility": "PASS",
+    "linkedinVerificationCompatibility": "PASS",
+    "routerCommandsHelp": "PASS",
+    "schemaStorage": "PASS",
+    "operatorDiagnostics": "PASS",
+    "privacyTerms": "PASS",
+    "landing": "PASS",
+    "npmAuditHigh": "PASS_0_VULNERABILITIES",
+    "gitDiffCheck": "PASS"
+  },
+  "fullSmoke": {
+    "baseline": { "step": "STEP059", "pass": 76, "fail": 13, "total": 89 },
+    "target": { "step": "STEP060", "pass": 77, "fail": 13, "total": 90 },
+    "newSmoke": "smoke:ai-news-drafts",
+    "newFailures": [],
+    "failureSetUnchanged": true
+  },
+  "notVerified": [
+    "migration_030_live_neon",
+    "newsdata_live_request",
+    "openai_live_generation",
+    "telegram_live_draft_edit_approval",
+    "linkedin_live_ai_news_post",
+    "live_duplicate_callback",
+    "live_unknown_outcome_reconciliation",
+    "pro_mode_rollout"
+  ]
+}

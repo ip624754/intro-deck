@@ -1,5 +1,6 @@
 import { CURRENT_SOURCE_STEP, getRuntimeArtifactSha } from '../src/config/release.js';
 import {
+  getAiNewsDraftConfig,
   getLinkedInShareConfig,
   getLinkedInVerificationConfig,
   getNotificationOpsConfig,
@@ -17,6 +18,7 @@ export default async function handler(req, res) {
   const operatorConfig = getOperatorConfig();
   const linkedInVerification = getLinkedInVerificationConfig();
   const linkedInShare = getLinkedInShareConfig();
+  const aiNewsDraft = getAiNewsDraftConfig();
   res.status(200).json({
     ok: true,
     step: CURRENT_SOURCE_STEP,
@@ -54,6 +56,25 @@ export default async function handler(req, res) {
     operatorDiagnosticsSurface: {
       enabled: flags.operatorDiagnosticsSurfaceConfigured,
       operatorCount: operatorConfig.operatorTelegramUserIds.length
+    },
+    aiNewsDraft: {
+      enabled: aiNewsDraft.enabled,
+      mode: aiNewsDraft.mode,
+      configurationValid: aiNewsDraft.configurationValid !== false,
+      configurationError: aiNewsDraft.configurationError || null,
+      newsProvider: 'newsdata',
+      newsProviderConfigured: aiNewsDraft.newsdata.configured,
+      aiProvider: 'openai',
+      aiProviderConfigured: aiNewsDraft.openai.configured,
+      model: aiNewsDraft.openai.model,
+      dailyLimit: aiNewsDraft.dailyLimit,
+      searchDailyLimit: aiNewsDraft.searchDailyLimit,
+      searchCooldownSeconds: aiNewsDraft.searchCooldownSeconds,
+      maxSourceAgeHours: aiNewsDraft.maxSourceAgeHours,
+      explicitApprovalRequired: true,
+      automaticPublishing: false,
+      sourceEvidenceRequired: true,
+      tokenPersistence: 'none'
     },
     linkedInShare: {
       enabled: linkedInShare.enabled,

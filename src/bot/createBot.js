@@ -1,6 +1,7 @@
 import { CURRENT_SOURCE_STEP } from '../config/release.js';
 import { Bot } from 'grammy';
 import { getAppConfig, getTelegramConfig } from '../config/env.js';
+import { buildAiNewsDraftSurface, buildAiNewsHubSurface, createAiNewsComposer } from './composers/aiNewsComposer.js';
 import { createContactUnlockComposer } from './composers/contactUnlockComposer.js';
 import { createDirectoryComposer } from './composers/directoryComposer.js';
 import { createDmComposer } from './composers/dmComposer.js';
@@ -68,7 +69,9 @@ export async function createBot() {
   bot.use(createDmComposer({
     clearAllPendingInputs,
     buildDmInboxSurface: surfaces.buildDmInboxSurface,
-    buildDmThreadSurface: surfaces.buildDmThreadSurface
+    buildDmThreadSurface: surfaces.buildDmThreadSurface,
+    buildAiNewsHubSurface,
+    buildAiNewsDraftSurface
   }));
 
   bot.use(createIntroComposer({
@@ -77,6 +80,11 @@ export async function createBot() {
     buildIntroDetailSurface: surfaces.buildIntroDetailSurface,
     buildDirectoryCardSurface: surfaces.buildDirectoryCardSurface,
     formatIntroDecisionReason
+  }));
+
+  bot.use(createAiNewsComposer({
+    clearAllPendingInputs,
+    appBaseUrl
   }));
 
   bot.use(createLinkedInShareComposer({
@@ -111,7 +119,9 @@ export async function createBot() {
     buildAdminNoticeSurface: adminSurfaces.buildAdminNoticeSurface,
     buildAdminBroadcastSurface: adminSurfaces.buildAdminBroadcastSurface,
     buildAdminSearchResultsSurface: adminSurfaces.buildAdminSearchResultsSurface,
-    buildDmThreadSurface: surfaces.buildDmThreadSurface
+    buildDmThreadSurface: surfaces.buildDmThreadSurface,
+    buildAiNewsHubSurface,
+    buildAiNewsDraftSurface
   }));
 
   bot.use(createOperatorComposer({

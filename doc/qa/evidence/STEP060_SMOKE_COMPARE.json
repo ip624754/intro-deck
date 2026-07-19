@@ -1,0 +1,52 @@
+{
+  "generatedAt": "2026-07-19T20:24:08Z",
+  "baseline": {
+    "step": "STEP059",
+    "total": 89,
+    "pass": 76,
+    "fail": 13,
+    "failed": [
+      "smoke:admin-allowlist",
+      "smoke:admin-intros",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-runbook-freeze",
+      "smoke:admin-russian-layer",
+      "smoke:admin-search",
+      "smoke:admin-user-card",
+      "smoke:admin-users",
+      "smoke:broadcast-idempotency",
+      "smoke:code-split",
+      "smoke:env",
+      "smoke:profile-session-schema"
+    ]
+  },
+  "target": {
+    "step": "STEP060",
+    "total": 90,
+    "pass": 77,
+    "fail": 13,
+    "failed": [
+      "smoke:admin-allowlist",
+      "smoke:admin-intros",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-runbook-freeze",
+      "smoke:admin-russian-layer",
+      "smoke:admin-search",
+      "smoke:admin-user-card",
+      "smoke:admin-users",
+      "smoke:broadcast-idempotency",
+      "smoke:code-split",
+      "smoke:env",
+      "smoke:profile-session-schema"
+    ]
+  },
+  "newSmokes": [
+    "smoke:ai-news-drafts"
+  ],
+  "removedSmokes": [],
+  "newFailures": [],
+  "resolvedFailures": [],
+  "failureSetUnchanged": true
+}

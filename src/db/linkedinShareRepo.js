@@ -34,7 +34,10 @@ export async function createLinkedInShareIntent(client, {
   profileId,
   postText,
   visibility,
-  expiresAt
+  expiresAt,
+  sourceKind = 'profile_share',
+  sourceRefId = null,
+  sourceSnapshotHash = null
 }) {
   await client.query(
     `update linkedin_share_intents
@@ -47,17 +50,18 @@ export async function createLinkedInShareIntent(client, {
   const result = await client.query(
     `insert into linkedin_share_intents (
        public_token, user_id, linkedin_account_id, profile_id,
-       post_text, visibility, status, expires_at
-     ) values ($1::uuid, $2, $3, $4, $5, $6, 'draft', $7)
+       post_text, visibility, status, expires_at,
+       source_kind, source_ref_id, source_snapshot_hash
+     ) values ($1::uuid, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10)
      returning *`,
-    [publicToken, userId, linkedinAccountId, profileId, postText, visibility, expiresAt]
+    [publicToken, userId, linkedinAccountId, profileId, postText, visibility, expiresAt, sourceKind, sourceRefId, sourceSnapshotHash]
   );
 
   const row = result.rows[0];
   await insertLinkedInShareEvent(client, {
     shareIntentId: row.id,
     eventType: 'draft_created',
-    detail: { visibility, expiresAt }
+    detail: { visibility, expiresAt, sourceKind, sourceRefId }
   });
   return row;
 }
@@ -90,7 +94,7 @@ export async function markLinkedInShareAuthorizationStarted(client, { publicToke
   if (new Date(intent.expires_at).getTime() <= Date.now()) {
     await client.query(`update linkedin_share_intents set status='expired', updated_at=now() where id=$1`, [intent.id]);
     await insertLinkedInShareEvent(client, { shareIntentId: intent.id, eventType: 'expired' });
-    return { ok: false, reason: 'share_intent_expired' };
+    return { ok: false, reason: 'share_intent_expired', intent: { ...intent, status: 'expired' } };
   }
   if (intent.status === 'published') return { ok: true, alreadyPublished: true, intent };
   if (!['draft', 'authorization_started', 'failed'].includes(intent.status)) {
@@ -137,7 +141,7 @@ export async function claimLinkedInShareIntent(client, {
   if (new Date(intent.expires_at).getTime() <= Date.now()) {
     await client.query(`update linkedin_share_intents set status='expired', updated_at=now() where id=$1`, [intent.id]);
     await insertLinkedInShareEvent(client, { shareIntentId: intent.id, eventType: 'expired' });
-    return { claimed: false, reason: 'share_intent_expired' };
+    return { claimed: false, reason: 'share_intent_expired', intent: { ...intent, status: 'expired' } };
   }
   if (intent.status === 'published') return { claimed: false, alreadyPublished: true, intent };
   if (intent.status === 'unknown') return { claimed: false, reason: 'share_outcome_unknown', intent };

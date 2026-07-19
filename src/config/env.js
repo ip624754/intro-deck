@@ -14,6 +14,19 @@ const DEFAULT_LINKEDIN_SHARE_API_TIMEOUT_MS = 8000;
 const DEFAULT_LINKEDIN_SHARE_INTENT_TTL_SECONDS = 900;
 const DEFAULT_LINKEDIN_SHARE_CLAIM_TIMEOUT_SECONDS = 300;
 const DEFAULT_LINKEDIN_SHARE_VISIBILITY = 'PUBLIC';
+const DEFAULT_AI_NEWS_DRAFT_MODE = 'off';
+const DEFAULT_NEWSDATA_BASE_URL = 'https://newsdata.io/api/1/';
+const DEFAULT_NEWSDATA_API_TIMEOUT_MS = 8000;
+const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com';
+const DEFAULT_OPENAI_DRAFT_MODEL = 'gpt-5.6-luna';
+const DEFAULT_OPENAI_API_TIMEOUT_MS = 30000;
+const DEFAULT_AI_NEWS_DAILY_LIMIT = 3;
+const DEFAULT_AI_NEWS_SEARCH_DAILY_LIMIT = 10;
+const DEFAULT_AI_NEWS_SEARCH_COOLDOWN_SECONDS = 60;
+const DEFAULT_AI_NEWS_MAX_SOURCE_AGE_HOURS = 48;
+const DEFAULT_AI_NEWS_MAX_ARTICLES = 5;
+const DEFAULT_AI_NEWS_SOURCE_SELECTION_TTL_SECONDS = 1800;
+const DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS = 3600;
 const DEFAULT_STATE_TTL_SECONDS = 600;
 const DEFAULT_JWKS_CACHE_TTL_SECONDS = 3600;
 const DEFAULT_DATABASE_SSLMODE = 'require';
@@ -322,6 +335,88 @@ export function getLinkedInShareConfig({ strict = false } = {}) {
   }
 }
 
+
+function readHttpsUrlEnv(name, fallback) {
+  const raw = String(readEnv(name, fallback) || '').trim();
+  const url = new URL(raw);
+  const localhost = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+  if (url.protocol !== 'https:' && !(localhost && url.protocol === 'http:')) {
+    throw new Error(`${name} must use HTTPS (HTTP is allowed only for localhost)`);
+  }
+  return url.toString();
+}
+
+function parseAiNewsDraftConfigStrict() {
+  const mode = readEnumEnv('AI_NEWS_DRAFT_MODE', DEFAULT_AI_NEWS_DRAFT_MODE, ['off', 'operator', 'pro']);
+  const enabled = mode !== 'off';
+  const newsdataApiKey = readEnv('NEWSDATA_API_KEY') || null;
+  const openaiApiKey = readEnv('OPENAI_API_KEY') || null;
+  if (enabled && !newsdataApiKey) throw new Error('NEWSDATA_API_KEY is required when AI_NEWS_DRAFT_MODE is enabled');
+  if (enabled && !openaiApiKey) throw new Error('OPENAI_API_KEY is required when AI_NEWS_DRAFT_MODE is enabled');
+
+  return {
+    mode,
+    enabled,
+    configurationValid: true,
+    configurationError: null,
+    dailyLimit: readBoundedIntegerEnv('AI_NEWS_DAILY_LIMIT', DEFAULT_AI_NEWS_DAILY_LIMIT, { min: 1, max: 25 }),
+    searchDailyLimit: readBoundedIntegerEnv('AI_NEWS_SEARCH_DAILY_LIMIT', DEFAULT_AI_NEWS_SEARCH_DAILY_LIMIT, { min: 1, max: 100 }),
+    searchCooldownSeconds: readBoundedIntegerEnv('AI_NEWS_SEARCH_COOLDOWN_SECONDS', DEFAULT_AI_NEWS_SEARCH_COOLDOWN_SECONDS, { min: 10, max: 3600 }),
+    maxSourceAgeHours: readBoundedIntegerEnv('AI_NEWS_MAX_SOURCE_AGE_HOURS', DEFAULT_AI_NEWS_MAX_SOURCE_AGE_HOURS, { min: 1, max: 168 }),
+    maxArticles: readBoundedIntegerEnv('AI_NEWS_MAX_ARTICLES', DEFAULT_AI_NEWS_MAX_ARTICLES, { min: 1, max: 10 }),
+    sourceSelectionTtlSeconds: readBoundedIntegerEnv('AI_NEWS_SOURCE_SELECTION_TTL_SECONDS', DEFAULT_AI_NEWS_SOURCE_SELECTION_TTL_SECONDS, { min: 300, max: 7200 }),
+    draftTtlSeconds: readBoundedIntegerEnv('AI_NEWS_DRAFT_TTL_SECONDS', DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS, { min: 900, max: 86400 }),
+    newsdata: {
+      configured: Boolean(newsdataApiKey),
+      apiKey: newsdataApiKey,
+      baseUrl: readHttpsUrlEnv('NEWSDATA_BASE_URL', DEFAULT_NEWSDATA_BASE_URL),
+      timeoutMs: readBoundedIntegerEnv('NEWSDATA_API_TIMEOUT_MS', DEFAULT_NEWSDATA_API_TIMEOUT_MS, { min: 1000, max: 30000 })
+    },
+    openai: {
+      configured: Boolean(openaiApiKey),
+      apiKey: openaiApiKey,
+      baseUrl: readHttpsUrlEnv('OPENAI_BASE_URL', DEFAULT_OPENAI_BASE_URL),
+      model: String(readEnv('OPENAI_DRAFT_MODEL', DEFAULT_OPENAI_DRAFT_MODEL) || '').trim(),
+      timeoutMs: readBoundedIntegerEnv('OPENAI_API_TIMEOUT_MS', DEFAULT_OPENAI_API_TIMEOUT_MS, { min: 3000, max: 120000 }),
+      store: false
+    },
+    explicitApprovalRequired: true,
+    automaticPublishing: false,
+    sourceEvidenceRequired: true
+  };
+}
+
+function buildAiNewsDraftFailSafeConfig(error) {
+  const rawMode = String(readEnv('AI_NEWS_DRAFT_MODE', DEFAULT_AI_NEWS_DRAFT_MODE) || '').trim().toLowerCase();
+  return {
+    mode: ['operator', 'pro'].includes(rawMode) ? rawMode : 'off',
+    enabled: false,
+    configurationValid: false,
+    configurationError: { code: 'ai_news_draft_config_invalid', message: error?.message || String(error) },
+    dailyLimit: DEFAULT_AI_NEWS_DAILY_LIMIT,
+    searchDailyLimit: DEFAULT_AI_NEWS_SEARCH_DAILY_LIMIT,
+    searchCooldownSeconds: DEFAULT_AI_NEWS_SEARCH_COOLDOWN_SECONDS,
+    maxSourceAgeHours: DEFAULT_AI_NEWS_MAX_SOURCE_AGE_HOURS,
+    maxArticles: DEFAULT_AI_NEWS_MAX_ARTICLES,
+    sourceSelectionTtlSeconds: DEFAULT_AI_NEWS_SOURCE_SELECTION_TTL_SECONDS,
+    draftTtlSeconds: DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS,
+    newsdata: { configured: Boolean(readEnv('NEWSDATA_API_KEY')), apiKey: null, baseUrl: DEFAULT_NEWSDATA_BASE_URL, timeoutMs: DEFAULT_NEWSDATA_API_TIMEOUT_MS },
+    openai: { configured: Boolean(readEnv('OPENAI_API_KEY')), apiKey: null, baseUrl: DEFAULT_OPENAI_BASE_URL, model: String(readEnv('OPENAI_DRAFT_MODEL', DEFAULT_OPENAI_DRAFT_MODEL)), timeoutMs: DEFAULT_OPENAI_API_TIMEOUT_MS, store: false },
+    explicitApprovalRequired: true,
+    automaticPublishing: false,
+    sourceEvidenceRequired: true
+  };
+}
+
+export function getAiNewsDraftConfig({ strict = false } = {}) {
+  try {
+    return parseAiNewsDraftConfigStrict();
+  } catch (error) {
+    if (strict) throw error;
+    return buildAiNewsDraftFailSafeConfig(error);
+  }
+}
+
 export function getLinkedInConfig() {
   const scopes = parseScopes(readEnv('LINKEDIN_SCOPES', DEFAULT_LINKEDIN_SCOPES));
   const stateSecret = readRequiredEnv('LINKEDIN_STATE_SECRET');
@@ -457,12 +552,14 @@ export function getPublicFlags() {
 
   const linkedInVerification = getLinkedInVerificationConfig();
   const linkedInShare = getLinkedInShareConfig();
+  const aiNewsDraft = getAiNewsDraftConfig();
 
   return {
     dbConfigured: dbConfig.configured,
     linkedInConfigured,
     linkedInVerificationConfigured: linkedInConfigured && linkedInVerification.enabled,
     linkedInShareConfigured: linkedInConfigured && linkedInShare.enabled,
+    aiNewsDraftConfigured: dbConfig.configured && linkedInShare.enabled && aiNewsDraft.enabled,
     telegramConfigured: Boolean(readEnv('TELEGRAM_BOT_TOKEN')),
     telegramWebhookSecretConfigured: Boolean(readEnv('TELEGRAM_WEBHOOK_SECRET')),
     runtimeGuardsConfigured: dbConfig.configured,

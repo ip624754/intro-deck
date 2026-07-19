@@ -3,12 +3,19 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP059
-- Phase: explicit user-approved Share Profile on LinkedIn plus Verified on LinkedIn Lite upgrade preparation
-- Primary mode: HEAVY / EXTERNAL PUBLISHING / OAUTH CONSENT / IDEMPOTENCY / AUDIT
-- Runtime status: STEP058B1 is operator-confirmed live at artifact `a5638bc0908aaf89848678ac1cdf8289698f906b`; the verification API returns a category snapshot and completion URL. STEP059 is source-implemented and awaits migration 029, share ENV, deployment, and one live publication.
+- Current STEP: STEP060
+- Phase: evidence-bound AI/news drafts with preview/edit and explicit one-post LinkedIn approval
+- Primary mode: HEAVY / AI EVIDENCE / EXTERNAL PROVIDERS / EXPLICIT PUBLISHING / IDEMPOTENCY / AUDIT
+- Runtime status: STEP059 is operator-confirmed deployed at artifact `18218eafe3942bc5ceee5319dc7117eada43d3c9`. STEP060 is source-implemented and awaits migration 030, provider ENV, deployment, and operator-only live acceptance.
 
 ## What exists now
+
+- STEP060 adds an operator-first AI/news drafting flow: topic preset/custom query → NewsData.io source selection → minimized evidence snapshot → OpenAI structured draft → exact preview/edit → explicit approval → existing STEP059 one-shot LinkedIn publishing.
+- No background or automatic publishing exists. Provider tokens are not persisted, OpenAI request storage is disabled, and a subscription may grant allowance but never publication authority.
+- Draft validation requires the exact source URL, rejects unsupported numeric claims and quotations, and requires evidence claims to point to exact source substrings.
+- Migration `030_ai_news_drafts_approval.sql` adds preferences, source snapshots, drafts, events, input sessions, and source binding on the existing LinkedIn share intent.
+- STEP059 remains the only canonical LinkedIn publishing core; AI/news drafts do not create a second publisher.
+
 
 - STEP059 adds one explicit Share Profile on LinkedIn rail for active/listed profiles.
 - Telegram shows the exact text and visibility before authorization; `/share` and Profile preview use the same canonical flow.
@@ -165,11 +172,11 @@
 
 ## Next recommended step
 
-1. Apply migration `029_linkedin_share_profile.sql` after a Neon restore point/branch backup.
-2. Enable the isolated Share on LinkedIn ENV contract and deploy STEP059.
-3. Verify one real explicit preview → consent → LinkedIn post → receipt flow and confirm a repeated callback does not create a duplicate.
-4. Submit the prepared Verified on LinkedIn Development → Lite request; record the LinkedIn case/reference ID without claiming approval.
-5. Keep AI/news drafting as a later explicit-preview/explicit-approval STEP after the manual share core is live-proven.
+1. Apply migration `030_ai_news_drafts_approval.sql` after a Neon restore point or branch backup.
+2. Configure NewsData.io and OpenAI server-side secrets and start with `AI_NEWS_DRAFT_MODE=operator`.
+3. Deploy STEP060 and verify health reports valid providers, explicit approval, no token persistence, and automatic publishing disabled.
+4. Run one operator flow: `/news` → source → generate → preview/edit → approve → canonical STEP059 LinkedIn authorization → exactly one post/receipt.
+5. Keep Pro rollout disabled until provider/runtime evidence and duplicate protection are accepted.
 
 ## STEP039.1 delta
 

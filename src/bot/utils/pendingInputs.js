@@ -2,6 +2,7 @@ import { cancelDirectoryFilterInputForTelegramUser } from '../../lib/storage/dir
 import { cancelAdminCommsEdit, cancelAdminUserNoteEdit } from '../../lib/storage/adminStore.js';
 import { cancelDmComposeForTelegramUser } from '../../lib/storage/dmStore.js';
 import { cancelProfileFieldEdit } from '../../lib/storage/profileEditStore.js';
+import { cancelAiNewsInputForTelegramUser } from '../../lib/storage/aiNewsStore.js';
 
 export async function clearAllPendingInputs(telegramUserId) {
   await cancelProfileFieldEdit({ telegramUserId }).catch(() => null);
@@ -9,5 +10,6 @@ export async function clearAllPendingInputs(telegramUserId) {
   await cancelAdminUserNoteEdit({ operatorTelegramUserId: telegramUserId }).catch(() => null);
   await cancelAdminCommsEdit({ operatorTelegramUserId: telegramUserId }).catch(() => null);
   await cancelDmComposeForTelegramUser({ telegramUserId }).catch(() => null);
+  await cancelAiNewsInputForTelegramUser({ telegramUserId }).catch(() => null);
 }
 

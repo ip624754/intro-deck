@@ -16,6 +16,11 @@ import {
   markLinkedInShareOutcomeUnknownAfterProviderSuccess
 } from '../../db/linkedinShareRepo.js';
 import { createAdminAuditEvent } from '../../db/adminRepo.js';
+import {
+  markAiNewsDraftPublishedByShareIntent,
+  markAiNewsDraftShareFailed,
+  reopenAiNewsDraftAfterShareCancel
+} from '../../db/aiNewsRepo.js';
 import { getSchemaCompat } from '../../db/schemaCompat.js';
 import { buildProfileSharePostText, LinkedInShareApiError, publishLinkedInTextPost } from '../linkedin/share.js';
 
@@ -28,14 +33,20 @@ function requirePersistence() {
 
 async function persistProviderSuccessAsUnknownBestEffort({ claim, claimToken, provider, failureReason }) {
   try {
-    return await withDbTransaction(async (client) => markLinkedInShareOutcomeUnknownAfterProviderSuccess(client, {
-      shareIntentId: claim.intent.id,
-      claimToken,
-      providerPostId: provider.postId,
-      providerRequestId: provider.requestId,
-      providerHttpStatus: provider.httpStatus,
-      failureReason
-    }));
+    return await withDbTransaction(async (client) => {
+      const row = await markLinkedInShareOutcomeUnknownAfterProviderSuccess(client, {
+        shareIntentId: claim.intent.id,
+        claimToken,
+        providerPostId: provider.postId,
+        providerRequestId: provider.requestId,
+        providerHttpStatus: provider.httpStatus,
+        failureReason
+      });
+      if (row && claim.intent.source_kind === 'ai_news_draft') {
+        await markAiNewsDraftShareFailed(client, { shareIntentId: claim.intent.id, outcomeUnknown: true });
+      }
+      return row;
+    });
   } catch (error) {
     console.error('[linkedin share] could not persist provider-success unknown state', {
       shareIntentId: claim.intent.id,
@@ -48,20 +59,22 @@ async function persistProviderSuccessAsUnknownBestEffort({ claim, claimToken, pr
   }
 }
 
-export async function createProfileShareDraftForTelegramUser({
+export async function createLinkedInTextShareIntentWithClient(client, {
   telegramUserId,
   telegramUsername = null,
-  botUsername,
+  postText,
   visibility,
-  ttlSeconds
+  ttlSeconds,
+  sourceKind = 'profile_share',
+  sourceRefId = null,
+  sourceSnapshotHash = null
 }) {
-  const unavailable = requirePersistence();
-  if (unavailable) return unavailable;
-
-  return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasLinkedInShareIntentsTable || !compat.hasLinkedInShareEventsTable) {
       return { persistenceEnabled: true, created: false, reason: 'migration_029_required' };
+    }
+    if (sourceKind === 'ai_news_draft' && (!compat.linkedInShareHasSourceKind || !compat.hasAiNewsDraftsTable)) {
+      return { persistenceEnabled: true, created: false, reason: 'migration_030_required' };
     }
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
     const profile = await getProfileSnapshotByTelegramUserId(client, telegramUserId);
@@ -73,6 +86,23 @@ export async function createProfileShareDraftForTelegramUser({
     if (!linkedinAccount) return { persistenceEnabled: true, created: false, reason: 'linkedin_account_missing' };
 
     await acquireLinkedInShareUserLock(client, user.id);
+    const unresolvedResult = await client.query(
+      `select * from linkedin_share_intents
+       where user_id=$1 and status in ('draft','authorization_started','publishing','unknown')
+       order by created_at desc limit 1 for update`,
+      [user.id]
+    );
+    const unresolvedIntent = unresolvedResult.rows[0] || null;
+    if (sourceKind === 'profile_share' && unresolvedIntent?.source_kind === 'ai_news_draft') {
+      return {
+        persistenceEnabled: true,
+        created: false,
+        reason: unresolvedIntent.status === 'unknown'
+          ? 'linkedin_share_previous_outcome_unknown'
+          : 'ai_news_share_pending',
+        intent: unresolvedIntent
+      };
+    }
     const blockingIntent = await getBlockingLinkedInShareIntentForUser(client, user.id);
     if (blockingIntent) {
       return {
@@ -85,7 +115,6 @@ export async function createProfileShareDraftForTelegramUser({
       };
     }
 
-    const postText = buildProfileSharePostText({ profileSnapshot: profile, botUsername });
     const publicToken = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + (ttlSeconds * 1000));
     const intent = await createLinkedInShareIntent(client, {
@@ -95,18 +124,50 @@ export async function createProfileShareDraftForTelegramUser({
       profileId: profile.profile_id,
       postText,
       visibility,
-      expiresAt
+      expiresAt,
+      sourceKind,
+      sourceRefId,
+      sourceSnapshotHash
     });
 
     await createAdminAuditEvent(client, {
-      eventType: 'linkedin_profile_share_draft_created',
+      eventType: sourceKind === 'ai_news_draft' ? 'ai_news_linkedin_share_draft_created' : 'linkedin_profile_share_draft_created',
       actorUserId: user.id,
       targetUserId: user.id,
-      summary: 'Member created a LinkedIn profile-share draft.',
-      detail: { shareIntentId: intent.id, visibility, expiresAt: expiresAt.toISOString() }
+      summary: sourceKind === 'ai_news_draft'
+        ? 'Member approved an evidence-bound AI news draft for LinkedIn authorization.'
+        : 'Member created a LinkedIn profile-share draft.',
+      detail: { shareIntentId: intent.id, visibility, expiresAt: expiresAt.toISOString(), sourceKind, sourceRefId }
     });
 
     return { persistenceEnabled: true, created: true, reason: 'share_draft_created', intent, profile };
+}
+
+export async function createLinkedInTextShareIntentForTelegramUser(args) {
+  const unavailable = requirePersistence();
+  if (unavailable) return unavailable;
+  return withDbTransaction(async (client) => createLinkedInTextShareIntentWithClient(client, args));
+}
+
+export async function createProfileShareDraftForTelegramUser({
+  telegramUserId,
+  telegramUsername = null,
+  botUsername,
+  visibility,
+  ttlSeconds
+}) {
+  const unavailable = requirePersistence();
+  if (unavailable) return unavailable;
+  const profileResult = await withDbClient(async (client) => getProfileSnapshotByTelegramUserId(client, telegramUserId));
+  if (!profileResult?.linkedin_sub) return { persistenceEnabled: true, created: false, reason: 'linkedin_not_connected' };
+  const postText = buildProfileSharePostText({ profileSnapshot: profileResult, botUsername });
+  return createLinkedInTextShareIntentForTelegramUser({
+    telegramUserId,
+    telegramUsername,
+    postText,
+    visibility,
+    ttlSeconds,
+    sourceKind: 'profile_share'
   });
 }
 
@@ -131,10 +192,11 @@ export async function markLinkedInShareAuthorizationForTelegramUser({ publicToke
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasLinkedInShareIntentsTable || !compat.hasLinkedInShareEventsTable) return { persistenceEnabled: true, ok: false, reason: 'migration_029_required' };
-    return {
-      persistenceEnabled: true,
-        ...(await markLinkedInShareAuthorizationStarted(client, { publicToken, telegramUserId }))
-    };
+    const result = await markLinkedInShareAuthorizationStarted(client, { publicToken, telegramUserId });
+    if (!result.ok && result.reason === 'share_intent_expired' && result.intent?.source_kind === 'ai_news_draft') {
+      await reopenAiNewsDraftAfterShareCancel(client, { shareIntentId: result.intent.id, reason: 'expired' });
+    }
+    return { persistenceEnabled: true, ...result };
   });
 }
 
@@ -144,10 +206,11 @@ export async function cancelLinkedInShareForTelegramUser({ publicToken, telegram
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasLinkedInShareIntentsTable || !compat.hasLinkedInShareEventsTable) return { persistenceEnabled: true, changed: false, reason: 'migration_029_required' };
-    return {
-      persistenceEnabled: true,
-        ...(await cancelLinkedInShareIntent(client, { publicToken, telegramUserId }))
-    };
+    const result = await cancelLinkedInShareIntent(client, { publicToken, telegramUserId });
+    if (result.changed && result.intent?.source_kind === 'ai_news_draft') {
+      await reopenAiNewsDraftAfterShareCancel(client, { shareIntentId: result.intent.id, reason: 'cancelled' });
+    }
+    return { persistenceEnabled: true, ...result };
   });
 }
 
@@ -166,13 +229,17 @@ export async function publishLinkedInShareForOAuthCallback({
   const claim = await withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasLinkedInShareIntentsTable || !compat.hasLinkedInShareEventsTable) return { claimed: false, reason: 'migration_029_required' };
-    return claimLinkedInShareIntent(client, {
+    const result = await claimLinkedInShareIntent(client, {
       publicToken,
       telegramUserId,
       linkedinSub,
       claimToken,
       staleAfterSeconds: shareConfig.claimTimeoutSeconds
     });
+    if (!result.claimed && result.reason === 'share_intent_expired' && result.intent?.source_kind === 'ai_news_draft') {
+      await reopenAiNewsDraftAfterShareCancel(client, { shareIntentId: result.intent.id, reason: 'expired' });
+    }
+    return result;
   });
 
   if (!claim.claimed) {
@@ -203,14 +270,24 @@ export async function publishLinkedInShareForOAuthCallback({
         providerErrorCode: isProviderError && error.code != null ? String(error.code) : null,
         failureReason: isProviderError ? error.message : 'linkedin_share_internal_error'
       });
+      if (row && claim.intent.source_kind === 'ai_news_draft') {
+        await markAiNewsDraftShareFailed(client, { shareIntentId: claim.intent.id, outcomeUnknown });
+      }
       if (row) {
+        const isAiNewsDraft = claim.intent.source_kind === 'ai_news_draft';
         await createAdminAuditEvent(client, {
-          eventType: outcomeUnknown ? 'linkedin_profile_share_outcome_unknown' : 'linkedin_profile_share_failed',
+          eventType: isAiNewsDraft
+            ? (outcomeUnknown ? 'ai_news_linkedin_share_outcome_unknown' : 'ai_news_linkedin_share_failed')
+            : (outcomeUnknown ? 'linkedin_profile_share_outcome_unknown' : 'linkedin_profile_share_failed'),
           actorUserId: claim.intent.user_id,
           targetUserId: claim.intent.user_id,
-          summary: outcomeUnknown
-            ? 'LinkedIn profile-share outcome is unknown; automatic retry is blocked.'
-            : 'LinkedIn profile-share attempt failed.',
+          summary: isAiNewsDraft
+            ? (outcomeUnknown
+              ? 'AI/news LinkedIn share outcome is unknown; automatic retry is blocked.'
+              : 'AI/news LinkedIn share attempt failed.')
+            : (outcomeUnknown
+              ? 'LinkedIn profile-share outcome is unknown; automatic retry is blocked.'
+              : 'LinkedIn profile-share attempt failed.'),
           detail: {
             shareIntentId: claim.intent.id,
             providerRequestId: isProviderError ? error.requestId : null,
@@ -242,13 +319,19 @@ export async function publishLinkedInShareForOAuthCallback({
   // A retry after an external success could create a duplicate LinkedIn post.
   let published;
   try {
-    published = await withDbTransaction(async (client) => finalizeLinkedInSharePublished(client, {
-      shareIntentId: claim.intent.id,
-      claimToken,
-      providerPostId: provider.postId,
-      providerRequestId: provider.requestId,
-      providerHttpStatus: provider.httpStatus
-    }));
+    published = await withDbTransaction(async (client) => {
+      const row = await finalizeLinkedInSharePublished(client, {
+        shareIntentId: claim.intent.id,
+        claimToken,
+        providerPostId: provider.postId,
+        providerRequestId: provider.requestId,
+        providerHttpStatus: provider.httpStatus
+      });
+      if (row && claim.intent.source_kind === 'ai_news_draft') {
+        await markAiNewsDraftPublishedByShareIntent(client, { shareIntentId: claim.intent.id });
+      }
+      return row;
+    });
   } catch (error) {
     console.error('[linkedin share] provider published but receipt persistence failed', {
       shareIntentId: claim.intent.id,
@@ -304,18 +387,25 @@ export async function publishLinkedInShareForOAuthCallback({
   // Audit is deliberately best-effort after the durable publication receipt. An
   // audit insert must never roll back a confirmed provider post receipt.
   try {
-    await withDbTransaction(async (client) => createAdminAuditEvent(client, {
-      eventType: 'linkedin_profile_share_published',
+    await withDbTransaction(async (client) => {
+      const isAiNewsDraft = claim.intent.source_kind === 'ai_news_draft';
+      return createAdminAuditEvent(client, {
+      eventType: isAiNewsDraft ? 'ai_news_linkedin_share_published' : 'linkedin_profile_share_published',
       actorUserId: claim.intent.user_id,
       targetUserId: claim.intent.user_id,
-      summary: 'Member explicitly published a profile share on LinkedIn.',
+      summary: isAiNewsDraft
+        ? 'Member explicitly published an evidence-bound AI/news draft on LinkedIn.'
+        : 'Member explicitly published a profile share on LinkedIn.',
       detail: {
         shareIntentId: claim.intent.id,
         providerPostId: provider.postId,
         providerRequestId: provider.requestId,
-        visibility: claim.intent.visibility
+        visibility: claim.intent.visibility,
+        sourceKind: claim.intent.source_kind,
+        sourceRefId: claim.intent.source_ref_id
       }
-    }));
+      });
+    });
   } catch (auditError) {
     console.warn('[linkedin share] published receipt saved; audit insert skipped', {
       shareIntentId: claim.intent.id,

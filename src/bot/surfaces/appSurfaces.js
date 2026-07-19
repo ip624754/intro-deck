@@ -9,12 +9,12 @@ import { loadNotificationOperatorSurface } from '../../lib/storage/notificationS
 import { loadPricingSurfaceState } from '../../lib/storage/monetizationStore.js';
 import { loadInviteHistoryState, loadInviteRewardsSummaryState, loadInviteSurfaceState } from '../../lib/storage/inviteStore.js';
 import { loadProfileEditorState } from '../../lib/storage/profileEditStore.js';
-import { getLinkedInConfig, getLinkedInShareConfig, getLinkedInVerificationConfig, getPricingConfig, isOperatorTelegramUser } from '../../config/env.js';
+import { getAiNewsDraftConfig, getLinkedInConfig, getLinkedInShareConfig, getLinkedInVerificationConfig, getPricingConfig, isOperatorTelegramUser } from '../../config/env.js';
 import { loadActiveAdminNotice } from '../../lib/storage/adminStore.js';
 import { buildSignedLinkedInLaunchTicket } from '../../lib/linkedin/oidc.js';
 
 
-function fallbackRenderHelpText() {
+function fallbackRenderHelpText({ aiNewsVisible = false } = {}) {
   return [
     '❓ Help',
     '',
@@ -29,25 +29,26 @@ function fallbackRenderHelpText() {
     '• /plans — open pricing and Pro status',
     '• /invite — share your invite',
     '• /share — preview and explicitly publish your listed profile on LinkedIn',
+    ...(aiNewsVisible ? ['• /news — create an evidence-bound draft with preview and explicit approval'] : []),
     '• /menu — return home'
   ].join('\n');
 }
 
-function fallbackRenderHelpKeyboard() {
-  return {
-    inline_keyboard: [
+function fallbackRenderHelpKeyboard({ aiNewsVisible = false } = {}) {
+  const rows = [
       [
         { text: '🧩 Profile', callback_data: 'p:menu' },
         { text: '🌐 Browse directory', callback_data: 'dir:list:0' }
       ],
       [{ text: '📨 Contact inbox', callback_data: 'contact:inbox' }],
+      ...(aiNewsVisible ? [[{ text: '🧠 AI/news drafts', callback_data: 'news:home' }]] : []),
       [
         { text: '⭐ Plans', callback_data: 'plans:root' },
         { text: '📨 Invite contacts', callback_data: 'invite:root' }
       ],
       [{ text: '🏠 Home', callback_data: 'home:root' }]
-    ]
-  };
+    ];
+  return { inline_keyboard: rows };
 }
 
 const renderHelpText = typeof render.renderHelpText === 'function' ? render.renderHelpText : fallbackRenderHelpText;
@@ -217,15 +218,21 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         telegramUserId: ctx.from.id,
         profileSnapshot: storeResult.profile,
         persistenceEnabled: storeResult.persistenceEnabled,
-        isOperator: isOperatorTelegramUser(ctx.from.id)
+        isOperator: isOperatorTelegramUser(ctx.from.id),
+        aiNewsVisible: (() => {
+          const config = getAiNewsDraftConfig();
+          return config.enabled && (config.mode === 'pro' || isOperatorTelegramUser(ctx.from.id));
+        })()
       })
     };
   }
 
-  async function buildHelpSurface() {
+  async function buildHelpSurface(ctx) {
+    const config = getAiNewsDraftConfig();
+    const aiNewsVisible = config.enabled && (config.mode === 'pro' || isOperatorTelegramUser(ctx?.from?.id));
     return {
-      text: renderHelpText(),
-      reply_markup: renderHelpKeyboard()
+      text: renderHelpText({ aiNewsVisible }),
+      reply_markup: renderHelpKeyboard({ aiNewsVisible })
     };
   }
 
@@ -311,7 +318,8 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         profileSnapshot: state.profile,
         persistenceEnabled: state.persistenceEnabled,
         linkedinVerificationConfig: linkedinVerificationAccess,
-        notice
+        notice,
+        aiNewsConfig: getAiNewsDraftConfig()
       }),
       reply_markup: renderProfilePreviewKeyboard({
         profileSnapshot: state.profile,
@@ -836,7 +844,8 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
         hotRetryDue: state.hotRetryDue,
         hotFailed: state.hotFailed,
         hotExhausted: state.hotExhausted,
-        notice
+        notice,
+        aiNewsConfig: getAiNewsDraftConfig()
       }),
       reply_markup: renderOperatorDiagnosticsKeyboard({
         allowed: true,

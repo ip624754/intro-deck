@@ -79,7 +79,8 @@ function describeError(error) {
 }
 
 function buildLinkedInShareResultMessage(result) {
-  const lines = ['📣 Share profile on LinkedIn', ''];
+  const isNewsDraft = result?.intent?.source_kind === 'ai_news_draft';
+  const lines = [isNewsDraft ? '🧠 AI/news draft on LinkedIn' : '📣 Share profile on LinkedIn', ''];
   if (result?.published) {
     lines.push('✅ Published once to your LinkedIn account.');
     lines.push(`• Post ID: ${result.provider?.postId || result.intent?.provider_post_id || 'recorded'}`);
@@ -111,19 +112,20 @@ function buildLinkedInShareResultMessage(result) {
   lines.push(`• Reason: ${result?.reason || 'linkedin_share_failed'}`);
   if (result?.error?.status) lines.push(`• HTTP status: ${result.error.status}`);
   if (result?.error?.requestId) lines.push(`• LinkedIn request ID: ${result.error.requestId}`);
-  lines.push('• Your Intro Deck profile remains unchanged.');
+  lines.push(isNewsDraft ? '• Your AI/news draft remains available for review when the outcome is confirmed failed.' : '• Your Intro Deck profile remains unchanged.');
   return lines.join('\n');
 }
 
 async function notifyLinkedInShareResult({ telegramUserId, result }) {
   const { botToken } = getTelegramConfig();
+  const isNewsDraft = result?.intent?.source_kind === 'ai_news_draft';
   await sendTelegramMessage({
     botToken,
     chatId: telegramUserId,
     text: buildLinkedInShareResultMessage(result),
     replyMarkup: {
       inline_keyboard: [
-        [{ text: '👁 Profile preview', callback_data: 'p:prev' }],
+        [{ text: isNewsDraft ? '🧠 News drafts' : '👁 Profile preview', callback_data: isNewsDraft ? 'news:home' : 'p:prev' }],
         [{ text: '🏠 Home', callback_data: 'home:root' }]
       ]
     }
@@ -131,11 +133,12 @@ async function notifyLinkedInShareResult({ telegramUserId, result }) {
 }
 
 function renderLinkedInShareResultPage(result) {
+  const isNewsDraft = result?.intent?.source_kind === 'ai_news_draft';
   if (result?.published || result?.alreadyPublished) {
     const postId = result.provider?.postId || result.intent?.provider_post_id || null;
     return renderHtml({
       title: 'LinkedIn post published',
-      body: `<h1>LinkedIn post published</h1><p>Your approved Intro Deck profile share was published once.</p>${postId ? `<p class="meta">Post ID: <code>${escapeHtml(postId)}</code></p>` : ''}<p>Return to Telegram to continue.</p>`
+      body: `<h1>LinkedIn post published</h1><p>${isNewsDraft ? 'Your approved evidence-bound news draft' : 'Your approved Intro Deck profile share'} was published once.</p>${postId ? `<p class="meta">Post ID: <code>${escapeHtml(postId)}</code></p>` : ''}<p>Return to Telegram to continue.</p>`
     });
   }
   if (result?.inProgress) {

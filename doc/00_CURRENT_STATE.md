@@ -4,12 +4,23 @@
 Intro Deck
 
 ## Current source baseline
-STEP059 — Share Profile on LinkedIn
+STEP060 — AI/News Drafts Approval Foundation
 
 ## Layer
-HEAVY / external publishing / OAuth consent / idempotency / audit
+HEAVY / AI evidence / external providers / explicit publishing / idempotency / audit
 
 ## Source-confirmed
+- STEP060 adds an operator-first AI/news drafting flow: topic preset/custom query → NewsData.io source selection → minimized evidence snapshot → OpenAI structured draft → exact preview/edit → explicit approval → existing STEP059 one-shot LinkedIn publishing.
+- No background or automatic publishing exists. OpenAI requests use `store=false`; NewsData/OpenAI keys and LinkedIn OAuth tokens are not persisted in draft evidence.
+- Draft validation requires the exact source URL, rejects unsupported numeric claims and quotations, and binds structured evidence claims to exact source substrings.
+- Migration `030_ai_news_drafts_approval.sql` adds preferences, source snapshots, drafts, audit events, input sessions, and source binding on the canonical LinkedIn share intent.
+- STEP059 remains the only LinkedIn publishing core. Unknown provider outcomes remain non-retryable to prevent duplicate posts.
+- Media, scheduling, organization posts, analytics, autonomous agents, and unattended publishing remain out of scope.
+- Source URLs are normalized, tracking fragments are removed, and credential-bearing/private-network URLs are rejected.
+- Article fields are sanitized and treated as untrusted prompt data; source text cannot override AI instructions or expose secrets.
+- Operator diagnostics expose rollout/configuration state without provider keys or raw payloads.
+- AI/news Help and CTA surfaces remain hidden when the feature is disabled or the member is not eligible.
+
 - STEP059 adds one explicit text-only Share Profile on LinkedIn rail for active/listed profiles.
 - The exact post text and visibility are shown before any LinkedIn authorization; listing a profile, connecting LinkedIn, or buying Pro never publishes automatically.
 - `w_member_social` is isolated to the signed one-shot share intent and is not added to base `LINKEDIN_SCOPES`.
@@ -19,7 +30,7 @@ HEAVY / external publishing / OAuth consent / idempotency / audit
 - Provider success followed by local receipt failure is also non-retryable `unknown`; it is never downgraded to retryable failure.
 - A `publishing` or `unknown` intent blocks a new share until evidence-based reconciliation.
 - Shared posts deep-link to the exact listed Intro Deck profile using `start=profile_<id>`.
-- STEP059 is text-only; media upload, scheduling, organization posting, analytics, AI drafts, and automatic publishing remain out of scope.
+- STEP059 remains text-only and is reused as the publishing core; STEP060 adds AI/news drafting above it without adding automatic publishing.
 - STEP059 canonical Node `20.20.2` QA is `76/89` PASS versus STEP058B1 `75/88`, with the same 13 inherited failures and new failures `0`; `npm audit` reports 0 vulnerabilities.
 - The Verified on LinkedIn Lite application pack is prepared, but Lite approval remains an operator-controlled LinkedIn review outcome.
 
@@ -316,3 +327,29 @@ STEP053A source implementation does not make STEP053 staging-accepted. A valid `
 
 ### Next
 Deploy STEP055, confirm `/api/health?full=1` reports STEP055, then manually exercise the activation path in `@introdeckbot`.
+
+
+## STEP060 handoff delta
+
+### Source-confirmed
+- operator-first `/news` flow: preset/custom query → NewsData source → evidence snapshot → OpenAI structured draft → preview/edit → explicit approval;
+- STEP059 remains the only LinkedIn publishing and receipt core;
+- OpenAI uses strict JSON Schema output and `store=false`;
+- article content is treated as untrusted prompt data;
+- exact source URL, numerical claims, quotations, and evidence substrings are validated;
+- search and draft allowances are bounded and atomic;
+- duplicate source, duplicate approval, stale callback, and provider-unknown paths fail closed;
+- optional provider configuration is fail-safe and cannot break health/webhook/base OIDC;
+- migration `030_ai_news_drafts_approval.sql` is required;
+- no automatic publishing, scheduling, media upload, organization posting, background token storage, or unattended subscription posting exists.
+
+### QA truth
+- package: `0.58.0`;
+- canonical Node `20.20.2`, npm `10.9.2`;
+- dependency install, syntax, dedicated STEP060 smoke, STEP059 compatibility, legal/router/commands/schema, and npm audit PASS;
+- full inventory: `77/90` PASS versus STEP059 `76/89`;
+- inherited failures remain exactly 13; new failures: `0`.
+
+### Live boundary
+- STEP059 deployment/config is operator-confirmed live at artifact `18218eafe3942bc5ceee5319dc7117eada43d3c9`;
+- STEP060 migration, provider ENV, deployment, NewsData source retrieval, OpenAI generation, and one real approved post remain not verified until operator rollout.

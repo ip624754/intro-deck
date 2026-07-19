@@ -3,12 +3,22 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP059 — Share Profile on LinkedIn
-- Current mode: HEAVY / EXTERNAL PUBLISHING / OAUTH CONSENT / IDEMPOTENCY / AUDIT
-- Current focus: apply migration 029, enable one-shot Share on LinkedIn, verify one real post and duplicate protection, and submit the prepared Verified on LinkedIn Lite upgrade request.
+- Current baseline: STEP060 — AI/News Drafts Approval Foundation
+- Current mode: HEAVY / AI EVIDENCE / EXTERNAL PROVIDERS / EXPLICIT PUBLISHING / IDEMPOTENCY / AUDIT
+- Current focus: apply migration 030, configure operator-only NewsData.io/OpenAI access, verify evidence-bound draft generation/editing, and reuse STEP059 for one explicit LinkedIn post.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP060 stores a minimized immutable source snapshot before generation and links each AI draft to that evidence hash.
+- NewsData.io and OpenAI are isolated providers; their API keys never enter Telegram surfaces or evidence artifacts.
+- OpenAI Responses requests use strict JSON schema and `store=false`.
+- Draft text must retain the exact source URL. Unsupported numbers and quotations are rejected before approval when not present in the evidence/profile context.
+- Users can replace the complete text, cancel the draft, or explicitly approve it. Approval creates a source-bound intent in the existing STEP059 publishing core.
+- Exactly one unresolved draft per user and existing LinkedIn share claims prevent duplicate generation/approval/publish races.
+- Unknown LinkedIn outcomes remain non-retryable and block new publication attempts until reconciliation.
+- Migration 030 is required. Automatic publishing, scheduling, media posts, organization posts, and autonomous news agents are out of scope.
+
 
 - STEP059 provides one explicit profile-share flow for active/listed profiles.
 - The exact post and visibility are rendered before OAuth; nothing publishes automatically.
@@ -380,3 +390,32 @@ Deploy STEP054, verify live positioning surfaces and BotFather copy, then procee
 - the live criteria request still returns `/verificationReport` HTTP 400;
 - STEP058B1 fallback success, request ID evidence, and removal of the production pg warning are not verified until deploy and operator retest;
 - public badges remain disabled.
+
+
+## STEP060 — AI/News Drafts Approval Foundation
+
+### Source-confirmed
+- source step `STEP060`, package `0.58.0`;
+- operator-first source/evidence/draft/preview/edit/approval flow;
+- NewsData.io source adapter and OpenAI strict-schema generator are optional and fail-safe;
+- source evidence is minimized, hashed, and treated as untrusted data;
+- the exact source URL plus numeric/quotation evidence is validated before approval;
+- member edits are revalidated and AI claim annotations are cleared;
+- one atomic approval creates one source-bound canonical STEP059 share intent;
+- unknown provider outcomes remain non-retryable;
+- migration `030_ai_news_drafts_approval.sql` is required;
+- no automatic/background publication or provider-token persistence.
+
+### QA truth
+- Node `20.20.2`, npm `10.9.2`;
+- `npm ci`, `npm run check`, `smoke:ai-news-drafts`, STEP059/058 compatibility, router/commands/legal/schema, and `npm audit` PASS;
+- full smoke inventory `77/90` PASS against STEP059 `76/89`;
+- inherited failures `13`, new failures `0`.
+
+### Operator handoff
+1. Apply migration 030.
+2. Add NewsData/OpenAI server secrets.
+3. Start with `AI_NEWS_DRAFT_MODE=operator`.
+4. Deploy and confirm STEP060 health/config.
+5. Run one exact operator source → draft → edit → approval → one LinkedIn post flow.
+6. Keep Pro mode off until runtime evidence is accepted.

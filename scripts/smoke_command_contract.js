@@ -11,6 +11,7 @@ const profileComposerSource = readFileSync(new URL('../src/bot/composers/profile
 const directoryComposerSource = readFileSync(new URL('../src/bot/composers/directoryComposer.js', import.meta.url), 'utf8');
 const introComposerSource = readFileSync(new URL('../src/bot/composers/introComposer.js', import.meta.url), 'utf8');
 const inviteComposerSource = readFileSync(new URL('../src/bot/composers/inviteComposer.js', import.meta.url), 'utf8');
+const aiNewsComposerSource = readFileSync(new URL('../src/bot/composers/aiNewsComposer.js', import.meta.url), 'utf8');
 const operatorComposerSource = readFileSync(new URL('../src/bot/composers/operatorComposer.js', import.meta.url), 'utf8');
 
 for (const [command, source] of [
@@ -22,6 +23,7 @@ for (const [command, source] of [
   ['contact', directoryComposerSource],
   ['inbox', introComposerSource],
   ['invite', inviteComposerSource],
+  ['news', aiNewsComposerSource],
   ['ops', operatorComposerSource]
 ]) {
   if (!source.includes(`composer.command('${command}'`)) {
@@ -33,13 +35,13 @@ if (homeComposerSource.includes("composer.command('sent'")) {
   throw new Error('/sent must not be exposed as a supported command');
 }
 
-const helpText = renderHelpText();
+const helpText = renderHelpText({ aiNewsVisible: true });
 if (!helpText.includes('Use Intro Deck to connect a LinkedIn account')) {
   throw new Error('Help surface must explain the product clearly');
 }
 
-const helpKeyboard = JSON.stringify(renderHelpKeyboard().inline_keyboard);
-for (const callback of ['p:menu', 'dir:list:0', 'contact:inbox', 'plans:root', 'home:root']) {
+const helpKeyboard = JSON.stringify(renderHelpKeyboard({ aiNewsVisible: true }).inline_keyboard);
+for (const callback of ['p:menu', 'dir:list:0', 'contact:inbox', 'news:home', 'plans:root', 'home:root']) {
   if (!helpKeyboard.includes(callback)) {
     throw new Error(`Help keyboard missing ${callback}`);
   }

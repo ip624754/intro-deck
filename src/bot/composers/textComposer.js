@@ -4,9 +4,10 @@ import { applyDirectoryFilterInputForTelegramUser } from '../../lib/storage/dire
 import { applyAdminCommsPhotoInput, applyAdminCommsTextInput, applyAdminUserNoteInput, loadAdminBroadcastState, loadAdminDirectMessageState, loadAdminNoticeState, loadAdminSearchResults } from '../../lib/storage/adminStore.js';
 import { applyProfileFieldInput } from '../../lib/storage/profileEditStore.js';
 import { applyDmComposeInput } from '../../lib/storage/dmStore.js';
+import { applyAiNewsTextInput } from '../../lib/storage/aiNewsStore.js';
 import { formatDmRequestReason, formatUserFacingError } from '../utils/notices.js';
 
-export function createTextComposer({ buildDirectoryFiltersSurface, buildAdminUserCardSurface, buildAdminUserMessageSurface, buildAdminNoticeSurface, buildAdminBroadcastSurface, buildAdminSearchResultsSurface, buildDmThreadSurface }) {
+export function createTextComposer({ buildDirectoryFiltersSurface, buildAdminUserCardSurface, buildAdminUserMessageSurface, buildAdminNoticeSurface, buildAdminBroadcastSurface, buildAdminSearchResultsSurface, buildDmThreadSurface, buildAiNewsHubSurface, buildAiNewsDraftSurface }) {
   const composer = new Composer();
 
   function broadcastSavedNotice(inputKind = 'broadcast_body') {
@@ -172,6 +173,25 @@ export function createTextComposer({ buildDirectoryFiltersSurface, buildAdminUse
       return;
     }
 
+    const aiNewsResult = await applyAiNewsTextInput({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      text: ctx.message.text
+    }).catch((error) => ({
+      persistenceEnabled: true,
+      consumed: false,
+      reason: String(error?.message || error),
+      errored: true
+    }));
+
+    if (aiNewsResult.consumed) {
+      const surface = aiNewsResult.inputKind === 'edit_draft' && aiNewsResult.draft
+        ? await buildAiNewsDraftSurface(ctx, aiNewsResult.draft.public_token, aiNewsResult.changed ? '✅ Draft updated. Review the complete text before approval.' : `⚠️ ${aiNewsResult.reason}`)
+        : await buildAiNewsHubSurface(ctx, '✅ Custom news topic saved.');
+      await ctx.reply(surface.text, { reply_markup: surface.reply_markup, disable_web_page_preview: true });
+      return;
+    }
+
     const profileResult = await applyProfileFieldInput({
       telegramUserId: ctx.from.id,
       text: ctx.message.text
@@ -220,6 +240,11 @@ export function createTextComposer({ buildDirectoryFiltersSurface, buildAdminUse
 
     if (dmResult.errored) {
       await ctx.reply(`⚠️ ${formatUserFacingError(dmResult.reason, 'Could not save this DM message right now.')}`);
+      return;
+    }
+
+    if (aiNewsResult.errored) {
+      await ctx.reply(`⚠️ Could not save this AI/news input right now (${aiNewsResult.reason}).`);
       return;
     }
 
