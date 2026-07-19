@@ -21,6 +21,7 @@ import {
   getAiNewsInputSession,
   getAiNewsPreferences,
   getAiNewsSourceByToken,
+  insertAiNewsProviderUsageEvent,
   getBlockingAiNewsDraft,
   getLatestAiNewsDraftForUser,
   listRecentAiNewsSources,
@@ -36,6 +37,7 @@ import { getProfileSnapshotByUserId } from '../../db/profileRepo.js';
 import { getSchemaCompat } from '../../db/schemaCompat.js';
 import { upsertTelegramUser } from '../../db/usersRepo.js';
 import { generateOpenAiNewsDraft, OpenAiDraftError } from '../ai/openaiNewsDraft.js';
+import { estimateFixedRequestCostMicrousd, estimateOpenAiCostMicrousd } from '../ai/newsCost.js';
 import {
   AI_NEWS_PRESETS,
   buildSourceEvidence,
@@ -50,6 +52,26 @@ import {
 import { fetchNewsDataLatest, NewsDataApiError } from '../news/newsdata.js';
 import { createLinkedInTextShareIntentWithClient } from './linkedinShareStore.js';
 
+
+
+async function recordProviderUsageBestEffort(event) {
+  if (!isDatabaseConfigured()) return null;
+  try {
+    return await withDbTransaction(async (client) => {
+      const compat = await getSchemaCompat(client);
+      if (!compat.hasAiNewsProviderUsageEventsTable) return null;
+      return insertAiNewsProviderUsageEvent(client, event);
+    });
+  } catch (error) {
+    console.warn('[ai news] provider telemetry skipped', {
+      provider: event?.provider || null,
+      operation: event?.operation || null,
+      outcome: event?.outcome || null,
+      error: String(error?.message || error).slice(0, 200)
+    });
+    return null;
+  }
+}
 
 function safeGenerationErrorCode(error) {
   if (error instanceof OpenAiDraftError) {
@@ -97,6 +119,9 @@ function checkEligibility({ config, telegramUserId, entitlements, profile }) {
     return { eligible: false, reason: 'profile_not_listed' };
   }
   const operator = isOperatorTelegramUser(telegramUserId);
+  if (config.rolloutStage === 'operator_acceptance' && !operator) {
+    return { eligible: false, reason: 'ai_news_operator_acceptance_in_progress' };
+  }
   if (config.mode === 'operator') return { eligible: operator, reason: operator ? 'operator_access' : 'operator_only' };
   if (config.mode === 'pro') {
     const pro = Boolean(entitlements?.proActive);
@@ -124,6 +149,9 @@ export async function loadAiNewsHubState({ telegramUserId, telegramUsername = nu
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPreferencesTable || !compat.hasAiNewsSourcesTable || !compat.hasAiNewsDraftsTable) {
       return { persistenceEnabled: true, enabled: config.enabled, eligible: false, reason: 'migration_030_required', config, preferences: defaultPreferences(), recentSources: [], latestDraft: null };
+    }
+    if (!compat.hasAiNewsProviderUsageEventsTable || !compat.aiNewsDraftsHasOpenAiUsage) {
+      return { persistenceEnabled: true, enabled: config.enabled, eligible: false, reason: 'migration_032_required', config, preferences: defaultPreferences(), recentSources: [], latestDraft: null };
     }
     const context = await loadUserContext(client, { telegramUserId, telegramUsername });
     const eligibility = checkEligibility({ config, telegramUserId, entitlements: context.entitlements, profile: context.profile });
@@ -290,13 +318,16 @@ export async function applyAiNewsTextInput({ telegramUserId, telegramUsername = 
   });
 }
 
-export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegramUsername = null, preferenceOverride = null, ignoreCooldown = false, fetchImpl = fetch }) {
+export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegramUsername = null, preferenceOverride = null, presetRunId = null, ignoreCooldown = false, fetchImpl = fetch }) {
   const config = getAiNewsDraftConfig();
   if (!isDatabaseConfigured()) return { ...persistenceUnavailable(), config, articles: [] };
   const prepared = await withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPreferencesTable || !compat.hasAiNewsSourcesTable || !compat.hasAiNewsDraftsTable) {
       return { ok: false, reason: 'migration_030_required' };
+    }
+    if (!compat.hasAiNewsProviderUsageEventsTable || !compat.aiNewsDraftsHasOpenAiUsage) {
+      return { ok: false, reason: 'migration_032_required' };
     }
     const context = await loadUserContext(client, { telegramUserId, telegramUsername });
     const preferences = normalizePreferences({ ...context.preferences, ...(preferenceOverride || {}) });
@@ -332,16 +363,40 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
     });
   } catch (error) {
     const providerError = error instanceof NewsDataApiError;
+    await recordProviderUsageBestEffort({
+      userId: prepared.user.id,
+      presetRunId,
+      provider: 'newsdata',
+      operation: 'search_latest',
+      outcome: 'failed',
+      requestId: providerError ? error.requestId : null,
+      durationMs: providerError ? error.durationMs : null,
+      estimatedCostMicrousd: estimateFixedRequestCostMicrousd(config.newsdata.estimatedRequestCostUsd),
+      errorCode: providerError ? (error.code || `http_${error.status || 'unknown'}`) : 'newsdata_internal_error'
+    });
     return {
       persistenceEnabled: true,
       found: false,
       articles: [],
       reason: providerError ? 'newsdata_request_failed' : 'newsdata_internal_error',
-      error: { status: providerError ? error.status : null, code: providerError ? error.code : null }
+      error: { status: providerError ? error.status : null, code: providerError ? error.code : null, requestId: providerError ? error.requestId : null }
     };
   }
 
-  if (!provider.articles.length) return { persistenceEnabled: true, found: false, articles: [], reason: 'ai_news_no_fresh_sources' };
+  if (!provider.articles.length) {
+    await recordProviderUsageBestEffort({
+      userId: prepared.user.id,
+      presetRunId,
+      provider: 'newsdata',
+      operation: 'search_latest',
+      outcome: 'no_result',
+      requestId: provider.requestId,
+      resultCount: 0,
+      durationMs: provider.durationMs,
+      estimatedCostMicrousd: estimateFixedRequestCostMicrousd(config.newsdata.estimatedRequestCostUsd)
+    });
+    return { persistenceEnabled: true, found: false, articles: [], reason: 'ai_news_no_fresh_sources' };
+  }
   const expiresAt = new Date(Date.now() + config.sourceSelectionTtlSeconds * 1000);
   const stored = await withDbTransaction(async (client) => {
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
@@ -370,6 +425,19 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
     }
     return rows;
   });
+  await recordProviderUsageBestEffort({
+    userId: prepared.user.id,
+    sourceId: stored[0]?.id || null,
+    presetRunId,
+    provider: 'newsdata',
+    operation: 'search_latest',
+    outcome: 'success',
+    requestId: provider.requestId,
+    resultCount: stored.length,
+    durationMs: provider.durationMs,
+    estimatedCostMicrousd: estimateFixedRequestCostMicrousd(config.newsdata.estimatedRequestCostUsd),
+    detail: { rawResultCount: provider.rawResultCount, storedResultCount: stored.length }
+  });
   return { persistenceEnabled: true, found: true, articles: stored, query: prepared.query, preferences: prepared.preferences };
 }
 
@@ -379,6 +447,7 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
   const prepared = await withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsDraftsTable || !compat.hasAiNewsSourcesTable) return { ok: false, reason: 'migration_030_required' };
+    if (!compat.hasAiNewsProviderUsageEventsTable || !compat.aiNewsDraftsHasOpenAiUsage) return { ok: false, reason: 'migration_032_required' };
     const context = await loadUserContext(client, { telegramUserId, telegramUsername });
     const preferences = normalizePreferences({ ...context.preferences, ...(preferenceOverride || {}) });
     const eligibility = checkEligibility({ config, telegramUserId, entitlements: context.entitlements, profile: context.profile });
@@ -442,10 +511,24 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
     });
   } catch (error) {
     const providerError = error instanceof OpenAiDraftError;
+    const errorCode = safeGenerationErrorCode(error);
     await withDbTransaction(async (client) => finalizeAiNewsDraftFailed(client, {
       draftId: prepared.draft.id,
-      errorCode: safeGenerationErrorCode(error)
+      errorCode
     })).catch(() => null);
+    await recordProviderUsageBestEffort({
+      userId: prepared.user.id,
+      sourceId: prepared.source.id,
+      draftId: prepared.draft.id,
+      presetRunId,
+      provider: 'openai',
+      operation: 'generate_draft',
+      outcome: 'failed',
+      requestId: providerError ? error.requestId : null,
+      modelName: config.openai.model,
+      durationMs: providerError ? error.durationMs : null,
+      errorCode
+    });
     return {
       persistenceEnabled: true,
       generated: false,
@@ -459,6 +542,12 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
     };
   }
 
+  const estimatedCostMicrousd = estimateOpenAiCostMicrousd({
+    inputTokens: generated.usage?.inputTokens,
+    outputTokens: generated.usage?.outputTokens,
+    inputUsdPerMillion: config.openai.inputCostUsdPerMillion,
+    outputUsdPerMillion: config.openai.outputCostUsdPerMillion
+  });
   const finalized = await withDbTransaction(async (client) => {
     const row = await finalizeAiNewsDraftGenerated(client, {
       draftId: prepared.draft.id,
@@ -467,7 +556,11 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
       modelProvider: 'openai',
       modelName: generated.model,
       providerResponseId: generated.providerResponseId,
-      providerRequestId: generated.providerRequestId
+      providerRequestId: generated.providerRequestId,
+      inputTokens: generated.usage?.inputTokens ?? null,
+      outputTokens: generated.usage?.outputTokens ?? null,
+      totalTokens: generated.usage?.totalTokens ?? null,
+      estimatedCostMicrousd
     });
     await createAdminAuditEvent(client, {
       eventType: 'ai_news_draft_generated',
@@ -481,10 +574,29 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
         model: generated.model,
         providerRequestId: generated.providerRequestId,
         postLanguage: prepared.preferences.post_language,
-        tone: prepared.preferences.tone
+        tone: prepared.preferences.tone,
+        inputTokens: generated.usage?.inputTokens ?? null,
+        outputTokens: generated.usage?.outputTokens ?? null,
+        estimatedCostMicrousd
       }
     });
     return row;
+  });
+  await recordProviderUsageBestEffort({
+    userId: prepared.user.id,
+    sourceId: prepared.source.id,
+    draftId: prepared.draft.id,
+    presetRunId,
+    provider: 'openai',
+    operation: 'generate_draft',
+    outcome: 'success',
+    requestId: generated.providerRequestId,
+    modelName: generated.model,
+    inputTokens: generated.usage?.inputTokens ?? null,
+    outputTokens: generated.usage?.outputTokens ?? null,
+    totalTokens: generated.usage?.totalTokens ?? null,
+    durationMs: generated.durationMs,
+    estimatedCostMicrousd
   });
   return { persistenceEnabled: true, generated: true, draft: { ...prepared.draft, ...finalized, ...prepared.source }, source: prepared.source };
 }

@@ -25,7 +25,7 @@ import {
   softDeleteAiNewsPreset,
   updateAiNewsPresetSchedule
 } from '../../db/aiNewsPresetRepo.js';
-import { acquireAiNewsUserLock, getAiNewsPreferences } from '../../db/aiNewsRepo.js';
+import { acquireAiNewsUserLock, getAiNewsPreferences, getAiNewsRolloutSummary } from '../../db/aiNewsRepo.js';
 import { getUserEntitlements } from '../../db/monetizationRepo.js';
 import { isDatabaseConfigured, withDbTransaction } from '../../db/pool.js';
 import { getProfileSnapshotByUserId } from '../../db/profileRepo.js';
@@ -50,6 +50,9 @@ function persistenceUnavailable() {
 function hasAccess({ config, telegramUserId, entitlements }) {
   const operator = isOperatorTelegramUser(telegramUserId);
   if (!config.enabled || config.configurationValid === false) return { allowed: false, reason: 'ai_news_disabled' };
+  if (config.rolloutStage === 'operator_acceptance' && !operator) {
+    return { allowed: false, reason: 'ai_news_operator_acceptance_in_progress' };
+  }
   if (config.mode === 'operator') return { allowed: operator, reason: operator ? 'operator_access' : 'operator_only' };
   if (config.mode === 'pro') {
     const pro = Boolean(entitlements?.proActive);
@@ -355,6 +358,7 @@ async function executePresetRun({ runId, deliver, fetchImpl = fetch }) {
     telegramUserId: Number(envelope.telegram_user_id),
     telegramUsername: envelope.telegram_username || null,
     preferenceOverride,
+    presetRunId: envelope.id,
     ignoreCooldown: envelope.trigger_kind === 'scheduled',
     fetchImpl
   });
@@ -480,7 +484,15 @@ export async function loadAiNewsPresetOperatorDiagnostics() {
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPresetsTable || !compat.hasAiNewsPresetRunsTable) return { persistenceEnabled: true, summary: null, reason: 'migration_031_required' };
-    return { persistenceEnabled: true, summary: await getAiNewsPresetOperatorSummary(client) };
+    const presetSummary = await getAiNewsPresetOperatorSummary(client);
+    const rolloutSummary = compat.hasAiNewsProviderUsageEventsTable
+      ? await getAiNewsRolloutSummary(client)
+      : null;
+    return {
+      persistenceEnabled: true,
+      summary: { ...presetSummary, ...(rolloutSummary || {}) },
+      reason: rolloutSummary ? null : 'migration_032_required'
+    };
   });
 }
 

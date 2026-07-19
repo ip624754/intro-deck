@@ -2620,6 +2620,7 @@ export function renderOperatorDiagnosticsText({
     lines.push('');
     lines.push('AI/news drafts:');
     lines.push(`• mode: ${aiNewsConfig.mode || 'off'}`);
+    lines.push(`• rollout stage: ${aiNewsConfig.rolloutStage || 'operator_acceptance'}`);
     lines.push(`• configuration: ${aiNewsConfig.configurationValid === false ? 'invalid / fail-safe disabled' : aiNewsConfig.enabled ? 'enabled' : 'disabled'}`);
     lines.push(`• NewsData: ${aiNewsConfig.newsdata?.configured ? 'configured' : 'not configured'}`);
     lines.push(`• OpenAI model: ${aiNewsConfig.openai?.model || 'not configured'}`);
@@ -2632,6 +2633,16 @@ export function renderOperatorDiagnosticsText({
       lines.push(`• presets: active ${aiNewsPresetSummary.active_presets || 0} • paused ${aiNewsPresetSummary.paused_presets || 0} • due ${aiNewsPresetSummary.due_presets || 0}`);
       lines.push(`• runs/24h: ${aiNewsPresetSummary.runs_24h || 0} • delivered ${aiNewsPresetSummary.delivered_24h || 0} • failed ${aiNewsPresetSummary.failed_24h || 0} • blocked ${aiNewsPresetSummary.blocked_24h || 0}`);
       lines.push(`• delivery retry due: ${aiNewsPresetSummary.retry_due || 0}`);
+      if (Object.prototype.hasOwnProperty.call(aiNewsPresetSummary, 'newsdata_calls_24h')) {
+        const estimatedUsd = (Number(aiNewsPresetSummary.estimated_cost_microusd_24h || 0) / 1_000_000).toFixed(6);
+        lines.push(`• provider calls/24h: NewsData ${aiNewsPresetSummary.newsdata_calls_24h || 0} • OpenAI ${aiNewsPresetSummary.openai_calls_24h || 0} • failures ${aiNewsPresetSummary.provider_failures_24h || 0}`);
+        lines.push(`• OpenAI tokens/24h: in ${aiNewsPresetSummary.openai_input_tokens_24h || 0} • out ${aiNewsPresetSummary.openai_output_tokens_24h || 0}`);
+        lines.push(`• estimated provider cost/24h: $${estimatedUsd}`);
+        lines.push(`• drafts/24h: attempts ${aiNewsPresetSummary.draft_attempts_24h || 0} • generated ${aiNewsPresetSummary.generated_drafts_24h || 0} • edited ${aiNewsPresetSummary.edited_drafts_24h || 0} • LinkedIn published ${aiNewsPresetSummary.linkedin_posts_24h || 0}`);
+        lines.push(`• unknown LinkedIn outcomes/24h: ${aiNewsPresetSummary.unknown_share_outcomes_24h || 0}`);
+      } else {
+        lines.push('• provider telemetry: migration 032 required');
+      }
     }
     if (aiNewsConfig.configurationError?.code) {
       lines.push(`• config error: ${aiNewsConfig.configurationError.code}`);

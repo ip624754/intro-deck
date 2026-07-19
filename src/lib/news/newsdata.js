@@ -1,12 +1,13 @@
 import { normalizeSourceUrl } from '../ai/newsDraftContract.js';
 
 export class NewsDataApiError extends Error {
-  constructor(message, { status = null, code = null, requestId = null } = {}) {
+  constructor(message, { status = null, code = null, requestId = null, durationMs = null } = {}) {
     super(message);
     this.name = 'NewsDataApiError';
     this.status = status;
     this.code = code;
     this.requestId = requestId;
+    this.durationMs = Number.isFinite(Number(durationMs)) ? Number(durationMs) : null;
   }
 }
 
@@ -76,13 +77,14 @@ export async function fetchNewsDataLatest({
   if (country) endpoint.searchParams.set('country', country);
   if (category) endpoint.searchParams.set('category', category);
 
+  const startedAt = Date.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response;
   try {
     response = await fetchImpl(endpoint, { method: 'GET', headers: { accept: 'application/json' }, signal: controller.signal });
   } catch (error) {
-    throw new NewsDataApiError(error?.name === 'AbortError' ? 'newsdata_timeout' : 'newsdata_network_error');
+    throw new NewsDataApiError(error?.name === 'AbortError' ? 'newsdata_timeout' : 'newsdata_network_error', { durationMs: Date.now() - startedAt });
   } finally {
     clearTimeout(timer);
   }
@@ -92,7 +94,7 @@ export async function fetchNewsDataLatest({
   if (!response.ok || payload?.status === 'error') {
     throw new NewsDataApiError(
       safeText(payload?.results?.message || payload?.message || `newsdata_http_${response.status}`, 300) || 'newsdata_request_failed',
-      { status: response.status, code: safeText(payload?.results?.code || payload?.code, 100), requestId: response.headers.get('x-request-id') }
+      { status: response.status, code: safeText(payload?.results?.code || payload?.code, 100), requestId: response.headers.get('x-request-id'), durationMs: Date.now() - startedAt }
     );
   }
 
@@ -106,5 +108,11 @@ export async function fetchNewsDataLatest({
     articles.push(article);
     if (articles.length >= maxArticles) break;
   }
-  return { articles, nextPage: safeText(payload?.nextPage, 240) };
+  return {
+    articles,
+    nextPage: safeText(payload?.nextPage, 240),
+    requestId: response.headers.get('x-request-id') || null,
+    durationMs: Date.now() - startedAt,
+    rawResultCount: Array.isArray(payload?.results) ? payload.results.length : 0
+  };
 }

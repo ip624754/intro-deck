@@ -3,12 +3,19 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP061H1
-- Phase: production hotfix for profile preview runtime safety on top of STEP061
+- Current STEP: STEP061A
+- Phase: AI/news end-to-end live acceptance and rollout hardening on top of STEP061H1
 - Primary mode: HEAVY / SUBSCRIPTION ENTITLEMENTS / SCHEDULING / AI EVIDENCE / IDEMPOTENCY / EXPLICIT PUBLISHING
-- Runtime status: STEP061 is operator-confirmed deployed at artifact `10d2288f9354312444cfdd4957a6c4a7e9da245d`; profile preview is currently broken in production until STEP061H1 is deployed. Migration 031 and scheduler configuration are operator-confirmed present through health, while full preset/cron delivery acceptance remains pending.
+- Runtime status: STEP061H1 is operator-confirmed live at artifact `4c2909b59584292b81a730f63b170d8f810316c3`; profile preview/webhook recovery is accepted. STEP061A source is implemented but requires migration 032, deployment, read-only preflight, and manual production evidence before a GO / GO_WITH_RISKS / NO_GO verdict.
 
 ## What exists now
+
+- STEP061A adds artifact-bound production acceptance for the NewsData → evidence → OpenAI draft → edit/approve → STEP059 LinkedIn receipt loop.
+- `AI_NEWS_ROLLOUT_STAGE=operator_acceptance` is the fail-closed default; Pro access requires an explicit post-acceptance ENV change.
+- Migration `032_ai_news_live_acceptance_telemetry.sql` records bounded provider usage, OpenAI token counts, duration, outcomes, and optional operator-configured cost estimates without prompts, tokens, keys, or raw provider payloads.
+- `step061a:preflight` is read-only and performs no provider calls; the manual verifier issues only GO / GO_WITH_RISKS / NO_GO against the exact deployed artifact.
+- Scheduled delivery remains Telegram-draft-only and STEP059 remains the only LinkedIn publishing core.
+- Canonical Node 20 QA: 81/93 smoke PASS versus STEP061H1 79/92; `smoke:env` resolved, no new failures, 12 inherited failures remain.
 
 - STEP061H1 fixes the live `p:prev` crash caused by an undefined `aiNewsPresetDiagnostics` reference in `buildProfilePreviewSurface`.
 - Profile preview no longer receives operator-only AI/news diagnostics; those diagnostics are passed only to the operator surface.

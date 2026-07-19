@@ -1,13 +1,14 @@
 import { validateDraftText, validateEvidenceClaims } from './newsDraftContract.js';
 
 export class OpenAiDraftError extends Error {
-  constructor(message, { status = null, code = null, requestId = null, retryable = false } = {}) {
+  constructor(message, { status = null, code = null, requestId = null, retryable = false, durationMs = null } = {}) {
     super(message);
     this.name = 'OpenAiDraftError';
     this.status = status;
     this.code = code;
     this.requestId = requestId;
     this.retryable = retryable;
+    this.durationMs = Number.isFinite(Number(durationMs)) ? Number(durationMs) : null;
   }
 }
 
@@ -91,6 +92,7 @@ export async function generateOpenAiNewsDraft({
     member_profile: profileContext(profile)
   });
 
+  const startedAt = Date.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response;
@@ -120,7 +122,7 @@ export async function generateOpenAiNewsDraft({
       signal: controller.signal
     });
   } catch (error) {
-    throw new OpenAiDraftError(error?.name === 'AbortError' ? 'openai_timeout' : 'openai_network_error', { retryable: true });
+    throw new OpenAiDraftError(error?.name === 'AbortError' ? 'openai_timeout' : 'openai_network_error', { retryable: true, durationMs: Date.now() - startedAt });
   } finally {
     clearTimeout(timer);
   }
@@ -135,20 +137,28 @@ export async function generateOpenAiNewsDraft({
         status: response.status,
         code: payload?.error?.code || payload?.error?.type || null,
         requestId,
-        retryable: response.status === 429 || response.status >= 500
+        retryable: response.status === 429 || response.status >= 500,
+        durationMs: Date.now() - startedAt
       }
     );
   }
 
   const outputText = extractOutputText(payload);
-  if (!outputText) throw new OpenAiDraftError('openai_output_missing', { requestId });
+  if (!outputText) throw new OpenAiDraftError('openai_output_missing', { requestId, durationMs: Date.now() - startedAt });
   let parsed;
-  try { parsed = JSON.parse(outputText); } catch { throw new OpenAiDraftError('openai_output_invalid_json', { requestId }); }
+  try { parsed = JSON.parse(outputText); } catch { throw new OpenAiDraftError('openai_output_invalid_json', { requestId, durationMs: Date.now() - startedAt }); }
 
   const textValidation = validateDraftText({ postText: parsed.post_text, sourceEvidence, profileSnapshot: profile, sourceUrl });
-  if (!textValidation.valid) throw new OpenAiDraftError(textValidation.reason, { requestId });
+  if (!textValidation.valid) throw new OpenAiDraftError(textValidation.reason, { requestId, durationMs: Date.now() - startedAt });
   const claimsValidation = validateEvidenceClaims({ claims: parsed.evidence_claims, sourceEvidence });
-  if (!claimsValidation.valid) throw new OpenAiDraftError(claimsValidation.reason, { requestId });
+  if (!claimsValidation.valid) throw new OpenAiDraftError(claimsValidation.reason, { requestId, durationMs: Date.now() - startedAt });
+
+  const usagePayload = payload?.usage || {};
+  const usage = {
+    inputTokens: Math.max(0, Number(usagePayload.input_tokens || 0) || 0),
+    outputTokens: Math.max(0, Number(usagePayload.output_tokens || 0) || 0),
+    totalTokens: Math.max(0, Number(usagePayload.total_tokens || 0) || 0)
+  };
 
   return {
     postText: textValidation.normalized,
@@ -156,6 +166,8 @@ export async function generateOpenAiNewsDraft({
     interpretationDisclosure: String(parsed.interpretation_disclosure || '').trim().slice(0, 500),
     providerResponseId: payload?.id || null,
     providerRequestId: requestId,
-    model: payload?.model || model
+    model: payload?.model || model,
+    usage,
+    durationMs: Date.now() - startedAt
   };
 }

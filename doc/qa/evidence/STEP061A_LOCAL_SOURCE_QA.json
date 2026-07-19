@@ -1,0 +1,32 @@
+{
+  "step": "STEP061A",
+  "status": "SOURCE_VERIFIED",
+  "node": "20.20.2",
+  "npm": "10.9.2",
+  "checks": {
+    "npmCi": "PASS",
+    "npmCheck": "PASS",
+    "dedicatedSmoke": "PASS",
+    "negativePreflightGuard": "PASS",
+    "syntheticEvidenceVerifier": "PASS",
+    "npmAudit": "PASS_0_VULNERABILITIES",
+    "gitDiffCheck": "PASS",
+    "envContract": "PASS"
+  },
+  "smoke": {
+    "passed": 81,
+    "failed": 12,
+    "total": 93,
+    "newFailures": 0,
+    "resolvedInherited": [
+      "smoke:env"
+    ]
+  },
+  "notVerified": [
+    "live migration 032",
+    "STEP061A deployment",
+    "provider telemetry",
+    "real LinkedIn post",
+    "final production verdict"
+  ]
+}

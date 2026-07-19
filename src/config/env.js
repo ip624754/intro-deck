@@ -35,6 +35,10 @@ const DEFAULT_AI_NEWS_SCHEDULE_BATCH_SIZE = 5;
 const DEFAULT_AI_NEWS_SCHEDULE_CLAIM_TIMEOUT_SECONDS = 900;
 const DEFAULT_AI_NEWS_SCHEDULE_RETRY_DELAY_SECONDS = 900;
 const DEFAULT_AI_NEWS_SCHEDULE_MAX_ATTEMPTS = 3;
+const DEFAULT_AI_NEWS_ROLLOUT_STAGE = 'operator_acceptance';
+const DEFAULT_NEWSDATA_REQUEST_COST_USD = 0;
+const DEFAULT_OPENAI_INPUT_COST_USD_PER_1M = 0;
+const DEFAULT_OPENAI_OUTPUT_COST_USD_PER_1M = 0;
 const DEFAULT_STATE_TTL_SECONDS = 600;
 const DEFAULT_JWKS_CACHE_TTL_SECONDS = 3600;
 const DEFAULT_DATABASE_SSLMODE = 'require';
@@ -73,6 +77,15 @@ function readBooleanEnv(name, fallback = false) {
   if (['1', 'true', 'yes', 'on'].includes(raw)) return true;
   if (['0', 'false', 'no', 'off', ''].includes(raw)) return false;
   throw new Error(`${name} must be a boolean value (1/0, true/false, yes/no, on/off)`);
+}
+
+function readNonNegativeNumberEnv(name, fallback = 0) {
+  const raw = readEnv(name, String(fallback));
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new Error(`${name} must be a non-negative number: ${raw}`);
+  }
+  return parsed;
 }
 
 function readIntegerEnv(name, fallback) {
@@ -417,9 +430,16 @@ function parseAiNewsDraftConfigStrict() {
     schedule = buildAiNewsScheduleFailSafeConfig(error);
   }
 
+  const rolloutStage = readEnumEnv(
+    'AI_NEWS_ROLLOUT_STAGE',
+    DEFAULT_AI_NEWS_ROLLOUT_STAGE,
+    ['operator_acceptance', 'limited_pro', 'live']
+  );
+
   return {
     mode,
     enabled,
+    rolloutStage,
     configurationValid: true,
     configurationError: null,
     dailyLimit: readBoundedIntegerEnv('AI_NEWS_DAILY_LIMIT', DEFAULT_AI_NEWS_DAILY_LIMIT, { min: 1, max: 25 }),
@@ -435,7 +455,8 @@ function parseAiNewsDraftConfigStrict() {
       configured: Boolean(newsdataApiKey),
       apiKey: newsdataApiKey,
       baseUrl: readHttpsUrlEnv('NEWSDATA_BASE_URL', DEFAULT_NEWSDATA_BASE_URL),
-      timeoutMs: readBoundedIntegerEnv('NEWSDATA_API_TIMEOUT_MS', DEFAULT_NEWSDATA_API_TIMEOUT_MS, { min: 1000, max: 30000 })
+      timeoutMs: readBoundedIntegerEnv('NEWSDATA_API_TIMEOUT_MS', DEFAULT_NEWSDATA_API_TIMEOUT_MS, { min: 1000, max: 30000 }),
+      estimatedRequestCostUsd: readNonNegativeNumberEnv('NEWSDATA_REQUEST_COST_USD', DEFAULT_NEWSDATA_REQUEST_COST_USD)
     },
     openai: {
       configured: Boolean(openaiApiKey),
@@ -443,6 +464,8 @@ function parseAiNewsDraftConfigStrict() {
       baseUrl: readHttpsUrlEnv('OPENAI_BASE_URL', DEFAULT_OPENAI_BASE_URL),
       model: String(readEnv('OPENAI_DRAFT_MODEL', DEFAULT_OPENAI_DRAFT_MODEL) || '').trim(),
       timeoutMs: readBoundedIntegerEnv('OPENAI_API_TIMEOUT_MS', DEFAULT_OPENAI_API_TIMEOUT_MS, { min: 3000, max: 120000 }),
+      inputCostUsdPerMillion: readNonNegativeNumberEnv('OPENAI_INPUT_COST_USD_PER_1M', DEFAULT_OPENAI_INPUT_COST_USD_PER_1M),
+      outputCostUsdPerMillion: readNonNegativeNumberEnv('OPENAI_OUTPUT_COST_USD_PER_1M', DEFAULT_OPENAI_OUTPUT_COST_USD_PER_1M),
       store: false
     },
     explicitApprovalRequired: true,
@@ -454,8 +477,10 @@ function parseAiNewsDraftConfigStrict() {
 
 function buildAiNewsDraftFailSafeConfig(error) {
   const rawMode = String(readEnv('AI_NEWS_DRAFT_MODE', DEFAULT_AI_NEWS_DRAFT_MODE) || '').trim().toLowerCase();
+  const rawRolloutStage = String(readEnv('AI_NEWS_ROLLOUT_STAGE', DEFAULT_AI_NEWS_ROLLOUT_STAGE) || '').trim().toLowerCase();
   return {
     mode: ['operator', 'pro'].includes(rawMode) ? rawMode : 'off',
+    rolloutStage: ['operator_acceptance', 'limited_pro', 'live'].includes(rawRolloutStage) ? rawRolloutStage : DEFAULT_AI_NEWS_ROLLOUT_STAGE,
     enabled: false,
     configurationValid: false,
     configurationError: { code: 'ai_news_draft_config_invalid', message: error?.message || String(error) },
@@ -468,8 +493,8 @@ function buildAiNewsDraftFailSafeConfig(error) {
     draftTtlSeconds: DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS,
     presetLimit: DEFAULT_AI_NEWS_PRESET_LIMIT,
     schedule: buildAiNewsScheduleFailSafeConfig(error),
-    newsdata: { configured: Boolean(readEnv('NEWSDATA_API_KEY')), apiKey: null, baseUrl: DEFAULT_NEWSDATA_BASE_URL, timeoutMs: DEFAULT_NEWSDATA_API_TIMEOUT_MS },
-    openai: { configured: Boolean(readEnv('OPENAI_API_KEY')), apiKey: null, baseUrl: DEFAULT_OPENAI_BASE_URL, model: String(readEnv('OPENAI_DRAFT_MODEL', DEFAULT_OPENAI_DRAFT_MODEL)), timeoutMs: DEFAULT_OPENAI_API_TIMEOUT_MS, store: false },
+    newsdata: { configured: Boolean(readEnv('NEWSDATA_API_KEY')), apiKey: null, baseUrl: DEFAULT_NEWSDATA_BASE_URL, timeoutMs: DEFAULT_NEWSDATA_API_TIMEOUT_MS, estimatedRequestCostUsd: DEFAULT_NEWSDATA_REQUEST_COST_USD },
+    openai: { configured: Boolean(readEnv('OPENAI_API_KEY')), apiKey: null, baseUrl: DEFAULT_OPENAI_BASE_URL, model: String(readEnv('OPENAI_DRAFT_MODEL', DEFAULT_OPENAI_DRAFT_MODEL)), timeoutMs: DEFAULT_OPENAI_API_TIMEOUT_MS, inputCostUsdPerMillion: DEFAULT_OPENAI_INPUT_COST_USD_PER_1M, outputCostUsdPerMillion: DEFAULT_OPENAI_OUTPUT_COST_USD_PER_1M, store: false },
     explicitApprovalRequired: true,
     automaticPublishing: false,
     scheduledDeliveryCreatesDraftOnly: true,

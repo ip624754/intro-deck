@@ -4,13 +4,19 @@
 Intro Deck
 
 ## Current source baseline
-STEP061H1 — Profile Preview Runtime Hotfix
+STEP061A — AI/News End-to-End Live Acceptance & Rollout Hardening
 
 ## Layer
-HEAVY / production webhook recovery / runtime regression guard
+HEAVY / production acceptance / AI evidence / provider telemetry / rollout governance
 
 ## Source-confirmed
 
+- STEP061A adds an artifact-bound production acceptance gate for the existing NewsData → evidence → OpenAI draft → edit/approval → STEP059 LinkedIn receipt loop.
+- `AI_NEWS_ROLLOUT_STAGE=operator_acceptance` is the fail-closed initial rollout stage; Pro access requires an explicit evidence-backed ENV change.
+- Migration 032 adds bounded provider usage, OpenAI token counters, durations, outcomes, and optional operator-configured cost estimates without storing prompts, secrets, OAuth tokens, or raw provider payloads.
+- Production preflight is read-only, performs no NewsData/OpenAI/Telegram-send/LinkedIn-publish calls, and binds evidence to the exact deployed artifact.
+- The manual verifier requires all core-loop, idempotency, preset, scheduler, and no-auto-publish scenarios before a GO verdict.
+- `.env.example` is synchronized with the Intro Deck runtime contract; the inherited Roll Duel template drift is removed.
 - STEP061H1 fixes the live profile preview callback crash caused by an undefined operator-diagnostics variable.
 - Operator-only AI/news preset diagnostics are no longer referenced by profile preview and are passed only to the operator diagnostics renderer.
 - A runtime smoke invokes the real profile-preview builder and proves the fallback surface renders without persistence.

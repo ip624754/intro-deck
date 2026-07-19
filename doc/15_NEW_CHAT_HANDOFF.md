@@ -3,12 +3,18 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP061H1 — Profile Preview Runtime Hotfix
-- Current mode: HEAVY / PRODUCTION WEBHOOK RECOVERY / RUNTIME REGRESSION GUARD
-- Current focus: deploy the profile-preview hotfix, rotate the exposed Telegram bot token, verify `p:prev`, then continue STEP061 live acceptance.
+- Current baseline: STEP061A — AI/News End-to-End Live Acceptance & Rollout Hardening
+- Current mode: HEAVY / AI PROVIDERS / LINKEDIN PUBLISHING / CRON / ROLLOUT GOVERNANCE
+- Current focus: apply migration 032, deploy STEP061A, run the artifact-bound read-only preflight, complete the operator E2E evidence, and decide GO / GO_WITH_RISKS / NO_GO before Pro rollout.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP061A adds provider usage/cost telemetry, a fail-closed rollout-stage gate, a read-only production preflight, and a manual evidence verifier.
+- Provider pricing is never guessed: cost rates default to zero and are operator-configured estimates only.
+- Missing migration 032 blocks source search/generation before provider budget is consumed.
+- `operator_acceptance` remains the default rollout stage; subscription access never grants publication authority.
+- STEP059 remains the only LinkedIn publishing core and every post still requires explicit one-post approval.
 
 - STEP061 adds saved personalized news presets with manual, daily, and weekdays modes.
 - Pro membership controls access and bounded allowances; operators retain support/testing access.

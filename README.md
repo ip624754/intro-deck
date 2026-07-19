@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP060 baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP061A baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
@@ -39,6 +39,8 @@ A Telegram-first professional directory:
 - STEP058B1 — verification compatibility + optional-config fail-safe
 - STEP059 — explicit user-approved Share Profile on LinkedIn
 - STEP061 — personalized AI/news presets, Pro access/allowances, and scheduled reviewable Telegram drafts
+- STEP061H1 — profile preview runtime and webhook token-log hotfix
+- STEP061A — AI/news E2E live acceptance, provider telemetry, and rollout hardening
 - STEP060 — evidence-bound AI/news drafts with preview/edit and explicit one-post approval
 
 ## Core docs
@@ -74,6 +76,10 @@ A Telegram-first professional directory:
 - `npm run smoke:linkedin-share`
 - `npm run smoke:ai-news-drafts`
 - `npm run step057:preflight`
+- `npm run smoke:ai-news-live-acceptance`
+- `npm run step061a:preflight`
+- `npm run step061a:evidence:init`
+- `npm run step061a:evidence:verify`
 
 
 ## STEP058B trust-surface rollout
@@ -134,3 +140,17 @@ STEP060 remains text-only and source-evidence-bound. STEP061 adds scheduled deli
 
 Operator runbook: `doc/87_STEP060_OPERATOR_ROLLOUT.md`.
 STEP specification: `doc/spec/STEP060_AI_NEWS_DRAFTS_APPROVAL_FOUNDATION.md`.
+
+
+## STEP061A AI/news live acceptance rollout
+
+1. Apply `migrations/032_ai_news_live_acceptance_telemetry.sql` after migrations 030 and 031.
+2. Keep `AI_NEWS_ROLLOUT_STAGE=operator_acceptance` for the first production evidence run.
+3. Configure provider cost-rate ENV only from trusted current pricing; leave values at `0` when unknown.
+4. Deploy and confirm health reports `STEP061A`, provider telemetry required, and automatic publishing disabled.
+5. Run `step061a:preflight` with exact production artifact SHA, database URL, bot token, and optional operator Telegram user ID.
+6. Complete the manual source → draft → edit → approval → exactly-one LinkedIn post plus preset/cron scenarios.
+7. Verify the evidence manifest. Only a recorded GO permits an explicit move to `limited_pro`; broad `live` remains a later operator decision.
+
+Operator runbook: `doc/89_STEP061A_OPERATOR_ROLLOUT.md`.
+STEP specification: `doc/spec/STEP061A_AI_NEWS_E2E_LIVE_ACCEPTANCE_AND_ROLLOUT_HARDENING.md`.

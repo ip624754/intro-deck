@@ -13,6 +13,7 @@ function reasonText(reason) {
     ai_news_draft_config_invalid: 'AI/news draft configuration is invalid.',
     operator_only: 'This foundation is currently limited to Intro Deck operators.',
     pro_required: 'AI/news drafts require Pro.',
+    ai_news_operator_acceptance_in_progress: 'AI/news rollout is currently limited to operator acceptance testing.',
     linkedin_not_connected: 'Connect LinkedIn first.',
     profile_not_listed: 'Complete and publish your profile first.',
     migration_030_required: 'Migration 030 has not been applied yet.',
@@ -28,6 +29,7 @@ function reasonText(reason) {
     newsdata_request_failed: 'The news provider request failed. Try again later.',
     linkedin_share_unavailable: 'LinkedIn publishing is not available right now.',
     migration_031_required: 'Migration 031 has not been applied yet.',
+    migration_032_required: 'Migration 032 has not been applied yet.',
     ai_news_preset_limit_reached: 'Your saved-preset limit is used.',
     ai_news_preset_duplicate: 'This preset is already saved.',
     ai_news_preferences_not_found: 'Choose topic, language, and tone before saving a preset.',
@@ -55,6 +57,7 @@ export function renderAiNewsHubText({ state, notice = null }) {
     `Allowance: ${state?.dailyUsage?.remaining ?? 0}/${state?.dailyUsage?.limit ?? state?.config?.dailyLimit ?? 0} remaining in 24h`,
     `Saved presets: ${state?.presetUsage?.used ?? state?.presets?.length ?? 0}/${state?.presetUsage?.limit ?? state?.config?.presetLimit ?? 0}`,
     `Scheduled delivery: ${state?.config?.schedule?.enabled ? 'drafts only · no auto-posting' : 'off'}`,
+    `Rollout stage: ${state?.config?.rolloutStage || 'operator_acceptance'}`,
     '',
     'Flow: source → evidence → draft → preview/edit → explicit LinkedIn approval.'
   ];

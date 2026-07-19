@@ -256,22 +256,29 @@ export async function finalizeAiNewsDraftGenerated(client, {
   modelProvider,
   modelName,
   providerResponseId,
-  providerRequestId = null
+  providerRequestId = null,
+  inputTokens = null,
+  outputTokens = null,
+  totalTokens = null,
+  estimatedCostMicrousd = 0
 }) {
   const result = await client.query(
     `update ai_news_drafts
      set status='draft', post_text=$2, ai_generated_text=$2,
          evidence_claims_json=$3::jsonb, model_provider=$4, model_name=$5,
-         provider_response_id=$6, provider_request_id=$7, generation_error_code=null, updated_at=now()
+         provider_response_id=$6, provider_request_id=$7, generation_error_code=null,
+         openai_input_tokens=$8, openai_output_tokens=$9, openai_total_tokens=$10,
+         estimated_generation_cost_microusd=$11, updated_at=now()
      where id=$1 and status='generating'
      returning *`,
-    [draftId, postText, JSON.stringify(evidenceClaims || []), modelProvider, modelName, providerResponseId, providerRequestId]
+    [draftId, postText, JSON.stringify(evidenceClaims || []), modelProvider, modelName, providerResponseId, providerRequestId,
+      inputTokens, outputTokens, totalTokens, estimatedCostMicrousd]
   );
   if (result.rows[0]) {
     await insertAiNewsDraftEvent(client, {
       draftId,
       eventType: 'generation_completed',
-      detail: { modelProvider, modelName, providerRequestId, evidenceClaimCount: (evidenceClaims || []).length }
+      detail: { modelProvider, modelName, providerRequestId, evidenceClaimCount: (evidenceClaims || []).length, inputTokens, outputTokens, totalTokens, estimatedCostMicrousd }
     });
   }
   return result.rows[0] || null;
@@ -443,4 +450,65 @@ export async function getAiNewsInputSession(client, { userId, forUpdate = false 
 
 export async function clearAiNewsInputSession(client, { userId }) {
   await client.query(`delete from ai_news_input_sessions where user_id=$1`, [userId]);
+}
+
+
+export async function insertAiNewsProviderUsageEvent(client, {
+  userId = null,
+  sourceId = null,
+  draftId = null,
+  presetRunId = null,
+  provider,
+  operation,
+  outcome,
+  requestId = null,
+  modelName = null,
+  inputTokens = null,
+  outputTokens = null,
+  totalTokens = null,
+  resultCount = null,
+  durationMs = null,
+  estimatedCostMicrousd = 0,
+  errorCode = null,
+  detail = null
+}) {
+  const result = await client.query(
+    `insert into ai_news_provider_usage_events (
+       user_id, source_id, draft_id, preset_run_id,
+       provider, operation, outcome, request_id, model_name,
+       input_tokens, output_tokens, total_tokens, result_count, duration_ms,
+       estimated_cost_microusd, error_code, detail_json
+     ) values (
+       $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17::jsonb
+     ) returning *`,
+    [
+      userId, sourceId, draftId, presetRunId,
+      provider, operation, outcome, requestId, modelName,
+      inputTokens, outputTokens, totalTokens, resultCount, durationMs,
+      Math.max(0, Number(estimatedCostMicrousd) || 0),
+      errorCode ? String(errorCode).slice(0, 160) : null,
+      detail ? JSON.stringify(detail) : null
+    ]
+  );
+  return result.rows[0] || null;
+}
+
+export async function getAiNewsRolloutSummary(client) {
+  const result = await client.query(`
+    select
+      (select count(*)::int from ai_news_provider_usage_events where provider='newsdata' and operation='search_latest' and created_at >= now()-interval '24 hours') as newsdata_calls_24h,
+      (select count(*)::int from ai_news_provider_usage_events where provider='openai' and operation='generate_draft' and created_at >= now()-interval '24 hours') as openai_calls_24h,
+      (select count(*)::int from ai_news_provider_usage_events where outcome='failed' and created_at >= now()-interval '24 hours') as provider_failures_24h,
+      (select coalesce(sum(input_tokens),0)::bigint from ai_news_provider_usage_events where provider='openai' and created_at >= now()-interval '24 hours') as openai_input_tokens_24h,
+      (select coalesce(sum(output_tokens),0)::bigint from ai_news_provider_usage_events where provider='openai' and created_at >= now()-interval '24 hours') as openai_output_tokens_24h,
+      (select coalesce(sum(estimated_cost_microusd),0)::bigint from ai_news_provider_usage_events where created_at >= now()-interval '24 hours') as estimated_cost_microusd_24h,
+      (select count(*)::int from ai_news_drafts where created_at >= now()-interval '24 hours') as draft_attempts_24h,
+      (select count(*)::int from ai_news_drafts where status in ('draft','editing','share_ready','published') and created_at >= now()-interval '24 hours') as generated_drafts_24h,
+      (select count(*)::int from ai_news_drafts where edited_by_user=true and created_at >= now()-interval '24 hours') as edited_drafts_24h,
+      (select count(*)::int from ai_news_drafts where status='published' and published_at >= now()-interval '24 hours') as published_drafts_24h,
+      (select count(*)::int from linkedin_share_intents where source_kind='ai_news_draft' and status='unknown' and created_at >= now()-interval '24 hours') as unknown_share_outcomes_24h,
+      (select count(*)::int from linkedin_share_intents where source_kind='ai_news_draft' and status='published' and published_at >= now()-interval '24 hours') as linkedin_posts_24h
+  `);
+  const row = result.rows[0] || {};
+  return Object.fromEntries(Object.entries(row).map(([key, value]) => [key, Number(value || 0)]));
 }

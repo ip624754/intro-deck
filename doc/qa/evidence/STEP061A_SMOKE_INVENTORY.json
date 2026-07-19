@@ -1,0 +1,862 @@
+{
+  "summary": {
+    "step": "STEP061A",
+    "node": "20.20.2",
+    "total": 93,
+    "passed": 81,
+    "failed": 12,
+    "failures": [
+      "smoke:code-split",
+      "smoke:profile-session-schema",
+      "smoke:admin-allowlist",
+      "smoke:admin-users",
+      "smoke:admin-user-card",
+      "smoke:admin-intros",
+      "smoke:broadcast-idempotency",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-search",
+      "smoke:admin-russian-layer",
+      "smoke:admin-runbook-freeze"
+    ]
+  },
+  "results": [
+    {
+      "index": 1,
+      "script": "smoke:env",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.0,
+      "stdout": "OK: env contract baseline present",
+      "stderr": ""
+    },
+    {
+      "index": 2,
+      "script": "smoke:auth",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.585,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:auth\n> node scripts/smoke_linkedin_auth_contract.js\n\nOK: linkedin auth contract baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 3,
+      "script": "smoke:router",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.589,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:router\n> node scripts/smoke_router_contract.js\n\nOK: router baseline contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 4,
+      "script": "smoke:storage",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.579,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:storage\n> node scripts/smoke_storage_contract.js\n\nOK: storage contract baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 5,
+      "script": "smoke:profile",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.585,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:profile\n> node scripts/smoke_profile_edit_contract.js\n\nOK: profile edit contract baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 6,
+      "script": "smoke:skills",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.595,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:skills\n> node scripts/smoke_skills_selection_contract.js\n\nOK: skills selection contract baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 7,
+      "script": "smoke:directory",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.764,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:directory\n> node scripts/smoke_directory_contract.js\n\nOK: directory browse contract baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 8,
+      "script": "smoke:filters",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.676,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:filters\n> node scripts/smoke_directory_filters_contract.js\n\nOK: directory filters contract baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 9,
+      "script": "smoke:search",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.664,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:search\n> node scripts/smoke_directory_search_contract.js\n\nOK: directory search contract baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 10,
+      "script": "smoke:outbound",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.586,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:outbound\n> node scripts/smoke_profile_card_outbound_contract.js\n\nOK: profile card outbound contract honors STEP014 contact rules\n",
+      "stderr": ""
+    },
+    {
+      "index": 11,
+      "script": "smoke:intro",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.676,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:intro\n> node scripts/smoke_intro_request_contract.js\n\nOK: intro request persistence baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 12,
+      "script": "smoke:webhook",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.576,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:webhook\n> node scripts/smoke_webhook_secret_contract.js\n\nOK: webhook secret guard baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 13,
+      "script": "smoke:intro-actions",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.587,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:intro-actions\n> node scripts/smoke_intro_inbox_actions_contract.js\n\nOK: intro inbox actions baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 14,
+      "script": "smoke:intro-decisions",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.639,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:intro-decisions\n> node scripts/smoke_intro_decision_contract.js\n\nOK: intro decision persistence baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 15,
+      "script": "smoke:intro-contact",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.803,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:intro-contact\n> node scripts/smoke_intro_contact_contract.js\n\nOK: intro contact contract baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 16,
+      "script": "smoke:intro-detail",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.717,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:intro-detail\n> node scripts/smoke_intro_detail_contract.js\n\nOK: intro detail surfaces baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 17,
+      "script": "smoke:guards",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.66,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:guards\n> node scripts/smoke_runtime_guard_contract.js\n\nOK: anti-abuse / retry / dedupe hardening baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 18,
+      "script": "smoke:intro-retention",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.587,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:intro-retention\n> node scripts/smoke_intro_retention_contract.js\n\nOK: intro retention / history safety baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 19,
+      "script": "smoke:code-split",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.579,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:code-split\n> node scripts/smoke_code_split_contract.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_code_split_contract.js:10\n  throw new Error(`createBot.js should stay slim after STEP018; got ${lineCount} lines`);\n        ^\n\nError: createBot.js should stay slim after STEP018; got 190 lines\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_code_split_contract.js:10:9\n    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 20,
+      "script": "smoke:data-split",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.575,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:data-split\n> node scripts/smoke_directory_repo_contract.js\n\nOK: directoryRepo extraction baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 21,
+      "script": "smoke:receipts",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.581,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:receipts\n> node scripts/smoke_notification_receipt_contract.js\n\nOK: notification / receipt layer baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 22,
+      "script": "smoke:notification-retry",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.572,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:notification-retry\n> node scripts/smoke_notification_retry_contract.js\n\nOK: notification retry baseline contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 23,
+      "script": "smoke:notification-history",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.577,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:notification-history\n> node scripts/smoke_notification_receipt_history_contract.js\n\nOK: receipt history / operator diagnostics baseline contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 24,
+      "script": "smoke:ops",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.589,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:ops\n> node scripts/smoke_operator_diagnostics_surface_contract.js\n\nOK: lightweight operator/admin shell + diagnostics surface contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 25,
+      "script": "smoke:cron",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.562,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:cron\n> node scripts/smoke_cron_contract.js\n\nOK: cron compatibility contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 26,
+      "script": "smoke:legal",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.577,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:legal\n> node scripts/smoke_public_legal_surfaces_contract.js\n\nOK: public legal surfaces contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 27,
+      "script": "smoke:bot-init",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.569,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:bot-init\n> node scripts/smoke_telegram_bot_init_contract.js\n\nOK: telegram bot init contract present\n",
+      "stderr": ""
+    },
+    {
+      "index": 28,
+      "script": "smoke:commands",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.584,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:commands\n> node scripts/smoke_command_contract.js\n\nOK: command contract cleanup baseline\n",
+      "stderr": ""
+    },
+    {
+      "index": 29,
+      "script": "smoke:help-surface-compat",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.65,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:help-surface-compat\n> node scripts/smoke_help_surface_compat.js\n\nOK: help surface render compat\n",
+      "stderr": ""
+    },
+    {
+      "index": 30,
+      "script": "smoke:oauth-routes",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.58,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:oauth-routes\n> node scripts/smoke_oauth_route_imports.js\n\nOK: oauth route relative imports resolve to existing files\n",
+      "stderr": ""
+    },
+    {
+      "index": 31,
+      "script": "smoke:profile-session-schema",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.723,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:profile-session-schema\n> node scripts/smoke_profile_edit_session_schema_contract.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_profile_edit_session_schema_contract.js:17\n    throw new Error(`STEP025 migration must allow field key: ${fieldKey}`);\n          ^\n\nError: STEP025 migration must allow field key: tg\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_profile_edit_session_schema_contract.js:17:11\n    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 32,
+      "script": "smoke:product-surfaces",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.728,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:product-surfaces\n> node scripts/smoke_product_surface_contract.js\n\nOK: product surface copy and navigation contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 33,
+      "script": "smoke:profile-render-compat",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.703,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:profile-render-compat\n> node scripts/smoke_profile_render_export_compat.js\n\nOK: profile render export compatibility holds\n",
+      "stderr": ""
+    },
+    {
+      "index": 34,
+      "script": "smoke:help-fallback",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.717,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:help-fallback\n> node scripts/smoke_help_fallback_callback_contract.js\n\nOK: help fallback callback contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 35,
+      "script": "smoke:linkedin-callback-diagnostics",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.596,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:linkedin-callback-diagnostics\n> node scripts/smoke_linkedin_callback_diagnostics_contract.js\n\nOK: linkedin callback diagnostics contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 36,
+      "script": "smoke:linkedin-relink-transfer",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.618,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:linkedin-relink-transfer\n> node scripts/smoke_linkedin_relink_transfer_contract.js\n\nOK: linkedin relink transfer contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 37,
+      "script": "smoke:linkedin-identity-transfer",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.588,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:linkedin-identity-transfer\n> node scripts/smoke_linkedin_identity_store_transfer_contract.js\n\nOK: linkedin identity store transfer contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 38,
+      "script": "smoke:linkedin-seed",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.596,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:linkedin-seed\n> node scripts/smoke_linkedin_seed_contract.js\n\nOK: linkedin identity auto-seed contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 39,
+      "script": "smoke:linkedin-profile-seed-sql",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.597,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:linkedin-profile-seed-sql\n> node scripts/smoke_linkedin_profile_seed_sql_contract.js\n\nOK: linkedin profile seed SQL contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 40,
+      "script": "smoke:admin-shell",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.61,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-shell\n> node scripts/smoke_admin_shell_contract.js\n\nOK: admin shell contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 41,
+      "script": "smoke:admin-allowlist",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.616,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-allowlist\n> node scripts/smoke_admin_allowlist_gate.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_allowlist_gate.js:18\n  throw new Error('Operator-only denial surface must use product-safe copy');\n        ^\n\nError: Operator-only denial surface must use product-safe copy\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_allowlist_gate.js:18:9\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 42,
+      "script": "smoke:admin-users",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.606,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-users\n> node scripts/smoke_admin_users_contract.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_users_contract.js:39\n  throw new Error('Users surface must expose the Users title');\n        ^\n\nError: Users surface must expose the Users title\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_users_contract.js:39:9\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 43,
+      "script": "smoke:admin-user-card",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.596,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-user-card\n> node scripts/smoke_admin_user_card_contract.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_user_card_contract.js:30\n  throw new Error('User card surface must expose the User Card title');\n        ^\n\nError: User card surface must expose the User Card title\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_user_card_contract.js:30:9\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 44,
+      "script": "smoke:notice",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.6,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:notice\n> node scripts/smoke_notice_contract.js\n\nOK: notice contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 45,
+      "script": "smoke:broadcast",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.602,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:broadcast\n> node scripts/smoke_broadcast_contract.js\n\nOK: broadcast composer uplift contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 46,
+      "script": "smoke:outbox",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.595,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:outbox\n> node scripts/smoke_outbox_contract.js\n\nOK: outbox contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 47,
+      "script": "smoke:admin-intros",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.615,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-intros\n> node scripts/smoke_admin_intros_contract.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_intros_contract.js:32\n  throw new Error('Admin intros surface must expose the Intros title');\n        ^\n\nError: Admin intros surface must expose the Intros title\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_intros_contract.js:32:9\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 48,
+      "script": "smoke:admin-delivery",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.601,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-delivery\n> node scripts/smoke_admin_delivery_contract.js\n\nOK: admin delivery contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 49,
+      "script": "smoke:admin-quality",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.616,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-quality\n> node scripts/smoke_admin_quality_contract.js\n\nOK: admin quality contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 50,
+      "script": "smoke:audit-detail",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.598,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:audit-detail\n> node scripts/smoke_audit_detail_contract.js\n\nOK: audit detail contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 51,
+      "script": "smoke:direct-message",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.597,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:direct-message\n> node scripts/smoke_direct_message_contract.js\n\nOK: direct message contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 52,
+      "script": "smoke:broadcast-batching",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.581,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:broadcast-batching\n> node scripts/smoke_broadcast_batching_contract.js\n\nOK: broadcast batching contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 53,
+      "script": "smoke:broadcast-idempotency",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.591,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:broadcast-idempotency\n> node scripts/smoke_broadcast_idempotency_contract.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_broadcast_idempotency_contract.js:11\n    throw new Error(`Broadcast idempotency flow missing ${fragment}`);\n          ^\n\nError: Broadcast idempotency flow missing const batch = await withDbClient(async (client) => listAdminBroadcastDeliveryBatch(client, { outboxId: prep.outboxId, limit: prep.batchSize }));\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_broadcast_idempotency_contract.js:11:11\n    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 54,
+      "script": "smoke:admin-polish",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.585,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-polish\n> node scripts/smoke_admin_polish_contract.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_polish_contract.js:9\n    throw new Error(`Admin home missing polished Russian fragment: ${fragment}`);\n          ^\n\nError: Admin home missing polished Russian fragment: \u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0440\u0430\u0437\u0434\u0435\u043b, \u0437\u0430\u0442\u0435\u043c \u0442\u0440\u0435\u0432\u043e\u0433\u0438\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_polish_contract.js:9:11\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 55,
+      "script": "smoke:admin-counters",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.585,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-counters\n> node scripts/smoke_admin_counters_contract.js\n\nOK: admin counters contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 56,
+      "script": "smoke:admin-segmentation",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.573,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-segmentation\n> node scripts/smoke_admin_segmentation_contract.js\n\nOK: admin segmentation contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 57,
+      "script": "smoke:admin-productivity",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.592,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-productivity\n> node scripts/smoke_admin_productivity_contract.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_productivity_contract.js:19\n    throw new Error(`Admin home missing quick action: ${callback}`);\n          ^\n\nError: Admin home missing quick action: adm:usr:list\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_productivity_contract.js:19:11\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 58,
+      "script": "smoke:admin-trends",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.592,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-trends\n> node scripts/smoke_admin_trends_contract.js\n\nOK: admin trends contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 59,
+      "script": "smoke:notice-targeting",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.599,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:notice-targeting\n> node scripts/smoke_notice_targeting_contract.js\n\nOK: notice targeting contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 60,
+      "script": "smoke:admin-templates",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.588,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-templates\n> node scripts/smoke_admin_templates_contract.js\n\nOK: admin templates contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 61,
+      "script": "smoke:admin-search",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.594,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-search\n> node scripts/smoke_admin_search_contract.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_search_contract.js:23\n    throw new Error(`Admin home missing search shortcut: ${callback}`);\n          ^\n\nError: Admin home missing search shortcut: adm:search:users\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_search_contract.js:23:11\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 62,
+      "script": "smoke:admin-search-results",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.664,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-search-results\n> node scripts/smoke_admin_search_results_contract.js\n\nOK: admin search results contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 63,
+      "script": "smoke:founder-admin-visibility",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.735,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:founder-admin-visibility\n> node scripts/smoke_founder_admin_visibility_contract.js\n\nOK: founder-only admin entry visibility contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 64,
+      "script": "smoke:admin-funnel-drilldowns",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.731,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-funnel-drilldowns\n> node scripts/smoke_admin_funnel_drilldowns.js\n\nOK: admin funnel drilldowns contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 65,
+      "script": "smoke:admin-russian-layer",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.705,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-russian-layer\n> node scripts/smoke_admin_russian_layer.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_russian_layer.js:6\n    throw new Error(`Admin surface layer missing Russian fragment: ${fragment}`);\n          ^\n\nError: Admin surface layer missing Russian fragment: \u041e\u0445\u0432\u0430\u0442 \u0443\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_russian_layer.js:6:11\n    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)\n    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 66,
+      "script": "smoke:admin-bulk-actions",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.739,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-bulk-actions\n> node scripts/smoke_admin_bulk_actions_contract.js\n\nOK: admin bulk actions contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 67,
+      "script": "smoke:admin-runbook-freeze",
+      "status": "FAIL",
+      "returncode": 1,
+      "durationSeconds": 0.756,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-runbook-freeze\n> node scripts/smoke_admin_runbook_freeze_contract.js\n\n",
+      "stderr": "file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_runbook_freeze_contract.js:31\n  throw new Error('Runbook surface missing launch ops copy');\n        ^\n\nError: Runbook surface missing launch ops copy\n    at file:///mnt/data/step061a_work/intro-deck-main/scripts/smoke_admin_runbook_freeze_contract.js:31:9\n\nNode.js v20.20.2\n"
+    },
+    {
+      "index": 68,
+      "script": "smoke:admin-live-verification",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.715,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:admin-live-verification\n> node scripts/smoke_admin_live_verification_contract.js\n\nOK: admin live verification / rehearsal contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 69,
+      "script": "smoke:contact-unlock",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.724,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:contact-unlock\n> node scripts/smoke_contact_unlock_contract.js\n\nOK: contact unlock render and contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 70,
+      "script": "smoke:contact-unlock-payments",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.721,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:contact-unlock-payments\n> node scripts/smoke_contact_unlock_payments_contract.js\n\nOK: contact unlock payment payload contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 71,
+      "script": "smoke:dm-relay",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.632,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:dm-relay\n> node scripts/smoke_dm_relay_contract.js\n\nOK: dm relay contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 72,
+      "script": "smoke:dm-payments",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.566,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:dm-payments\n> node scripts/smoke_dm_payments_contract.js\n\nOK: dm payment contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 73,
+      "script": "smoke:schema-compat",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.57,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:schema-compat\n> node scripts/smoke_schema_compat_contract.js\n\n",
+      "stderr": ""
+    },
+    {
+      "index": 74,
+      "script": "smoke:landing",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.58,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:landing\n> node scripts/smoke_landing_contract.js\n\nlanding contract smoke passed\n",
+      "stderr": ""
+    },
+    {
+      "index": 75,
+      "script": "smoke:og-social",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.58,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:og-social\n> node scripts/smoke_og_social_contract.js\n\nog/social metadata smoke passed\n",
+      "stderr": ""
+    },
+    {
+      "index": 76,
+      "script": "smoke:landing-polish",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.581,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:landing-polish\n> node scripts/smoke_landing_polish_contract.js\n\nlanding polish contract smoke passed\n",
+      "stderr": ""
+    },
+    {
+      "index": 77,
+      "script": "smoke:invite",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.591,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:invite\n> node scripts/smoke_invite_contract.js\n\nOK: invite contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 78,
+      "script": "smoke:invite-rewards-foundation",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.565,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:invite-rewards-foundation\n> node scripts/smoke_invite_rewards_foundation.js\n\n",
+      "stderr": ""
+    },
+    {
+      "index": 79,
+      "script": "smoke:invite-rewards-read",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.58,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:invite-rewards-read\n> node scripts/smoke_invite_rewards_read_surfaces.js\n\n",
+      "stderr": ""
+    },
+    {
+      "index": 80,
+      "script": "smoke:contact-contract",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.596,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:contact-contract\n> node scripts/smoke_contact_contract_payment_honesty.js\n\nOK: STEP053 contact contract and payment honesty\n",
+      "stderr": ""
+    },
+    {
+      "index": 81,
+      "script": "smoke:step053a-pack",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.672,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:step053a-pack\n> node scripts/smoke_step053a_staging_acceptance_pack.js\n\nOK: STEP053A staging runtime acceptance pack contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 82,
+      "script": "smoke:positioning-truth",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.592,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:positioning-truth\n> node scripts/smoke_positioning_discovery_truth_contract.js\n\nOK: STEP054 positioning and discovery truth contract preserved in STEP061A\n",
+      "stderr": ""
+    },
+    {
+      "index": 83,
+      "script": "smoke:guided-activation",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.589,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:guided-activation\n> node scripts/smoke_guided_activation_spine.js\n\nOK: STEP055 guided activation spine contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 84,
+      "script": "smoke:contact-rail",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.601,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:contact-rail\n> node scripts/smoke_core_contact_rail_simplification.js\n\nOK: STEP056 core contact rail simplification\n",
+      "stderr": ""
+    },
+    {
+      "index": 85,
+      "script": "smoke:step057-readiness",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.594,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:step057-readiness\n> node scripts/smoke_step057_production_readiness.js\n\nOK: STEP057 production readiness and core-loop acceptance pack\n",
+      "stderr": ""
+    },
+    {
+      "index": 86,
+      "script": "smoke:linkedin-verified-dev",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.659,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:linkedin-verified-dev\n> node scripts/smoke_linkedin_verified_development_integration.js\n\nOK: STEP058A Verified on LinkedIn Development integration contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 87,
+      "script": "smoke:linkedin-trust-surfaces",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.593,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:linkedin-trust-surfaces\n> node scripts/smoke_linkedin_verified_badges_trust_surfaces.js\n\nOK: STEP058B Verified badges and trust surfaces contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 88,
+      "script": "smoke:linkedin-verification-compat",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.648,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:linkedin-verification-compat\n> node scripts/smoke_linkedin_verification_compat_fail_safe.js\n\nOK: STEP058B1 LinkedIn verification compatibility and fail-safe contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 89,
+      "script": "smoke:linkedin-share",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.676,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:linkedin-share\n> node scripts/smoke_linkedin_share_profile.js\n\nOK: STEP059 Share Profile on LinkedIn explicit-approval contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 90,
+      "script": "smoke:ai-news-drafts",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.668,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:ai-news-drafts\n> node scripts/smoke_ai_news_drafts_approval.js\n\nOK: STEP060 AI/news drafts approval foundation contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 91,
+      "script": "smoke:ai-news-productization",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.645,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:ai-news-productization\n> node scripts/smoke_ai_news_presets_subscription.js\n\nOK: STEP061 personalized news presets and subscription productization contract\n",
+      "stderr": ""
+    },
+    {
+      "index": 92,
+      "script": "smoke:step061-profile-preview-hotfix",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.797,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:step061-profile-preview-hotfix\n> node scripts/smoke_step061_profile_preview_hotfix.js\n\nOK: STEP061H1 profile preview runtime hotfix\n",
+      "stderr": ""
+    },
+    {
+      "index": 93,
+      "script": "smoke:ai-news-live-acceptance",
+      "status": "PASS",
+      "returncode": 0,
+      "durationSeconds": 0.66,
+      "stdout": "\n> linkedin-telegram-directory-bot@0.60.0 smoke:ai-news-live-acceptance\n> node scripts/smoke_ai_news_live_acceptance.js\n\nOK: STEP061A AI/news live acceptance and rollout hardening contract\n",
+      "stderr": ""
+    }
+  ]
+}

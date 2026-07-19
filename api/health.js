@@ -25,6 +25,9 @@ export default async function handler(req, res) {
     docsStep: CURRENT_SOURCE_STEP,
     artifactSha: getRuntimeArtifactSha(),
     service: 'linkedin-telegram-directory-bot',
+    runtime: {
+      node: process.versions.node
+    },
     flags,
     persistence: {
       enabled: flags.dbConfigured
@@ -60,6 +63,7 @@ export default async function handler(req, res) {
     aiNewsDraft: {
       enabled: aiNewsDraft.enabled,
       mode: aiNewsDraft.mode,
+      rolloutStage: aiNewsDraft.rolloutStage,
       configurationValid: aiNewsDraft.configurationValid !== false,
       configurationError: aiNewsDraft.configurationError || null,
       newsProvider: 'newsdata',
@@ -67,6 +71,12 @@ export default async function handler(req, res) {
       aiProvider: 'openai',
       aiProviderConfigured: aiNewsDraft.openai.configured,
       model: aiNewsDraft.openai.model,
+      providerTelemetryRequired: true,
+      costEstimationConfigured: Boolean(
+        Number(aiNewsDraft.newsdata.estimatedRequestCostUsd || 0) > 0 ||
+        Number(aiNewsDraft.openai.inputCostUsdPerMillion || 0) > 0 ||
+        Number(aiNewsDraft.openai.outputCostUsdPerMillion || 0) > 0
+      ),
       dailyLimit: aiNewsDraft.dailyLimit,
       searchDailyLimit: aiNewsDraft.searchDailyLimit,
       searchCooldownSeconds: aiNewsDraft.searchCooldownSeconds,
@@ -88,7 +98,8 @@ export default async function handler(req, res) {
       automaticPublishing: false,
       subscriptionControlsAccessNotPublishing: true,
       sourceEvidenceRequired: true,
-      tokenPersistence: 'none'
+      tokenPersistence: 'none',
+      liveAcceptancePolicy: 'artifact_bound_preflight_plus_manual_core_loop_evidence'
     },
     linkedInShare: {
       enabled: linkedInShare.enabled,
@@ -100,6 +111,7 @@ export default async function handler(req, res) {
       visibility: linkedInShare.visibility,
       explicitApprovalRequired: true,
       tokenPersistence: 'none',
+      liveAcceptancePolicy: 'artifact_bound_preflight_plus_manual_core_loop_evidence',
       automaticPublishing: false
     },
     linkedInVerification: {
