@@ -3,12 +3,17 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP056 — Core Contact Rail Simplification
-- Current mode: HEAVY / CONTACT UX / PAYMENT ORCHESTRATION / CONSENT
-- Current focus: expose one understandable Contact entry and inbox while preserving the canonical intro, Telegram-contact, private-chat, payment, and entitlement cores.
+- Current baseline: STEP057 — Production Readiness and Core Loop Acceptance
+- Current mode: HEAVY / PRODUCTION READINESS / RUNTIME TRUTH / CORE LOOP
+- Current focus: produce an artifact-bound, production-safe readiness verdict for the real Telegram core loop without production fixtures or broad operational ceremony.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP057 read-only production preflight exists and binds health, Telegram, PostgreSQL, and evidence to one exact production artifact SHA.
+- STEP057 PostgreSQL diagnostics run inside `BEGIN READ ONLY` and create no fixtures.
+- STEP057 manual evidence classifies `GO`, `GO_WITH_RISKS`, or `NO_GO`; missing required core-loop scenarios cannot become GO.
+- Optional Stars payment/replay evidence may remain incomplete only under GO_WITH_RISKS.
 
 - STEP056 canonical contact entry exists: `🤝 Request contact` on eligible profile cards.
 - The contact options surface shows free intro, private chat, or Telegram contact according to authoritative profile mode.
@@ -64,6 +69,9 @@
 - missing-target, wrong-database-fingerprint, and artifact-mismatch paths fail closed.
 
 ## Live-confirmed
+
+- Production `/api/health?full=1` operator-confirmed STEP056 with artifact `7beaa0657c72dcedf423b17b3c998fc0ea67a6db`.
+- STEP057 deployment, automated preflight, and manual core-loop verdict are not yet confirmed.
 
 - Production `/api/health?full=1` operator-confirmed STEP055 with `ok=true`, `docsStep=STEP055`, and artifact `c582529c422915f5bf8b87364be47e957a9e9d71`.
 - Database, LinkedIn, Telegram, webhook, persistence, contact unlock, DM relay, pricing, runtime guards, and operator diagnostics flags were true.

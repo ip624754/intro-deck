@@ -3,12 +3,14 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP056
-- Phase: Core Contact Rail Simplification on top of live-deployed STEP055
-- Primary mode: HEAVY / CONTACT UX / PAYMENT ORCHESTRATION / CONSENT
-- Runtime status: STEP055 is live-deployed at artifact `c582529c422915f5bf8b87364be47e957a9e9d71`; STEP056 is source-implemented and awaits deploy verification
+- Current STEP: STEP057
+- Phase: Production Readiness and Core Loop Acceptance on top of live-deployed STEP056
+- Primary mode: HEAVY / PRODUCTION READINESS / RUNTIME TRUTH / CORE LOOP
+- Runtime status: STEP056 is operator-confirmed live at artifact `7beaa0657c72dcedf423b17b3c998fc0ea67a6db`; STEP057 is source-implemented and awaits deploy/read-only acceptance evidence
 
 ## What exists now
+
+- STEP057 production-safe read-only preflight, exact artifact binding, Telegram webhook diagnostics, PostgreSQL invariant checks, and operator-assisted core-loop verdict pack
 
 - STEP056 one canonical `Request contact` entry on profile cards, a deterministic contact-options surface, and one Contact inbox hub while preserving existing intro/contact/DM repositories and payment transitions
 
@@ -45,6 +47,10 @@
 - STEP051.5 restores the broken `Plans` surface by shipping the missing pricing text/keyboard render layer, so `⭐ Plans`, `/plans`, and `plans:root` no longer fail on `renderPricingText is not a function`
 
 ## Current truth
+
+- STEP057 changes no product, payment, callback, entitlement, or database state machine; it adds only read-only production diagnostics and evidence governance
+- Automated preflight cannot mutate production and uses a PostgreSQL `READ ONLY` transaction
+- Required core-loop evidence drives GO/NO_GO; incomplete optional Stars/replay evidence yields GO_WITH_RISKS rather than a false GO
 
 - STEP056 changes the user-facing entry and navigation only: one `dir:contact` rail resolves to free intro, private chat, or Telegram contact according to profile mode
 - Existing `dir:intro`, `dir:dm`, and `dir:unlock` callbacks remain supported for stale messages and backend compatibility

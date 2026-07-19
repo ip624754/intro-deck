@@ -1,0 +1,47 @@
+{
+  "baseline": {
+    "step": "STEP056",
+    "pass": 71,
+    "fail": 13,
+    "total": 84,
+    "failures": [
+      "smoke:env",
+      "smoke:code-split",
+      "smoke:profile-session-schema",
+      "smoke:admin-allowlist",
+      "smoke:admin-users",
+      "smoke:admin-user-card",
+      "smoke:admin-intros",
+      "smoke:broadcast-idempotency",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-search",
+      "smoke:admin-russian-layer",
+      "smoke:admin-runbook-freeze"
+    ]
+  },
+  "target": {
+    "step": "STEP057",
+    "pass": 72,
+    "fail": 13,
+    "total": 85,
+    "failures": [
+      "smoke:env",
+      "smoke:code-split",
+      "smoke:profile-session-schema",
+      "smoke:admin-allowlist",
+      "smoke:admin-users",
+      "smoke:admin-user-card",
+      "smoke:admin-intros",
+      "smoke:broadcast-idempotency",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-search",
+      "smoke:admin-russian-layer",
+      "smoke:admin-runbook-freeze"
+    ]
+  },
+  "newFailures": [],
+  "resolvedFailures": [],
+  "newPassingContract": "smoke:step057-readiness"
+}
