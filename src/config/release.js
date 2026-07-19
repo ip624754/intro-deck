@@ -1,4 +1,4 @@
-export const CURRENT_SOURCE_STEP = 'STEP058B';
+export const CURRENT_SOURCE_STEP = 'STEP058B1';
 
 const ARTIFACT_SHA_PATTERN = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/i;
 

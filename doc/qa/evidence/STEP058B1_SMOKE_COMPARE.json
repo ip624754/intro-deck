@@ -1,0 +1,18 @@
+{
+  "baselineStep": "STEP058B",
+  "targetStep": "STEP058B1",
+  "baseline": {
+    "pass": 74,
+    "fail": 13,
+    "total": 87
+  },
+  "target": {
+    "pass": 75,
+    "fail": 13,
+    "total": 88
+  },
+  "newFailures": [],
+  "fixedFailures": [],
+  "unchangedFailureSet": true,
+  "newPassingContract": "smoke:linkedin-verification-compat"
+}

@@ -70,14 +70,14 @@ const baseProfile = {
 
 const developmentConfig = withVerificationEnv({
   LINKEDIN_VERIFIED_MODE: 'development',
-  LINKEDIN_VERIFIED_SCOPES: 'r_profile_basicinfo r_verify_details',
+  LINKEDIN_VERIFIED_SCOPES: 'r_profile_basicinfo r_verify',
   LINKEDIN_VERIFIED_PUBLIC_BADGES_ENABLED: '1',
   LINKEDIN_VERIFIED_PUBLIC_BADGE_MAX_AGE_DAYS: '30',
   LINKEDIN_VERIFIED_IDENTITY_API_VERSION: '202510.03',
   LINKEDIN_VERIFIED_REPORT_API_VERSION: '202510'
 }, () => getLinkedInVerificationConfig());
 
-assert.equal(developmentConfig.verificationScope, 'r_verify_details');
+assert.equal(developmentConfig.verificationScope, 'r_verify');
 assert.equal(developmentConfig.publicBadgeRequested, true);
 assert.equal(developmentConfig.publicBadgesEnabled, false, 'Development mode must never enable public badges');
 
@@ -239,7 +239,7 @@ const terms = read('terms/index.html');
 const landing = read('index.html');
 
 for (const required of [
-  'r_verify_details',
+  'r_verify',
   'LINKEDIN_VERIFIED_PUBLIC_BADGES_ENABLED',
   'LINKEDIN_VERIFIED_PUBLIC_BADGE_MAX_AGE_DAYS',
   "mode === 'lite' && publicBadgeRequested"
@@ -261,6 +261,6 @@ assert.equal(adminSurface.includes('LinkedIn trust: identity'), true);
 assert.equal(privacy.includes('fresh Lite snapshot'), true);
 assert.equal(terms.includes('Public verification badges may be shown only'), true);
 assert.equal(landing.includes('LinkedIn verification categories'), true);
-assert.equal(CURRENT_SOURCE_STEP, 'STEP058B');
+assert.equal(['STEP058B', 'STEP058B1'].includes(CURRENT_SOURCE_STEP), true);
 
 console.log('OK: STEP058B Verified badges and trust surfaces contract');

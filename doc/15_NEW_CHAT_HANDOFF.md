@@ -3,12 +3,16 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP058B — Verified Badges and Trust Surfaces
-- Current mode: HEAVY / EXTERNAL TRUST CLAIMS / BADGE ELIGIBILITY / FAIL-CLOSED SURFACES
-- Current focus: ship trust surfaces and future badge rendering while keeping all public claims fail-closed until a fresh Lite snapshot and explicit operator enablement exist.
+- Current baseline: STEP058B1 — LinkedIn Verification Compatibility and Fail-Safe Hotfix
+- Current mode: HEAVY / OAUTH PROVIDER COMPATIBILITY / OPTIONAL CONFIG FAIL-SAFE / TRUST CLAIMS
+- Current focus: deploy STEP058B1, verify the live no-criteria compatibility fallback, and confirm invalid optional verification config can no longer crash the core runtime.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP058B1 keeps optional LinkedIn verification fail-safe: invalid config cannot crash health/webhook/core OIDC.
+- `/verificationReport` retries without criteria only after a criteria request returns HTTP 400; request IDs and attempt strategy are retained safely.
+- Development/Lite scope canon is `r_profile_basicinfo r_verify`.
 
 - STEP058B canonical trust policy exists across owner, preview, directory, health, and admin surfaces.
 - Public badges require Lite mode, explicit flag, fresh Lite snapshot, and at least one verified category.
@@ -77,6 +81,9 @@
 - STEP050J schema reality check now exists in source: profile/directory reads are schema-compatible again, while hidden Telegram username writes and direct-contact unlock flows explicitly require STEP046 migration `019_contact_unlock_requests.sql`.
 
 ## Locally verified
+- STEP058B1 Node `20.20.2` check and dedicated compatibility smoke passed.
+- Full STEP058B1 inventory is `75/88` PASS versus STEP058B `74/87`; the 13-failure baseline set is unchanged.
+- Invalid verification config health behavior, HTTP 400 fallback behavior, and same-client sequential query contract are source-verified.
 
 - syntax/smoke can be run from repo;
 - docs canon exists;
@@ -90,6 +97,9 @@
 - missing-target, wrong-database-fingerprint, and artifact-mismatch paths fail closed.
 
 ## Live-confirmed
+- STEP058B is operator-confirmed live at artifact `c01f7e599ee8a5f8ad0f1c0070f1e6bfdc1d2878`.
+- Production health is restored with `verificationScope=r_verify`, Development mode, and public badges disabled.
+- A repeated live verification attempt still returned `/verificationReport` HTTP 400; no successful category snapshot is confirmed.
 
 - Production `/api/health?full=1` operator-confirmed STEP057 at artifact `615d4014f3463bb40b6ec46c47d3e0879a670b55`.
 - STEP057 production read-only preflight returned WARN only for local Node 24 and empty directory supply; artifact, webhook, PostgreSQL, migration 027, impossible states, notification health, and policy checks passed.
@@ -330,3 +340,27 @@ Deploy STEP054, verify live positioning surfaces and BotFather copy, then procee
 - the first Development sync failed with `linkedin_verified_sync_failed`;
 - STEP058B does not create or infer a verified category from that failure;
 - STEP058B deployment, successful category snapshot, Lite approval, and public badge rendering remain unconfirmed.
+
+## STEP058B1 handoff delta
+
+### Source-confirmed
+- optional Verified on LinkedIn configuration is parsed fail-safe; invalid values disable only the optional integration;
+- health remains available and exposes `configurationValid` plus a safe configuration error;
+- Development/Lite scope canon is `r_profile_basicinfo r_verify`;
+- `/verificationReport` retries once without criteria only after the criteria request returns HTTP 400;
+- request attempt and LinkedIn request ID are retained without tokens or raw provider payload;
+- invite reward reads in the LinkedIn persistence transaction are sequential on one `pg` client;
+- no migration is required.
+
+### QA truth
+- package: `0.56.1`;
+- canonical Node `20.20.2`, npm `10.9.2`;
+- dependency install, syntax, dedicated compatibility smoke, STEP058A/STEP058B compatibility, and npm audit PASS;
+- full inventory: `75/88` PASS versus STEP058B `74/87`;
+- inherited failures remain exactly 13; new failures: `0`.
+
+### Live boundary
+- STEP058B is live-confirmed at artifact `c01f7e599ee8a5f8ad0f1c0070f1e6bfdc1d2878`;
+- the live criteria request still returns `/verificationReport` HTTP 400;
+- STEP058B1 fallback success, request ID evidence, and removal of the production pg warning are not verified until deploy and operator retest;
+- public badges remain disabled.

@@ -354,11 +354,11 @@ export async function loadAdminInviteSnapshotState() {
 
 export async function maybeCreatePendingInviteRewardForActivationWithClient(client, { userId }) {
   await ensureInviteRewardsDefaults(client);
-  const [mode, config, activationState] = await Promise.all([
-    getInviteRewardsMode(client),
-    getInviteRewardsConfig(client),
-    getInviteRewardActivationStateByInvitedUserId(client, { invitedUserId: userId })
-  ]);
+  // node-postgres does not support concurrent queries on the same checked-out client.
+  // Keep this transaction path sequential so OAuth persistence does not emit pg@9 deprecation warnings.
+  const mode = await getInviteRewardsMode(client);
+  const config = await getInviteRewardsConfig(client);
+  const activationState = await getInviteRewardActivationStateByInvitedUserId(client, { invitedUserId: userId });
 
   if (!['earn_only', 'live'].includes(mode)) {
     return {

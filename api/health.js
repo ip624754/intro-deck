@@ -56,6 +56,8 @@ export default async function handler(req, res) {
     linkedInVerification: {
       enabled: linkedInVerification.enabled,
       mode: linkedInVerification.mode,
+      configurationValid: linkedInVerification.configurationValid !== false,
+      configurationError: linkedInVerification.configurationError || null,
       categoryOnly: linkedInVerification.mode === 'development' || linkedInVerification.mode === 'lite',
       identityApiVersion: linkedInVerification.identityApiVersion,
       reportApiVersion: linkedInVerification.reportApiVersion,

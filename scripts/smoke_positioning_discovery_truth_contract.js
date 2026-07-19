@@ -152,7 +152,7 @@ for (const legalSurface of ['privacy/index.html', 'terms/index.html']) {
   }
 }
 
-if (!/^STEP\d+[A-Z]?$/.test(CURRENT_SOURCE_STEP)) {
+if (!/^STEP\d+[A-Z]?\d*$/.test(CURRENT_SOURCE_STEP)) {
   throw new Error(`Invalid release marker while preserving STEP054 positioning truth: ${CURRENT_SOURCE_STEP}`);
 }
 

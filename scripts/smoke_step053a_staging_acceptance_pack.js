@@ -26,7 +26,7 @@ for (const key of ['STEP053A_TARGET', 'STEP053A_MUTATION_ACK', 'STEP053A_DATABAS
   assert.match(env, new RegExp(`^${key}=`, 'm'), `.env.example missing ${key}`);
 }
 assert.match(gitignore, /runtime_evidence\//);
-assert.match(release, /export const CURRENT_SOURCE_STEP = 'STEP\d+[A-Z]?'/);
+assert.match(release, /export const CURRENT_SOURCE_STEP = 'STEP\d+[A-Z]?\d*'/);
 assert.match(health, /step: CURRENT_SOURCE_STEP/);
 assert.match(health, /docsStep: CURRENT_SOURCE_STEP/);
 assert.match(health, /artifactSha: getRuntimeArtifactSha\(\)/);

@@ -12,12 +12,12 @@ Keep the current production test configuration:
 
 ```env
 LINKEDIN_VERIFIED_MODE=development
-LINKEDIN_VERIFIED_SCOPES=r_profile_basicinfo r_verify_details
+LINKEDIN_VERIFIED_SCOPES=r_profile_basicinfo r_verify
 LINKEDIN_VERIFIED_PUBLIC_BADGES_ENABLED=0
 LINKEDIN_VERIFIED_PUBLIC_BADGE_MAX_AGE_DAYS=30
 ```
 
-Legacy `r_verify` remains accepted by the source for an existing LinkedIn app configuration, but `r_verify_details` is the current standard.
+Legacy `r_verify` remains accepted by the source for an existing LinkedIn app configuration, but `r_verify_details` is the Development/Lite scope.
 
 ## 3. Deploy verification
 

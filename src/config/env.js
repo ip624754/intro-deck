@@ -1,7 +1,7 @@
 const DEFAULT_LINKEDIN_OIDC_DISCOVERY_URL = 'https://www.linkedin.com/oauth/.well-known/openid-configuration';
 const DEFAULT_LINKEDIN_SCOPES = 'openid profile';
 const DEFAULT_LINKEDIN_VERIFIED_MODE = 'off';
-const DEFAULT_LINKEDIN_VERIFIED_SCOPES = 'r_profile_basicinfo r_verify_details';
+const DEFAULT_LINKEDIN_VERIFIED_SCOPES = 'r_profile_basicinfo r_verify';
 const DEFAULT_LINKEDIN_VERIFIED_IDENTITY_API_VERSION = '202510.03';
 const DEFAULT_LINKEDIN_VERIFIED_REPORT_API_VERSION = '202510';
 const DEFAULT_LINKEDIN_VERIFIED_API_TIMEOUT_MS = 8000;
@@ -132,7 +132,7 @@ export function getTelegramConfig() {
   };
 }
 
-export function getLinkedInVerificationConfig() {
+function parseLinkedInVerificationConfigStrict() {
   const mode = readEnumEnv(
     'LINKEDIN_VERIFIED_MODE',
     DEFAULT_LINKEDIN_VERIFIED_MODE,
@@ -141,13 +141,12 @@ export function getLinkedInVerificationConfig() {
 
   const scopes = parseScopes(readEnv('LINKEDIN_VERIFIED_SCOPES', DEFAULT_LINKEDIN_VERIFIED_SCOPES));
   const requiredBasicScope = 'r_profile_basicinfo';
-  const supportedVerificationScopes = ['r_verify_details', 'r_verify'];
-  const verificationScope = supportedVerificationScopes.find((scope) => scopes.includes(scope)) || null;
+  const verificationScope = scopes.includes('r_verify') ? 'r_verify' : null;
   if (mode !== 'off' && !scopes.includes(requiredBasicScope)) {
     throw new Error(`LINKEDIN_VERIFIED_SCOPES is missing required scope: ${requiredBasicScope}`);
   }
   if (mode !== 'off' && !verificationScope) {
-    throw new Error(`LINKEDIN_VERIFIED_SCOPES must include r_verify_details (current) or r_verify (legacy)`);
+    throw new Error('LINKEDIN_VERIFIED_SCOPES must include r_verify for Development/Lite');
   }
 
   const identityApiVersion = String(readEnv(
@@ -173,6 +172,8 @@ export function getLinkedInVerificationConfig() {
   return {
     mode,
     enabled: mode !== 'off',
+    configurationValid: true,
+    configurationError: null,
     scopes,
     requiredScopes: [requiredBasicScope, verificationScope].filter(Boolean),
     verificationScope,
@@ -191,6 +192,47 @@ export function getLinkedInVerificationConfig() {
       { min: 1, max: 365 }
     )
   };
+}
+
+function buildLinkedInVerificationFailSafeConfig(error) {
+  const rawMode = String(readEnv('LINKEDIN_VERIFIED_MODE', DEFAULT_LINKEDIN_VERIFIED_MODE) || '').trim().toLowerCase();
+  const mode = ['off', 'development', 'lite'].includes(rawMode) ? rawMode : 'off';
+  const scopes = parseScopes(readEnv('LINKEDIN_VERIFIED_SCOPES', DEFAULT_LINKEDIN_VERIFIED_SCOPES));
+  const verificationScope = scopes.includes('r_verify') ? 'r_verify' : null;
+
+  return {
+    mode,
+    enabled: false,
+    configurationValid: false,
+    configurationError: {
+      code: 'linkedin_verified_config_invalid',
+      message: error?.message || String(error)
+    },
+    scopes,
+    requiredScopes: [],
+    verificationScope,
+    identityApiVersion: String(readEnv(
+      'LINKEDIN_VERIFIED_IDENTITY_API_VERSION',
+      DEFAULT_LINKEDIN_VERIFIED_IDENTITY_API_VERSION
+    )),
+    reportApiVersion: String(readEnv(
+      'LINKEDIN_VERIFIED_REPORT_API_VERSION',
+      DEFAULT_LINKEDIN_VERIFIED_REPORT_API_VERSION
+    )),
+    timeoutMs: DEFAULT_LINKEDIN_VERIFIED_API_TIMEOUT_MS,
+    publicBadgeRequested: false,
+    publicBadgesEnabled: false,
+    publicBadgeMaxAgeDays: DEFAULT_LINKEDIN_VERIFIED_PUBLIC_BADGE_MAX_AGE_DAYS
+  };
+}
+
+export function getLinkedInVerificationConfig({ strict = false } = {}) {
+  try {
+    return parseLinkedInVerificationConfigStrict();
+  } catch (error) {
+    if (strict) throw error;
+    return buildLinkedInVerificationFailSafeConfig(error);
+  }
 }
 
 export function getLinkedInConfig() {

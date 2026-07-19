@@ -73,7 +73,7 @@ A Telegram-first professional directory:
 1. Apply `migrations/028_linkedin_verified_development.sql`.
 2. Keep public badges disabled.
 3. Set `LINKEDIN_VERIFIED_MODE=development` only after the migration is applied.
-4. Configure `LINKEDIN_VERIFIED_SCOPES=r_profile_basicinfo r_verify_details` (legacy `r_verify` remains accepted).
+4. Configure `LINKEDIN_VERIFIED_SCOPES=r_profile_basicinfo r_verify` for Development/Lite. `r_verify_details` is reserved for Plus-compatible configurations.
 5. Configure `LINKEDIN_VERIFIED_IDENTITY_API_VERSION=202510.03` and `LINKEDIN_VERIFIED_REPORT_API_VERSION=202510`.
 6. Redeploy and test Profile → Refresh LinkedIn verification with a LinkedIn developer-app administrator that is also an Intro Deck operator.
 7. Keep `LINKEDIN_VERIFIED_PUBLIC_BADGES_ENABLED=0` in Development. Public badges require Lite mode, explicit enablement, and a fresh Lite snapshot.

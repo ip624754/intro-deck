@@ -4,19 +4,26 @@
 Intro Deck
 
 ## Current source baseline
-STEP058B — Verified Badges and Trust Surfaces
+STEP058B1 — LinkedIn Verification Compatibility and Fail-Safe Hotfix
 
 ## Layer
-HEAVY / external trust claims / badge eligibility / fail-closed surfaces
+HEAVY / OAuth provider compatibility / optional integration fail-safe / trust claims
 
 ## Source-confirmed
+- STEP058B1 retries `/verificationReport` once without `verificationCriteria` only after a primary HTTP 400.
+- Invalid optional verification ENV disables only Verified on LinkedIn; health, webhook, Telegram, and base OIDC remain available.
+- Development/Lite scope is `r_profile_basicinfo r_verify`.
+- LinkedIn request IDs and request strategy are retained without tokens or raw payloads.
+- OAuth invite-reward reads are sequential on one checked-out PostgreSQL client.
+- No migration is required.
+
 - STEP058B introduces a canonical trust resolver for snapshot freshness, exact category badges, public eligibility, and fail-closed reasons.
 - Public badge eligibility requires Lite mode, explicit feature enablement, a fresh Lite snapshot, and at least one LinkedIn category.
 - Development snapshots remain private and cannot appear in the public directory.
 - Directory cards show only exact identity/workplace category wording; professional card claims remain member-provided.
 - Owner preview exposes a private badge preview and the exact gate that blocks public display.
 - Admin user cards expose read-only trust diagnostics without changing verification data.
-- Current `r_verify_details` is the default verification scope; legacy `r_verify` remains accepted.
+- Development/Lite use `r_verify`; `r_verify_details` is a Plus-tier scope and is not used by the current Development/Lite integration.
 - STEP058B adds no schema migration and does not change OIDC, payment, contact, entitlement, or invite state machines.
 
 - STEP058A adds a gated Development/Lite Verified on LinkedIn client for `/identityMe` and `/verificationReport`.

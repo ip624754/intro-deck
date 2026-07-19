@@ -57,8 +57,10 @@ export default async function handler(req, res) {
   try {
     const { clientId, redirectUri, stateSecret, stateTtlSeconds, oidcDiscoveryUrl, scopes } = getLinkedInConfig();
     const verificationConfig = getLinkedInVerificationConfig();
-    const verificationEligible = verificationConfig.mode === 'lite'
-      || (verificationConfig.mode === 'development' && isOperatorTelegramUser(telegramUserId));
+    const verificationEligible = verificationConfig.enabled && verificationConfig.configurationValid !== false && (
+      verificationConfig.mode === 'lite'
+      || (verificationConfig.mode === 'development' && isOperatorTelegramUser(telegramUserId))
+    );
     let verificationRequested = false;
 
     if (purpose === 'verification_refresh') {
@@ -83,9 +85,11 @@ export default async function handler(req, res) {
     if (purpose === 'verification_refresh' && !verificationRequested) {
       return res.status(403).send(renderHtml({
         title: 'LinkedIn verification unavailable',
-        body: verificationConfig.mode === 'development'
-          ? '<h1>Verification testing is limited</h1><p>Development access is available only to configured Intro Deck operator accounts that are also LinkedIn developer-app administrators.</p>'
-          : '<h1>Verification is not enabled</h1><p>Verified on LinkedIn is not enabled for this environment.</p>'
+        body: verificationConfig.configurationValid === false
+          ? '<h1>Verification configuration needs attention</h1><p>The optional Verified on LinkedIn integration is temporarily disabled. The normal LinkedIn connection remains available.</p>'
+          : verificationConfig.mode === 'development'
+            ? '<h1>Verification testing is limited</h1><p>Development access is available only to configured Intro Deck operator accounts that are also LinkedIn developer-app administrators.</p>'
+            : '<h1>Verification is not enabled</h1><p>Verified on LinkedIn is not enabled for this environment.</p>'
       }));
     }
 

@@ -1,0 +1,30 @@
+{
+  "step": "STEP058B1",
+  "status": "SOURCE_VERIFIED",
+  "node": "20.20.2",
+  "npm": "10.9.2",
+  "checks": {
+    "npmCi": "PASS",
+    "npmCheck": "PASS",
+    "dedicatedSmoke": "PASS",
+    "step058bCompatibility": "PASS",
+    "step058aCompatibility": "PASS",
+    "invalidConfigHealth200": "PASS",
+    "criteriaFallback": "PASS",
+    "fallbackFailureDiagnostics": "PASS",
+    "pgSameClientSequentialContract": "PASS",
+    "npmAudit": "PASS_0_VULNERABILITIES",
+    "gitDiffCheck": "PASS"
+  },
+  "fullSmoke": {
+    "pass": 75,
+    "fail": 13,
+    "total": 88
+  },
+  "newFailures": [],
+  "notVerified": [
+    "live verificationReport fallback",
+    "live request ID",
+    "production pg warning removal"
+  ]
+}

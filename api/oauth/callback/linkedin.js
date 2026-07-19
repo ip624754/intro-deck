@@ -108,11 +108,27 @@ function safeVerificationTransferPayload(verificationSync) {
     status: verificationSync.status || 'unavailable',
     reason: verificationSync.reason || 'linkedin_verified_sync_unavailable',
     snapshot,
+    diagnostics: verificationSync.diagnostics
+      ? {
+          verificationReportStrategy: verificationSync.diagnostics.verificationReportStrategy || null,
+          requestId: verificationSync.diagnostics.requestId || null,
+          fallbackAttempted: Boolean(verificationSync.diagnostics.fallbackAttempted),
+          primaryStatus: verificationSync.diagnostics.primaryStatus || null,
+          primaryCode: verificationSync.diagnostics.primaryCode || null,
+          primaryRequestId: verificationSync.diagnostics.primaryRequestId || null
+        }
+      : null,
     error: verificationSync.error
       ? {
           status: verificationSync.error.status || null,
           code: verificationSync.error.code || null,
-          endpoint: verificationSync.error.endpoint || null
+          endpoint: verificationSync.error.endpoint || null,
+          requestId: verificationSync.error.requestId || null,
+          attempt: verificationSync.error.attempt || null,
+          compatibilityFallbackAttempted: Boolean(verificationSync.error.compatibilityFallbackAttempted),
+          primaryStatus: verificationSync.error.primaryStatus || null,
+          primaryCode: verificationSync.error.primaryCode || null,
+          primaryRequestId: verificationSync.error.primaryRequestId || null
         }
       : null
   };
@@ -150,6 +166,12 @@ function buildVerificationMessageLines({ verificationSync, persistResult }) {
     lines.push(`• ${describeLinkedInVerificationSyncReason(verificationSync.reason, verificationSync.error)}`);
     if (verificationSync.error?.endpoint) {
       lines.push(`• Failed API: ${verificationSync.error.endpoint}`);
+    }
+    if (verificationSync.error?.compatibilityFallbackAttempted) {
+      lines.push('• Compatibility retry without verification criteria also failed.');
+    }
+    if (verificationSync.error?.requestId) {
+      lines.push(`• LinkedIn request ID: ${verificationSync.error.requestId}`);
     }
     lines.push('• Your normal LinkedIn connection remains active.');
   }

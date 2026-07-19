@@ -3,12 +3,18 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP058B
-- Phase: Verified badges and fail-closed trust surfaces on top of live-deployed STEP058A
-- Primary mode: HEAVY / EXTERNAL TRUST CLAIMS / BADGE ELIGIBILITY / FAIL-CLOSED SURFACES
-- Runtime status: STEP058A is operator-confirmed live at artifact `781c9fb89c4aa870388108f0436e301a7140c106`; its first Development sync returned `linkedin_verified_sync_failed`; STEP058B is source-implemented and awaits deploy plus a successful Development snapshot
+- Current STEP: STEP058B1
+- Phase: LinkedIn verification compatibility and optional-config production fail-safe on top of live-deployed STEP058B
+- Primary mode: HEAVY / OAUTH PROVIDER COMPATIBILITY / OPTIONAL CONFIG FAIL-SAFE / TRUST CLAIMS
+- Runtime status: STEP058B is operator-confirmed live at artifact `c01f7e599ee8a5f8ad0f1c0070f1e6bfdc1d2878`; correct `r_verify` configuration is live, but `/verificationReport` still returns HTTP 400. STEP058B1 is source-implemented and awaits deploy/runtime verification.
 
 ## What exists now
+
+- STEP058B1 adds a fail-safe optional verification config: invalid verification ENV disables only Verified on LinkedIn and leaves health, webhook, base OIDC, and the bot available.
+- `/verificationReport` now retries once without `verificationCriteria` after a criteria request receives HTTP 400, matching LinkedIn Development quickstart compatibility behavior.
+- Safe diagnostics retain endpoint, request strategy, and LinkedIn request IDs without tokens or raw payloads.
+- The OAuth invite-reward path no longer runs concurrent queries on one PostgreSQL client.
+- STEP058B1 canonical Node `20.20.2` QA: `75/88` PASS versus STEP058B `74/87`, with the same 13 inherited failures and new failures `0`.
 
 - STEP058B adds one canonical LinkedIn trust resolver shared by owner, preview, directory, health, and admin surfaces.
 - Public badges are fail-closed and require all gates: `mode=lite`, explicit `LINKEDIN_VERIFIED_PUBLIC_BADGES_ENABLED=1`, a fresh snapshot, at least one verified category, and `source_tier=lite`.
@@ -16,7 +22,7 @@
 - Directory cards can render only exact category badges: `Identity verified on LinkedIn` and/or `Workplace verified on LinkedIn`.
 - Role, company, skills, experience, bio, seniority, and expertise remain member-provided even when a category badge is present.
 - Verification sync failures now report a safe endpoint/status/code diagnosis without exposing OAuth tokens or raw provider payloads.
-- The current LinkedIn standard scope `r_verify_details` is the default; legacy `r_verify` remains accepted for existing app configurations.
+- Development/Lite use `r_verify`; `r_verify_details` is not used by the current integration.
 - No database migration or state-machine change is introduced by STEP058B.
 
 - STEP058A adds a gated Verified on LinkedIn Development integration for configured Intro Deck operators that are also LinkedIn developer-app administrators.

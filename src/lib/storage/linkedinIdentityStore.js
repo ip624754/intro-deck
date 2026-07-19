@@ -83,7 +83,11 @@ async function persistVerificationEvidenceWithinSavepoint(client, {
         syncStatus: verificationSync.status || null,
         syncReason: verificationSync.reason || null,
         errorStatus: verificationSync.error?.status || null,
-        errorCode: verificationSync.error?.code || null
+        errorCode: verificationSync.error?.code || null,
+        failedEndpoint: verificationSync.error?.endpoint || null,
+        requestId: verificationSync.error?.requestId || null,
+        requestAttempt: verificationSync.error?.attempt || null,
+        compatibilityFallbackAttempted: Boolean(verificationSync.error?.compatibilityFallbackAttempted)
       }
     });
     return {
@@ -111,7 +115,10 @@ async function persistVerificationEvidenceWithinSavepoint(client, {
       identityVerified: verificationSnapshot.identityVerified,
       workplaceVerified: verificationSnapshot.workplaceVerified,
       verificationUrlOffered: verificationSnapshot.verificationUrlOffered,
-      syncedAt: verificationSnapshot.syncedAt
+      syncedAt: verificationSnapshot.syncedAt,
+      verificationReportStrategy: verificationSync.diagnostics?.verificationReportStrategy || null,
+      compatibilityFallbackAttempted: Boolean(verificationSync.diagnostics?.fallbackAttempted),
+      requestId: verificationSync.diagnostics?.requestId || null
     }
   });
 

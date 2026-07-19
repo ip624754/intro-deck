@@ -11,7 +11,7 @@ Verified badges and trust surfaces on top of STEP058A.
 - Development-private badge preview;
 - public directory category badges;
 - owner and admin trust diagnostics;
-- current `r_verify_details` default with legacy `r_verify` compatibility;
+- STEP058B originally accepted `r_verify_details`; STEP058B1 supersedes this for Development/Lite with canonical `r_verify`;
 - safe endpoint/status/code sync diagnostics;
 - landing, Help, Privacy, Terms, README, health, state, and handoff alignment;
 - dedicated STEP058B smoke contract.

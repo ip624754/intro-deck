@@ -6,13 +6,24 @@ const ALLOWED_VERIFICATION_CATEGORIES = new Set([
 ]);
 
 export class LinkedInVerifiedApiError extends Error {
-  constructor(message, { status = null, code = null, payload = null, endpoint = null } = {}) {
+  constructor(message, {
+    status = null,
+    code = null,
+    payload = null,
+    endpoint = null,
+    requestId = null,
+    attempt = null,
+    compatibilityFallback = null
+  } = {}) {
     super(message);
     this.name = 'LinkedInVerifiedApiError';
     this.status = status;
     this.code = code;
     this.payload = payload;
     this.endpoint = endpoint;
+    this.requestId = requestId;
+    this.attempt = attempt;
+    this.compatibilityFallback = compatibilityFallback;
   }
 }
 
@@ -53,7 +64,22 @@ function determineVerificationState({ categories, verificationUrl }) {
   return 'no_category_or_url';
 }
 
-async function fetchLinkedInRestJson({ endpoint, endpointName, accessToken, apiVersion, timeoutMs }) {
+function getLinkedInRequestId(response) {
+  for (const headerName of ['x-restli-id', 'x-li-uuid', 'x-li-request-id', 'x-linkedin-id']) {
+    const value = response.headers.get(headerName);
+    if (value) return value;
+  }
+  return null;
+}
+
+async function fetchLinkedInRestJson({
+  endpoint,
+  endpointName,
+  accessToken,
+  apiVersion,
+  timeoutMs,
+  attempt = null
+}) {
   const response = await fetch(endpoint, {
     method: 'GET',
     headers: {
@@ -65,6 +91,7 @@ async function fetchLinkedInRestJson({ endpoint, endpointName, accessToken, apiV
     signal: AbortSignal.timeout(timeoutMs)
   });
 
+  const requestId = getLinkedInRequestId(response);
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
     const serviceCode = payload?.serviceErrorCode || payload?.status || null;
@@ -74,36 +101,99 @@ async function fetchLinkedInRestJson({ endpoint, endpointName, accessToken, apiV
         status: response.status,
         code: serviceCode ? String(serviceCode) : null,
         payload,
-        endpoint: endpointName || null
+        endpoint: endpointName || null,
+        requestId,
+        attempt
       }
     );
   }
 
-  return payload;
+  return { payload, requestId };
 }
 
 export async function fetchLinkedInIdentityMe({ accessToken, apiVersion, timeoutMs }) {
-  return fetchLinkedInRestJson({
+  const result = await fetchLinkedInRestJson({
     endpoint: 'https://api.linkedin.com/rest/identityMe',
     endpointName: 'identityMe',
     accessToken,
     apiVersion,
-    timeoutMs
+    timeoutMs,
+    attempt: 'default'
   });
+  return result.payload;
 }
 
-export async function fetchLinkedInVerificationReport({ accessToken, apiVersion, timeoutMs }) {
+async function fetchLinkedInVerificationReportAttempt({
+  accessToken,
+  apiVersion,
+  timeoutMs,
+  includeCriteria
+}) {
   const endpoint = new URL('https://api.linkedin.com/rest/verificationReport');
-  endpoint.searchParams.append('verificationCriteria', VERIFIED_CATEGORY_IDENTITY);
-  endpoint.searchParams.append('verificationCriteria', VERIFIED_CATEGORY_WORKPLACE);
+  if (includeCriteria) {
+    endpoint.searchParams.append('verificationCriteria', VERIFIED_CATEGORY_IDENTITY);
+    endpoint.searchParams.append('verificationCriteria', VERIFIED_CATEGORY_WORKPLACE);
+  }
 
   return fetchLinkedInRestJson({
     endpoint: endpoint.toString(),
     endpointName: 'verificationReport',
     accessToken,
     apiVersion,
-    timeoutMs
+    timeoutMs,
+    attempt: includeCriteria ? 'criteria' : 'no_criteria_fallback'
   });
+}
+
+export async function fetchLinkedInVerificationReport({ accessToken, apiVersion, timeoutMs }) {
+  try {
+    const primary = await fetchLinkedInVerificationReportAttempt({
+      accessToken,
+      apiVersion,
+      timeoutMs,
+      includeCriteria: true
+    });
+    return {
+      report: primary.payload,
+      diagnostics: {
+        strategy: 'criteria',
+        requestId: primary.requestId,
+        fallbackAttempted: false
+      }
+    };
+  } catch (primaryError) {
+    if (!(primaryError instanceof LinkedInVerifiedApiError) || primaryError.status !== 400) {
+      throw primaryError;
+    }
+
+    try {
+      const fallback = await fetchLinkedInVerificationReportAttempt({
+        accessToken,
+        apiVersion,
+        timeoutMs,
+        includeCriteria: false
+      });
+      return {
+        report: fallback.payload,
+        diagnostics: {
+          strategy: 'no_criteria_fallback',
+          requestId: fallback.requestId,
+          fallbackAttempted: true,
+          primaryStatus: primaryError.status,
+          primaryCode: primaryError.code,
+          primaryRequestId: primaryError.requestId
+        }
+      };
+    } catch (fallbackError) {
+      fallbackError.compatibilityFallback = {
+        attempted: true,
+        primaryStatus: primaryError.status,
+        primaryCode: primaryError.code,
+        primaryRequestId: primaryError.requestId
+      };
+      throw fallbackError;
+    }
+  }
 }
 
 export function normalizeVerifiedOnLinkedInSnapshot({
@@ -206,7 +296,7 @@ export async function syncVerifiedOnLinkedIn({ accessToken, verificationConfig }
   }
 
   try {
-    const [identityMe, verificationReport] = await Promise.all([
+    const [identityMe, verificationReportResult] = await Promise.all([
       fetchLinkedInIdentityMe({
         accessToken,
         apiVersion: verificationConfig.identityApiVersion,
@@ -218,6 +308,7 @@ export async function syncVerifiedOnLinkedIn({ accessToken, verificationConfig }
         timeoutMs: verificationConfig.timeoutMs
       })
     ]);
+    const verificationReport = verificationReportResult.report;
 
     const normalized = normalizeVerifiedOnLinkedInSnapshot({
       identityMe,
@@ -232,7 +323,15 @@ export async function syncVerifiedOnLinkedIn({ accessToken, verificationConfig }
       status: 'success',
       reason: 'linkedin_verified_snapshot_fetched',
       snapshot: normalized.snapshot,
-      verificationUrl: normalized.verificationUrl
+      verificationUrl: normalized.verificationUrl,
+      diagnostics: {
+        verificationReportStrategy: verificationReportResult.diagnostics.strategy,
+        requestId: verificationReportResult.diagnostics.requestId || null,
+        fallbackAttempted: Boolean(verificationReportResult.diagnostics.fallbackAttempted),
+        primaryStatus: verificationReportResult.diagnostics.primaryStatus || null,
+        primaryCode: verificationReportResult.diagnostics.primaryCode || null,
+        primaryRequestId: verificationReportResult.diagnostics.primaryRequestId || null
+      }
     };
   } catch (error) {
     return {
@@ -246,6 +345,12 @@ export async function syncVerifiedOnLinkedIn({ accessToken, verificationConfig }
         status: Number.isFinite(Number(error?.status)) ? Number(error.status) : null,
         code: error?.code || null,
         endpoint: error?.endpoint || null,
+        requestId: error?.requestId || null,
+        attempt: error?.attempt || null,
+        compatibilityFallbackAttempted: Boolean(error?.compatibilityFallback?.attempted),
+        primaryStatus: error?.compatibilityFallback?.primaryStatus || null,
+        primaryCode: error?.compatibilityFallback?.primaryCode || null,
+        primaryRequestId: error?.compatibilityFallback?.primaryRequestId || null,
         message: error?.message || String(error)
       }
     };
