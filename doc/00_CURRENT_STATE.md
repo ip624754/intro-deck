@@ -4,12 +4,25 @@
 Intro Deck
 
 ## Current source baseline
-STEP058B1 — LinkedIn Verification Compatibility and Fail-Safe Hotfix
+STEP059 — Share Profile on LinkedIn
 
 ## Layer
-HEAVY / OAuth provider compatibility / optional integration fail-safe / trust claims
+HEAVY / external publishing / OAuth consent / idempotency / audit
 
 ## Source-confirmed
+- STEP059 adds one explicit text-only Share Profile on LinkedIn rail for active/listed profiles.
+- The exact post text and visibility are shown before any LinkedIn authorization; listing a profile, connecting LinkedIn, or buying Pro never publishes automatically.
+- `w_member_social` is isolated to the signed one-shot share intent and is not added to base `LINKEDIN_SCOPES`.
+- Publishing uses the current LinkedIn Posts API path `POST /rest/posts`; the access token is used in memory for that call and is not persisted.
+- Migration `029_linkedin_share_profile.sql` adds durable share intents/events, provider receipts, unresolved-user uniqueness, state constraints, and audit history.
+- User advisory lock + row claim serialize duplicate/concurrent callbacks. Provider 4xx is confirmed failure; network/timeout/5xx/missing post ID is non-retryable `unknown`.
+- Provider success followed by local receipt failure is also non-retryable `unknown`; it is never downgraded to retryable failure.
+- A `publishing` or `unknown` intent blocks a new share until evidence-based reconciliation.
+- Shared posts deep-link to the exact listed Intro Deck profile using `start=profile_<id>`.
+- STEP059 is text-only; media upload, scheduling, organization posting, analytics, AI drafts, and automatic publishing remain out of scope.
+- STEP059 canonical Node `20.20.2` QA is `76/89` PASS versus STEP058B1 `75/88`, with the same 13 inherited failures and new failures `0`; `npm audit` reports 0 vulnerabilities.
+- The Verified on LinkedIn Lite application pack is prepared, but Lite approval remains an operator-controlled LinkedIn review outcome.
+
 - STEP058B1 retries `/verificationReport` once without `verificationCriteria` only after a primary HTTP 400.
 - Invalid optional verification ENV disables only Verified on LinkedIn; health, webhook, Telegram, and base OIDC remain available.
 - Development/Lite scope is `r_profile_basicinfo r_verify`.

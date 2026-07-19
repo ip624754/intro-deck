@@ -261,6 +261,6 @@ assert.equal(adminSurface.includes('LinkedIn trust: identity'), true);
 assert.equal(privacy.includes('fresh Lite snapshot'), true);
 assert.equal(terms.includes('Public verification badges may be shown only'), true);
 assert.equal(landing.includes('LinkedIn verification categories'), true);
-assert.equal(['STEP058B', 'STEP058B1'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP058B', 'STEP058B1', 'STEP059'].includes(CURRENT_SOURCE_STEP), true);
 
 console.log('OK: STEP058B Verified badges and trust surfaces contract');

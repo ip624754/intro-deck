@@ -6,6 +6,7 @@ import { createDirectoryComposer } from './composers/directoryComposer.js';
 import { createDmComposer } from './composers/dmComposer.js';
 import { createHomeComposer } from './composers/homeComposer.js';
 import { createInviteComposer } from './composers/inviteComposer.js';
+import { createLinkedInShareComposer } from './composers/linkedinShareComposer.js';
 import { createIntroComposer } from './composers/introComposer.js';
 import { createMonetizationComposer } from './composers/monetizationComposer.js';
 import { createOperatorComposer } from './composers/operatorComposer.js';
@@ -43,7 +44,8 @@ export async function createBot() {
     buildInvitePerformanceSurface: surfaces.buildInvitePerformanceSurface,
     buildInviteRewardsSurface: surfaces.buildInviteRewardsSurface,
     buildInviteHistorySurface: surfaces.buildInviteHistorySurface,
-    buildInviteCardMessage: surfaces.buildInviteCardMessage
+    buildInviteCardMessage: surfaces.buildInviteCardMessage,
+    buildDirectoryCardSurface: surfaces.buildDirectoryCardSurface
   }));
 
   bot.use(createHomeComposer({
@@ -75,6 +77,12 @@ export async function createBot() {
     buildIntroDetailSurface: surfaces.buildIntroDetailSurface,
     buildDirectoryCardSurface: surfaces.buildDirectoryCardSurface,
     formatIntroDecisionReason
+  }));
+
+  bot.use(createLinkedInShareComposer({
+    clearAllPendingInputs,
+    appBaseUrl,
+    buildProfilePreviewSurface: surfaces.buildProfilePreviewSurface
   }));
 
   bot.use(createProfileComposer({

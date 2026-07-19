@@ -74,6 +74,7 @@
             <li>Member-provided profile information you add or edit inside the bot, such as display name, headline, company, city, about, skills, and listing status.</li>
             <li>Intro request records, direct-contact state, and DM workflow state needed to run the product.</li>
             <li>Operational data such as notification receipts, retry metadata, anti-abuse guards, purchase receipts, and security logs.</li>
+            <li>When you explicitly share a listed profile on LinkedIn, the exact post draft, publication state, provider post/request identifiers, and failure metadata needed for idempotency and support.</li>
           </ul>
         </section>
 
@@ -86,6 +87,7 @@
             <li>To deliver intro requests, direct-contact requests, DM relay flows, and related decisions.</li>
             <li>To keep the service secure, prevent abuse, and maintain operational reliability.</li>
             <li>To diagnose failures and support audit, receipts, and service integrity workflows.</li>
+            <li>To publish the exact profile-share draft you reviewed only after your separate LinkedIn authorization.</li>
           </ul>
         </section>
 
@@ -101,7 +103,17 @@
         </section>
 
         <section>
-          <h2>4. How visibility and contact access work</h2>
+          <h2>4. Share on LinkedIn boundaries</h2>
+          <p>
+            Share on LinkedIn is optional and user initiated. Intro Deck shows the exact post text and visibility before opening LinkedIn authorization.
+            Nothing is published automatically or in the background. The OAuth access token used for the approved post is not stored by Intro Deck.
+            Intro Deck retains a minimal publication receipt and idempotency state so retries, duplicate callbacks, and uncertain provider outcomes do not
+            silently create duplicate posts. An uncertain outcome blocks automatic retry and asks the member to check the LinkedIn feed.
+          </p>
+        </section>
+
+        <section>
+          <h2>5. How visibility and contact access work</h2>
           <p>
             Profiles are shown in the directory only when they are both active and listed. Those listed cards are visible to bot users.
             Member-entered professional fields are not verified by LinkedIn or Intro Deck unless explicitly stated. Contact details are not public by default,
@@ -110,7 +122,7 @@
         </section>
 
         <section>
-          <h2>5. Data sharing</h2>
+          <h2>6. Data sharing</h2>
           <p>
             Intro Deck does not sell personal information. Data is shared only as needed to operate the service, such as with infrastructure
             providers, LinkedIn for sign-in, and Telegram for bot delivery. Profile and workflow information may be shown to other users only
@@ -119,7 +131,7 @@
         </section>
 
         <section>
-          <h2>6. Retention and security</h2>
+          <h2>7. Retention and security</h2>
           <p>
             Intro Deck keeps operational and workflow data only for as long as reasonably needed to run the service, maintain history,
             support anti-abuse protections, and investigate failures. Security controls include webhook secret validation, protected operational
@@ -128,7 +140,7 @@
         </section>
 
         <section>
-          <h2>7. Your choices</h2>
+          <h2>8. Your choices</h2>
           <ul>
             <li>You may edit your profile fields inside the bot.</li>
             <li>You may control whether your profile is listed and active in the directory.</li>
@@ -138,7 +150,7 @@
         </section>
 
         <section>
-          <h2>8. Contact</h2>
+          <h2>9. Contact</h2>
           <p>
             For privacy questions or requests related to Intro Deck, contact the operator through the official Intro Deck LinkedIn page
             or the official Telegram bot at <a href="https://t.me/introdeckbot">@introdeckbot</a>.

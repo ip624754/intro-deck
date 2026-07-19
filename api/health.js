@@ -1,5 +1,6 @@
 import { CURRENT_SOURCE_STEP, getRuntimeArtifactSha } from '../src/config/release.js';
 import {
+  getLinkedInShareConfig,
   getLinkedInVerificationConfig,
   getNotificationOpsConfig,
   getNotificationRetryConfig,
@@ -15,6 +16,7 @@ export default async function handler(req, res) {
   const notificationOps = getNotificationOpsConfig();
   const operatorConfig = getOperatorConfig();
   const linkedInVerification = getLinkedInVerificationConfig();
+  const linkedInShare = getLinkedInShareConfig();
   res.status(200).json({
     ok: true,
     step: CURRENT_SOURCE_STEP,
@@ -52,6 +54,18 @@ export default async function handler(req, res) {
     operatorDiagnosticsSurface: {
       enabled: flags.operatorDiagnosticsSurfaceConfigured,
       operatorCount: operatorConfig.operatorTelegramUserIds.length
+    },
+    linkedInShare: {
+      enabled: linkedInShare.enabled,
+      mode: linkedInShare.mode,
+      configurationValid: linkedInShare.configurationValid !== false,
+      configurationError: linkedInShare.configurationError || null,
+      scope: linkedInShare.scopes.includes('w_member_social') ? 'w_member_social' : null,
+      postsApiVersion: linkedInShare.postsApiVersion,
+      visibility: linkedInShare.visibility,
+      explicitApprovalRequired: true,
+      tokenPersistence: 'none',
+      automaticPublishing: false
     },
     linkedInVerification: {
       enabled: linkedInVerification.enabled,

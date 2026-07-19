@@ -9,7 +9,7 @@ import { loadNotificationOperatorSurface } from '../../lib/storage/notificationS
 import { loadPricingSurfaceState } from '../../lib/storage/monetizationStore.js';
 import { loadInviteHistoryState, loadInviteRewardsSummaryState, loadInviteSurfaceState } from '../../lib/storage/inviteStore.js';
 import { loadProfileEditorState } from '../../lib/storage/profileEditStore.js';
-import { getLinkedInConfig, getLinkedInVerificationConfig, getPricingConfig, isOperatorTelegramUser } from '../../config/env.js';
+import { getLinkedInConfig, getLinkedInShareConfig, getLinkedInVerificationConfig, getPricingConfig, isOperatorTelegramUser } from '../../config/env.js';
 import { loadActiveAdminNotice } from '../../lib/storage/adminStore.js';
 import { buildSignedLinkedInLaunchTicket } from '../../lib/linkedin/oidc.js';
 
@@ -28,6 +28,7 @@ function fallbackRenderHelpText() {
     '• /dm — open private chats',
     '• /plans — open pricing and Pro status',
     '• /invite — share your invite',
+    '• /share — preview and explicitly publish your listed profile on LinkedIn',
     '• /menu — return home'
   ].join('\n');
 }
@@ -314,7 +315,8 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
       }),
       reply_markup: renderProfilePreviewKeyboard({
         profileSnapshot: state.profile,
-        persistenceEnabled: state.persistenceEnabled
+        persistenceEnabled: state.persistenceEnabled,
+        linkedinShareConfig: getLinkedInShareConfig()
       })
     };
   }

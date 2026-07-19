@@ -569,8 +569,8 @@ export function buildLinkedInStartUrl({ appBaseUrl, telegramUserId, returnTo = '
   const url = new URL('/api/oauth/start/linkedin', appBaseUrl);
   url.searchParams.set('tg_id', String(telegramUserId));
   url.searchParams.set('ret', returnTo);
-  if (purpose === 'verification_refresh') {
-    url.searchParams.set('purpose', 'verification_refresh');
+  if (['verification_refresh', 'share_profile'].includes(purpose)) {
+    url.searchParams.set('purpose', purpose);
     if (launchTicket) url.searchParams.set('ticket', launchTicket);
   }
   return url.toString();
@@ -748,11 +748,17 @@ export function renderHelpText() {
     '• use /contact to return to that hub',
     '• open plans / Pro status',
     '• invite professional contacts',
+    '• share your listed profile on LinkedIn with an exact preview and one explicit approval',
     '',
     'LinkedIn trust signals:',
     '• Identity verified and Workplace verified are separate LinkedIn categories.',
     '• A badge never verifies the role, company text, skills, bio, experience, or expertise entered on the Intro Deck card.',
-    '• Public badges require LinkedIn Lite mode, an explicit feature flag, and a fresh Lite snapshot.'
+    '• Public badges require LinkedIn Lite mode, an explicit feature flag, and a fresh Lite snapshot.',
+    '',
+    'Share on LinkedIn:',
+    '• use /share or Profile preview → Share profile on LinkedIn',
+    '• Intro Deck shows the exact text before authorization',
+    '• nothing is published automatically, and the OAuth access token is not stored'
   ].join('\n');
 }
 
@@ -1005,7 +1011,7 @@ export function renderProfilePreviewText({ profileSnapshot = null, persistenceEn
   return lines.join('\n');
 }
 
-export function renderProfilePreviewKeyboard({ profileSnapshot = null, persistenceEnabled = true } = {}) {
+export function renderProfilePreviewKeyboard({ profileSnapshot = null, persistenceEnabled = true, linkedinShareConfig = null } = {}) {
   const rows = [];
   const activation = getProfileActivationState(profileSnapshot || {});
 
@@ -1013,6 +1019,9 @@ export function renderProfilePreviewKeyboard({ profileSnapshot = null, persisten
     if (!activation.isReady) {
       rows.push([{ text: '➡️ Continue setup', callback_data: 'p:next' }]);
     } else if (activation.isListed) {
+      if (linkedinShareConfig?.enabled) {
+        rows.push([{ text: '📣 Share profile on LinkedIn', callback_data: 'li:share:start' }]);
+      }
       rows.push([{ text: '🙈 Hide from directory', callback_data: 'p:vis' }]);
     } else {
       rows.push([{ text: '🌐 Publish in directory', callback_data: 'p:pub' }]);
@@ -1025,6 +1034,42 @@ export function renderProfilePreviewKeyboard({ profileSnapshot = null, persisten
     { text: '🏠 Home', callback_data: 'home:root' }
   ]);
 
+  return buildInlineKeyboard(rows);
+}
+
+export function renderLinkedInSharePreviewText({ intent = null, notice = null } = {}) {
+  const lines = [
+    '📣 Share profile on LinkedIn',
+    '',
+    'Review the exact post below. Nothing is published until you open LinkedIn and explicitly approve this one share.',
+    '',
+    '——— LinkedIn post preview ———',
+    intent?.post_text || 'Share draft is unavailable.',
+    '——— End preview ———',
+    '',
+    `Visibility: ${intent?.visibility || 'PUBLIC'}`,
+    '• One approval can create at most one provider post.',
+    '• Intro Deck does not store the OAuth access token used for publishing.',
+    '• If LinkedIn returns an uncertain result, automatic retry is blocked to prevent duplicates.'
+  ];
+  if (notice) {
+    lines.push('', notice);
+  }
+  return lines.join('\n');
+}
+
+export function renderLinkedInSharePreviewKeyboard({ publishUrl = null, publicToken = null } = {}) {
+  const rows = [];
+  if (publishUrl) {
+    rows.push([{ text: '✅ Approve and publish on LinkedIn', url: publishUrl }]);
+  }
+  if (publicToken) {
+    rows.push([{ text: '✖️ Cancel this share', callback_data: `li:share:cancel:${publicToken}` }]);
+  }
+  rows.push([
+    { text: '↩️ Profile preview', callback_data: 'p:prev' },
+    { text: '🏠 Home', callback_data: 'home:root' }
+  ]);
   return buildInlineKeyboard(rows);
 }
 

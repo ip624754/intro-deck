@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { getLinkedInConfig, getLinkedInVerificationConfig, getTelegramConfig } from '../../../src/config/env.js';
+import { getLinkedInConfig, getLinkedInShareConfig, getLinkedInVerificationConfig, getTelegramConfig } from '../../../src/config/env.js';
 import {
   exchangeCodeForToken,
   fetchOidcDiscovery,
@@ -17,6 +17,7 @@ import {
   pickLinkedInIdentityClaims
 } from '../../../src/lib/linkedin/profile.js';
 import { persistLinkedInIdentity } from '../../../src/lib/storage/linkedinIdentityStore.js';
+import { publishLinkedInShareForOAuthCallback } from '../../../src/lib/storage/linkedinShareStore.js';
 import { sendTelegramMessage } from '../../../src/lib/telegram/botApi.js';
 
 function escapeHtml(input) {
@@ -75,6 +76,85 @@ function describeError(error) {
   }
 
   return summary;
+}
+
+function buildLinkedInShareResultMessage(result) {
+  const lines = ['📣 Share profile on LinkedIn', ''];
+  if (result?.published) {
+    lines.push('✅ Published once to your LinkedIn account.');
+    lines.push(`• Post ID: ${result.provider?.postId || result.intent?.provider_post_id || 'recorded'}`);
+    lines.push('• The OAuth access token was used for this request and was not stored by Intro Deck.');
+    return lines.join('\n');
+  }
+  if (result?.alreadyPublished) {
+    lines.push('ℹ️ This approved share was already published. No duplicate post was created.');
+    if (result.intent?.provider_post_id) lines.push(`• Post ID: ${result.intent.provider_post_id}`);
+    return lines.join('\n');
+  }
+  if (result?.inProgress) {
+    lines.push('⏳ Publishing is already in progress. Do not approve the same share again.');
+    return lines.join('\n');
+  }
+  if (result?.outcomeUnknown || result?.reason === 'share_outcome_unknown') {
+    if (result?.provider?.postId) {
+      lines.push('⚠️ LinkedIn returned a post ID, but Intro Deck could not finalize the local publication receipt.');
+      lines.push(`• Provider post ID: ${result.provider.postId}`);
+    } else {
+      lines.push('⚠️ LinkedIn did not return a conclusive publication result.');
+    }
+    lines.push('• Automatic retry is blocked to prevent a duplicate post.');
+    lines.push('• Check your LinkedIn feed before creating another share.');
+    if (result.error?.requestId) lines.push(`• LinkedIn request ID: ${result.error.requestId}`);
+    return lines.join('\n');
+  }
+  lines.push('❌ The LinkedIn post was not published.');
+  lines.push(`• Reason: ${result?.reason || 'linkedin_share_failed'}`);
+  if (result?.error?.status) lines.push(`• HTTP status: ${result.error.status}`);
+  if (result?.error?.requestId) lines.push(`• LinkedIn request ID: ${result.error.requestId}`);
+  lines.push('• Your Intro Deck profile remains unchanged.');
+  return lines.join('\n');
+}
+
+async function notifyLinkedInShareResult({ telegramUserId, result }) {
+  const { botToken } = getTelegramConfig();
+  await sendTelegramMessage({
+    botToken,
+    chatId: telegramUserId,
+    text: buildLinkedInShareResultMessage(result),
+    replyMarkup: {
+      inline_keyboard: [
+        [{ text: '👁 Profile preview', callback_data: 'p:prev' }],
+        [{ text: '🏠 Home', callback_data: 'home:root' }]
+      ]
+    }
+  });
+}
+
+function renderLinkedInShareResultPage(result) {
+  if (result?.published || result?.alreadyPublished) {
+    const postId = result.provider?.postId || result.intent?.provider_post_id || null;
+    return renderHtml({
+      title: 'LinkedIn post published',
+      body: `<h1>LinkedIn post published</h1><p>Your approved Intro Deck profile share was published once.</p>${postId ? `<p class="meta">Post ID: <code>${escapeHtml(postId)}</code></p>` : ''}<p>Return to Telegram to continue.</p>`
+    });
+  }
+  if (result?.inProgress) {
+    return renderHtml({
+      title: 'LinkedIn post is publishing',
+      body: '<h1>Publishing is already in progress</h1><p>Do not repeat the approval. Return to Telegram for the final receipt.</p>'
+    });
+  }
+  if (result?.outcomeUnknown || result?.reason === 'share_outcome_unknown') {
+    const providerPostId = result?.provider?.postId || null;
+    return renderHtml({
+      title: 'LinkedIn publication needs review',
+      body: `<h1>Publication needs review</h1>${providerPostId ? `<p>LinkedIn returned post ID <code>${escapeHtml(providerPostId)}</code>, but Intro Deck could not finalize the local receipt.</p>` : '<p>LinkedIn did not return a conclusive publication result.</p>'}<p>Automatic retry is blocked to prevent a duplicate post. Check your LinkedIn feed before trying again.</p>`
+    });
+  }
+  return renderHtml({
+    title: 'LinkedIn post not published',
+    body: `<h1>LinkedIn post was not published</h1><p>${escapeHtml(result?.reason || 'The provider rejected the request.')}</p><p>Return to Telegram to review the result.</p>`
+  });
 }
 
 function safeVerificationTransferPayload(verificationSync) {
@@ -537,6 +617,47 @@ export default async function handler(req, res) {
 
     stage = 'extract_identity';
     const identity = pickLinkedInIdentityClaims({ idTokenClaims, userInfo });
+
+    if (statePayload.shareRequested || statePayload.purpose === 'share_profile') {
+      stage = 'publish_linkedin_profile_share';
+      const shareConfig = getLinkedInShareConfig();
+      let shareResult;
+      if (
+        !shareConfig.enabled
+        || shareConfig.configurationValid === false
+        || !statePayload.shareIntentToken
+        || statePayload.purpose !== 'share_profile'
+      ) {
+        shareResult = {
+          published: false,
+          reason: 'linkedin_share_runtime_config_changed'
+        };
+      } else {
+        shareResult = await publishLinkedInShareForOAuthCallback({
+          publicToken: statePayload.shareIntentToken,
+          telegramUserId: statePayload.telegramUserId,
+          linkedinSub: identity.linkedinSub,
+          accessToken: tokenPayload.access_token,
+          shareConfig
+        });
+      }
+
+      try {
+        stage = 'notify_linkedin_share_result';
+        await notifyLinkedInShareResult({
+          telegramUserId: statePayload.telegramUserId,
+          result: shareResult
+        });
+      } catch (notifyError) {
+        console.warn('[linkedin share callback] telegram notify skipped', {
+          telegramUserId: statePayload.telegramUserId,
+          error: describeError(notifyError)
+        });
+      }
+
+      const statusCode = shareResult?.published || shareResult?.alreadyPublished ? 200 : 409;
+      return res.status(statusCode).send(renderLinkedInShareResultPage(shareResult));
+    }
 
     let verificationSync = {
       requested: false,

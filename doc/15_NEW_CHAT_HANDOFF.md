@@ -3,12 +3,24 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP058B1 — LinkedIn Verification Compatibility and Fail-Safe Hotfix
-- Current mode: HEAVY / OAUTH PROVIDER COMPATIBILITY / OPTIONAL CONFIG FAIL-SAFE / TRUST CLAIMS
-- Current focus: deploy STEP058B1, verify the live no-criteria compatibility fallback, and confirm invalid optional verification config can no longer crash the core runtime.
+- Current baseline: STEP059 — Share Profile on LinkedIn
+- Current mode: HEAVY / EXTERNAL PUBLISHING / OAUTH CONSENT / IDEMPOTENCY / AUDIT
+- Current focus: apply migration 029, enable one-shot Share on LinkedIn, verify one real post and duplicate protection, and submit the prepared Verified on LinkedIn Lite upgrade request.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP059 provides one explicit profile-share flow for active/listed profiles.
+- The exact post and visibility are rendered before OAuth; nothing publishes automatically.
+- `w_member_social` is isolated to the share OAuth intent and is not added to base OIDC scopes.
+- Current LinkedIn Posts API `POST /rest/posts` is the canonical provider path.
+- Access tokens are used in memory for one provider call and are not stored.
+- Migration 029 adds share intents/events, provider receipts, user/unresolved uniqueness, state constraints, and audit history.
+- Claim/finalize logic prevents concurrent callbacks from creating two posts.
+- Provider 4xx is retryable only through a fresh explicit authorization; network/timeout/5xx/missing post ID and provider-success receipt failures are `unknown` and block retry.
+- A `publishing` or `unknown` intent blocks creation of a new share.
+- Shared post links open the exact listed member profile through `start=profile_<id>`.
+- The Lite upgrade application pack is prepared, but LinkedIn approval is not claimed.
 
 - STEP058B1 keeps optional LinkedIn verification fail-safe: invalid config cannot crash health/webhook/core OIDC.
 - `/verificationReport` retries without criteria only after a criteria request returns HTTP 400; request IDs and attempt strategy are retained safely.
@@ -22,7 +34,7 @@
 - Professional role, company, skills, experience, seniority, bio, and expertise remain member-provided.
 - Safe sync diagnostics now distinguish bad request/version, deprecated version, scope/admin denial, timeout, rate limit, member unavailable, and provider failure.
 - No migration is required for STEP058B.
-- STEP058A is live-deployed, but the first operator Development attempt returned `linkedin_verified_sync_failed`; real category snapshot evidence remains not verified.
+- STEP058B1 live evidence confirms the verification APIs, zero-category snapshot persistence, and completion URL; no completed category is available for the tested operator account.
 
 - STEP058A requests Verified on LinkedIn scopes only for eligible Development testers or all members after an explicit Lite mode switch.
 - The integration calls `/identityMe` and `/verificationReport`, cross-checks app-scoped member IDs, and stores only category-level trust facts.
@@ -81,6 +93,10 @@
 - STEP050J schema reality check now exists in source: profile/directory reads are schema-compatible again, while hidden Telegram username writes and direct-contact unlock flows explicitly require STEP046 migration `019_contact_unlock_requests.sql`.
 
 ## Locally verified
+- STEP059 canonical Node `20.20.2`: dependency install, `npm run check`, dedicated share smoke, STEP058A/B/B1 compatibility, legal/landing/router/commands/schema/invite contracts, and `npm audit` PASS.
+- Full STEP059 inventory is `76/89` PASS versus STEP058B1 `75/88`; the same 13 inherited failures remain, with new failures `0`.
+- Share preview, signed intent/state, current Posts API request contract, 4xx/unknown separation, no-token persistence, provider-success receipt hardening, and direct profile deep link are source-verified.
+
 - STEP058B1 Node `20.20.2` check and dedicated compatibility smoke passed.
 - Full STEP058B1 inventory is `75/88` PASS versus STEP058B `74/87`; the 13-failure baseline set is unchanged.
 - Invalid verification config health behavior, HTTP 400 fallback behavior, and same-client sequential query contract are source-verified.
@@ -97,14 +113,14 @@
 - missing-target, wrong-database-fingerprint, and artifact-mismatch paths fail closed.
 
 ## Live-confirmed
+- STEP058B1 is operator-confirmed live at artifact `a5638bc0908aaf89848678ac1cdf8289698f906b`; verification APIs returned a zero-category snapshot plus completion URL.
+- STEP059 is not live-confirmed.
 - STEP058B is operator-confirmed live at artifact `c01f7e599ee8a5f8ad0f1c0070f1e6bfdc1d2878`.
 - Production health is restored with `verificationScope=r_verify`, Development mode, and public badges disabled.
-- A repeated live verification attempt still returned `/verificationReport` HTTP 400; no successful category snapshot is confirmed.
 
 - Production `/api/health?full=1` operator-confirmed STEP057 at artifact `615d4014f3463bb40b6ec46c47d3e0879a670b55`.
 - STEP057 production read-only preflight returned WARN only for local Node 24 and empty directory supply; artifact, webhook, PostgreSQL, migration 027, impossible states, notification health, and policy checks passed.
-- STEP058A deployment/config and migration 028 are operator-confirmed live at artifact `781c9fb89c4aa870388108f0436e301a7140c106`; the private callback returned `linkedin_verified_sync_failed`. Successful verification API/category snapshot evidence is not confirmed.
-- STEP058B deployment is not yet confirmed.
+- STEP058A migration/config are live; STEP058B1 supersedes the initial failed-sync state with a successful zero-category API snapshot and completion URL.
 
 - Production `/api/health?full=1` operator-confirmed STEP056 with artifact `7beaa0657c72dcedf423b17b3c998fc0ea67a6db`.
 - STEP057 deployment, automated preflight, and manual core-loop verdict are not yet confirmed.
@@ -337,9 +353,9 @@ Deploy STEP054, verify live positioning surfaces and BotFather copy, then procee
 
 ### Live boundary
 - STEP058A deployment/config and migration 028 are live-confirmed;
-- the first Development sync failed with `linkedin_verified_sync_failed`;
-- STEP058B does not create or infer a verified category from that failure;
-- STEP058B deployment, successful category snapshot, Lite approval, and public badge rendering remain unconfirmed.
+- the initial Development sync failure was superseded by STEP058B1 compatibility evidence;
+- a zero-category snapshot does not create or infer a verified category;
+- Lite approval, a completed LinkedIn category, and public badge rendering remain unconfirmed.
 
 ## STEP058B1 handoff delta
 

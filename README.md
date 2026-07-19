@@ -1,11 +1,12 @@
 # LinkedIn Telegram Directory Bot
 
-STEP058B baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP059 baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
 A Telegram-first professional directory:
-- LinkedIn OIDC for basic account identity plus a gated Verified on LinkedIn Development test rail; member-entered professional claims remain separate
+- LinkedIn OIDC for basic account identity plus a gated Verified on LinkedIn trust rail; member-entered professional claims remain separate
+- explicit, preview-first Share Profile on LinkedIn with one-shot `w_member_social` authorization and no OAuth token persistence
 - self-managed profile completion inside Telegram
 - listed/active profile browse visible to bot users, with private contact details hidden by default
 - one canonical Request contact entry point with free intro, private-chat, or Telegram-contact outcomes
@@ -35,6 +36,8 @@ A Telegram-first professional directory:
 - STEP057 — production readiness and core-loop acceptance
 - STEP058A — Verified on LinkedIn Development integration
 - STEP058B — Verified badges and fail-closed trust surfaces
+- STEP058B1 — verification compatibility + optional-config fail-safe
+- STEP059 — explicit user-approved Share Profile on LinkedIn
 
 ## Core docs
 
@@ -65,6 +68,8 @@ A Telegram-first professional directory:
 - `npm run smoke:step057-readiness`
 - `npm run smoke:linkedin-verified-dev`
 - `npm run smoke:linkedin-trust-surfaces`
+- `npm run smoke:linkedin-verification-compat`
+- `npm run smoke:linkedin-share`
 - `npm run step057:preflight`
 
 
@@ -83,3 +88,17 @@ Development mode is testing-only. `IDENTITY` and `WORKPLACE` are separate catego
 Operator runbooks: `doc/82_STEP058A_OPERATOR_ROLLOUT.md` and `doc/83_STEP058B_OPERATOR_ROLLOUT.md`.
 
 Roadmap: `doc/81_LINKEDIN_TRUST_AND_DISTRIBUTION_ROADMAP.md`.
+
+
+## STEP059 Share Profile on LinkedIn rollout
+
+1. Apply `migrations/029_linkedin_share_profile.sql`.
+2. Confirm Share on LinkedIn / `w_member_social` is enabled for the LinkedIn developer app.
+3. Configure `LINKEDIN_SHARE_MODE=live` and the STEP059 share ENV contract.
+4. Redeploy and confirm `/api/health?full=1` reports `STEP059` and `linkedInShare.enabled=true`.
+5. Test Profile preview → Share profile on LinkedIn → exact preview → explicit authorization → one receipt.
+6. Confirm the resulting Telegram deep link opens the correct listed profile.
+7. Keep automatic posting, token persistence, scheduled posting, media upload, and AI drafting disabled.
+
+Operator runbook: `doc/86_STEP059_OPERATOR_ROLLOUT.md`.
+Lite upgrade pack: `doc/85_LINKEDIN_LITE_UPGRADE_APPLICATION_PACK.md`.

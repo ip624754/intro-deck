@@ -1,0 +1,38 @@
+{
+  "step": "STEP059",
+  "packageVersion": "0.57.0",
+  "mode": "HEAVY",
+  "riskScore": 12,
+  "environment": {
+    "node": "20.20.2",
+    "npm": "10.9.2"
+  },
+  "checks": {
+    "npmCiIgnoreScripts": "PASS",
+    "npmCheck": "PASS",
+    "dedicatedSmoke": "PASS",
+    "step058B1Compatibility": "PASS",
+    "step058BCompatibility": "PASS",
+    "step058ACompatibility": "PASS",
+    "legal": "PASS",
+    "landing": "PASS",
+    "router": "PASS",
+    "commands": "PASS",
+    "schemaCompat": "PASS",
+    "inviteDeepLink": "PASS",
+    "npmAuditHigh": "PASS_0_VULNERABILITIES",
+    "gitDiffCheck": "PASS"
+  },
+  "fullSmoke": {
+    "baseline": { "step": "STEP058B1", "pass": 75, "fail": 13, "total": 88 },
+    "target": { "step": "STEP059", "pass": 76, "fail": 13, "total": 89 },
+    "newFailures": [],
+    "newPassingContract": "smoke:linkedin-share"
+  },
+  "truthBoundary": {
+    "sourceVerified": true,
+    "liveDeploymentVerified": false,
+    "liveLinkedInPostVerified": false,
+    "liteApprovalVerified": false
+  }
+}

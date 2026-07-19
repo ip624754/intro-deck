@@ -3,12 +3,24 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP058B1
-- Phase: LinkedIn verification compatibility and optional-config production fail-safe on top of live-deployed STEP058B
-- Primary mode: HEAVY / OAUTH PROVIDER COMPATIBILITY / OPTIONAL CONFIG FAIL-SAFE / TRUST CLAIMS
-- Runtime status: STEP058B is operator-confirmed live at artifact `c01f7e599ee8a5f8ad0f1c0070f1e6bfdc1d2878`; correct `r_verify` configuration is live, but `/verificationReport` still returns HTTP 400. STEP058B1 is source-implemented and awaits deploy/runtime verification.
+- Current STEP: STEP059
+- Phase: explicit user-approved Share Profile on LinkedIn plus Verified on LinkedIn Lite upgrade preparation
+- Primary mode: HEAVY / EXTERNAL PUBLISHING / OAUTH CONSENT / IDEMPOTENCY / AUDIT
+- Runtime status: STEP058B1 is operator-confirmed live at artifact `a5638bc0908aaf89848678ac1cdf8289698f906b`; the verification API returns a category snapshot and completion URL. STEP059 is source-implemented and awaits migration 029, share ENV, deployment, and one live publication.
 
 ## What exists now
+
+- STEP059 adds one explicit Share Profile on LinkedIn rail for active/listed profiles.
+- Telegram shows the exact text and visibility before authorization; `/share` and Profile preview use the same canonical flow.
+- `w_member_social` is requested only for the one-shot share intent, not for base LinkedIn login.
+- Publishing uses the current LinkedIn Posts API and stores a minimal receipt; OAuth access tokens are never persisted.
+- Signed launch ticket + signed OAuth state bind Telegram user, purpose, intent, expiry, and nonce.
+- Concurrent/duplicate callbacks are serialized; a stale, timed-out, provider-5xx, network, missing-post-id, or provider-success/local-receipt failure becomes non-retryable `unknown`.
+- A user with a `publishing` or `unknown` intent cannot create another share until reconciliation, preventing duplicate posts.
+- Shared posts deep-link directly to the member's listed Intro Deck profile.
+- Migration `029_linkedin_share_profile.sql` is required.
+- STEP059 canonical Node `20.20.2` QA: `76/89` PASS versus STEP058B1 `75/88`, with the same 13 inherited failures, one new passing share contract, and new failures `0`; `npm audit` reports 0 vulnerabilities.
+- `doc/85_LINKEDIN_LITE_UPGRADE_APPLICATION_PACK.md` prepares the Development → Lite operator request without claiming approval.
 
 - STEP058B1 adds a fail-safe optional verification config: invalid verification ENV disables only Verified on LinkedIn and leaves health, webhook, base OIDC, and the bot available.
 - `/verificationReport` now retries once without `verificationCriteria` after a criteria request receives HTTP 400, matching LinkedIn Development quickstart compatibility behavior.
@@ -33,7 +45,7 @@
 - Role, company, title, seniority, skills, experience, expertise, and bio remain member-provided.
 - STEP058B canonical Node `20.20.2` QA: dependency install, `npm run check`, dedicated STEP058A/STEP058B contracts, positioning compatibility, and `npm audit` PASS.
 - Full STEP058B inventory: `74/87` PASS versus STEP058A `73/86`, with the same 13 inherited failures, one new passing trust-surface contract, and new failures `0`.
-- STEP058A is operator-confirmed deployed and migration 028/config are live; the first Development verification attempt returned `linkedin_verified_sync_failed`. Successful `/identityMe`, `/verificationReport`, and category snapshot evidence remain not verified.
+- STEP058B1 is operator-confirmed live; `/identityMe` and `/verificationReport` returned a zero-category snapshot plus a LinkedIn completion URL. No public badge is inferred from the empty category set.
 
 - STEP057 production-safe read-only preflight, exact artifact binding, Telegram webhook diagnostics, PostgreSQL invariant checks, and operator-assisted core-loop verdict pack
 
@@ -72,6 +84,14 @@
 - STEP051.5 restores the broken `Plans` surface by shipping the missing pricing text/keyboard render layer, so `⭐ Plans`, `/plans`, and `plans:root` no longer fail on `renderPricingText is not a function`
 
 ## Current truth
+
+- STEP059 never publishes automatically: listing a profile, buying Pro, or connecting LinkedIn is not publication consent.
+- One Telegram preview approval is bound to one share intent and at most one provider post.
+- Provider success is never downgraded to retryable failure because of local receipt or audit problems.
+- `unknown` is a launch-safe duplicate-prevention state and requires feed/operator reconciliation.
+- Share access tokens and raw provider payloads are not persisted.
+- STEP059 is text-only; media, scheduling, organization posting, analytics, AI drafts, and automatic publishing remain out of scope.
+- Lite upgrade submission is an operator action; approval is not source- or live-confirmed.
 
 - STEP058B source readiness does not make a failed Development sync into verification evidence.
 - Development mode can never enable a public badge, even if the public-badge env flag is set.
@@ -145,7 +165,11 @@
 
 ## Next recommended step
 
-- deploy STEP055 and verify `/api/health?full=1` reports `STEP055`; then manually test incomplete profile → next field → skills → preview → publish → hide in Telegram
+1. Apply migration `029_linkedin_share_profile.sql` after a Neon restore point/branch backup.
+2. Enable the isolated Share on LinkedIn ENV contract and deploy STEP059.
+3. Verify one real explicit preview → consent → LinkedIn post → receipt flow and confirm a repeated callback does not create a duplicate.
+4. Submit the prepared Verified on LinkedIn Development → Lite request; record the LinkedIn case/reference ID without claiming approval.
+5. Keep AI/news drafting as a later explicit-preview/explicit-approval STEP after the manual share core is live-proven.
 
 ## STEP039.1 delta
 

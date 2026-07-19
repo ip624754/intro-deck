@@ -78,7 +78,19 @@ export async function getSchemaCompat(client) {
         from information_schema.tables
         where table_schema = current_schema()
           and table_name = 'linkedin_verification_snapshots'
-      ) as has_linkedin_verification_snapshots_table
+      ) as has_linkedin_verification_snapshots_table,
+      exists (
+        select 1
+        from information_schema.tables
+        where table_schema = current_schema()
+          and table_name = 'linkedin_share_intents'
+      ) as has_linkedin_share_intents_table,
+      exists (
+        select 1
+        from information_schema.tables
+        where table_schema = current_schema()
+          and table_name = 'linkedin_share_events'
+      ) as has_linkedin_share_events_table
   `);
 
   const compat = {
@@ -92,7 +104,9 @@ export async function getSchemaCompat(client) {
     dmThreadsHasProCovered: Boolean(result.rows[0]?.dm_threads_has_pro_covered),
     dmThreadsHasCheckoutAuthorizedAt: Boolean(result.rows[0]?.dm_threads_has_checkout_authorized_at),
     hasContactUnlockEventsTable: Boolean(result.rows[0]?.has_contact_unlock_events_table),
-    hasLinkedInVerificationSnapshotsTable: Boolean(result.rows[0]?.has_linkedin_verification_snapshots_table)
+    hasLinkedInVerificationSnapshotsTable: Boolean(result.rows[0]?.has_linkedin_verification_snapshots_table),
+    hasLinkedInShareIntentsTable: Boolean(result.rows[0]?.has_linkedin_share_intents_table),
+    hasLinkedInShareEventsTable: Boolean(result.rows[0]?.has_linkedin_share_events_table)
   };
 
   schemaCompatCache.set(client, compat);

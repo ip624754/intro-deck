@@ -1,5 +1,6 @@
-import { getLinkedInConfig, getLinkedInVerificationConfig, isOperatorTelegramUser } from '../../../src/config/env.js';
+import { getLinkedInConfig, getLinkedInShareConfig, getLinkedInVerificationConfig, isOperatorTelegramUser } from '../../../src/config/env.js';
 import { buildAuthorizeUrl, buildSignedState, fetchOidcDiscovery, verifySignedLinkedInLaunchTicket } from '../../../src/lib/linkedin/oidc.js';
+import { markLinkedInShareAuthorizationForTelegramUser } from '../../../src/lib/storage/linkedinShareStore.js';
 
 function escapeHtml(input) {
   return String(input)
@@ -44,7 +45,8 @@ export default async function handler(req, res) {
   const telegramUserId = url.searchParams.get('tg_id');
   const returnTo = url.searchParams.get('ret') || '/menu';
   const redirect = url.searchParams.get('redirect') !== '0';
-  const purpose = url.searchParams.get('purpose') === 'verification_refresh' ? 'verification_refresh' : 'connect';
+  const rawPurpose = url.searchParams.get('purpose');
+  const purpose = ['verification_refresh', 'share_profile'].includes(rawPurpose) ? rawPurpose : 'connect';
   const launchTicket = url.searchParams.get('ticket');
 
   if (!telegramUserId || !/^\d+$/.test(telegramUserId)) {
@@ -57,11 +59,14 @@ export default async function handler(req, res) {
   try {
     const { clientId, redirectUri, stateSecret, stateTtlSeconds, oidcDiscoveryUrl, scopes } = getLinkedInConfig();
     const verificationConfig = getLinkedInVerificationConfig();
+    const shareConfig = getLinkedInShareConfig();
     const verificationEligible = verificationConfig.enabled && verificationConfig.configurationValid !== false && (
       verificationConfig.mode === 'lite'
       || (verificationConfig.mode === 'development' && isOperatorTelegramUser(telegramUserId))
     );
     let verificationRequested = false;
+    let shareRequested = false;
+    let shareIntentToken = null;
 
     if (purpose === 'verification_refresh') {
       let ticketPayload;
@@ -93,9 +98,60 @@ export default async function handler(req, res) {
       }));
     }
 
+    if (purpose === 'share_profile') {
+      let ticketPayload;
+      try {
+        ticketPayload = verifySignedLinkedInLaunchTicket(launchTicket, stateSecret);
+      } catch {
+        return res.status(403).send(renderHtml({
+          title: 'LinkedIn share link expired',
+          body: '<h1>Share link expired</h1><p>Return to your Intro Deck profile preview and create a fresh LinkedIn share.</p>'
+        }));
+      }
+
+      shareIntentToken = ticketPayload.shareIntentToken || null;
+      if (
+        ticketPayload.telegramUserId !== String(telegramUserId)
+        || ticketPayload.purpose !== purpose
+        || !shareIntentToken
+        || !/^[0-9a-f-]{36}$/i.test(shareIntentToken)
+      ) {
+        return res.status(403).send(renderHtml({
+          title: 'LinkedIn share link rejected',
+          body: '<h1>Share link rejected</h1><p>Return to your Intro Deck profile preview and create a fresh LinkedIn share.</p>'
+        }));
+      }
+
+      if (!shareConfig.enabled || shareConfig.configurationValid === false) {
+        return res.status(403).send(renderHtml({
+          title: 'LinkedIn sharing unavailable',
+          body: '<h1>LinkedIn sharing is unavailable</h1><p>The optional Share on LinkedIn integration is not enabled correctly. Your profile remains unchanged.</p>'
+        }));
+      }
+
+      const authorization = await markLinkedInShareAuthorizationForTelegramUser({
+        publicToken: shareIntentToken,
+        telegramUserId
+      });
+      if (!authorization.persistenceEnabled || !authorization.ok) {
+        return res.status(409).send(renderHtml({
+          title: 'LinkedIn share no longer available',
+          body: `<h1>Share no longer available</h1><p>${escapeHtml(authorization.reason || 'The share draft could not be authorized.')}</p><p>Return to Telegram and create a fresh preview.</p>`
+        }));
+      }
+      if (authorization.alreadyPublished) {
+        return res.status(200).send(renderHtml({
+          title: 'Already published',
+          body: '<h1>This LinkedIn share was already published</h1><p>Return to Telegram to review the receipt.</p>'
+        }));
+      }
+      shareRequested = true;
+    }
+
     const requestedScopes = [...new Set([
       ...scopes,
-      ...(verificationRequested ? verificationConfig.scopes : [])
+      ...(verificationRequested ? verificationConfig.scopes : []),
+      ...(shareRequested ? shareConfig.scopes : [])
     ])];
     const discovery = await fetchOidcDiscovery(oidcDiscoveryUrl);
     const state = buildSignedState({
@@ -104,6 +160,8 @@ export default async function handler(req, res) {
       purpose,
       verificationRequested,
       verificationMode: verificationRequested ? verificationConfig.mode : 'off',
+      shareRequested,
+      shareIntentToken,
       ttlSeconds: stateTtlSeconds,
       secret: stateSecret
     });

@@ -7,6 +7,13 @@ const DEFAULT_LINKEDIN_VERIFIED_REPORT_API_VERSION = '202510';
 const DEFAULT_LINKEDIN_VERIFIED_API_TIMEOUT_MS = 8000;
 const DEFAULT_LINKEDIN_VERIFIED_PUBLIC_BADGES_ENABLED = false;
 const DEFAULT_LINKEDIN_VERIFIED_PUBLIC_BADGE_MAX_AGE_DAYS = 30;
+const DEFAULT_LINKEDIN_SHARE_MODE = 'off';
+const DEFAULT_LINKEDIN_SHARE_SCOPES = 'w_member_social';
+const DEFAULT_LINKEDIN_SHARE_POSTS_API_VERSION = '202606';
+const DEFAULT_LINKEDIN_SHARE_API_TIMEOUT_MS = 8000;
+const DEFAULT_LINKEDIN_SHARE_INTENT_TTL_SECONDS = 900;
+const DEFAULT_LINKEDIN_SHARE_CLAIM_TIMEOUT_SECONDS = 300;
+const DEFAULT_LINKEDIN_SHARE_VISIBILITY = 'PUBLIC';
 const DEFAULT_STATE_TTL_SECONDS = 600;
 const DEFAULT_JWKS_CACHE_TTL_SECONDS = 3600;
 const DEFAULT_DATABASE_SSLMODE = 'require';
@@ -235,6 +242,86 @@ export function getLinkedInVerificationConfig({ strict = false } = {}) {
   }
 }
 
+function parseLinkedInShareConfigStrict() {
+  const mode = readEnumEnv('LINKEDIN_SHARE_MODE', DEFAULT_LINKEDIN_SHARE_MODE, ['off', 'live']);
+  const scopes = parseScopes(readEnv('LINKEDIN_SHARE_SCOPES', DEFAULT_LINKEDIN_SHARE_SCOPES));
+  if (mode !== 'off' && !scopes.includes('w_member_social')) {
+    throw new Error('LINKEDIN_SHARE_SCOPES must include w_member_social');
+  }
+
+  const postsApiVersion = String(readEnv(
+    'LINKEDIN_SHARE_POSTS_API_VERSION',
+    DEFAULT_LINKEDIN_SHARE_POSTS_API_VERSION
+  ));
+  if (!/^\d{6}$/.test(postsApiVersion)) {
+    throw new Error('LINKEDIN_SHARE_POSTS_API_VERSION must use LinkedIn YYYYMM format');
+  }
+
+  const visibility = String(readEnv('LINKEDIN_SHARE_VISIBILITY', DEFAULT_LINKEDIN_SHARE_VISIBILITY) || '')
+    .trim()
+    .toUpperCase();
+  if (!['PUBLIC', 'CONNECTIONS'].includes(visibility)) {
+    throw new Error('LINKEDIN_SHARE_VISIBILITY must be PUBLIC or CONNECTIONS');
+  }
+
+  return {
+    mode,
+    enabled: mode === 'live',
+    configurationValid: true,
+    configurationError: null,
+    scopes,
+    postsApiVersion,
+    visibility,
+    timeoutMs: readBoundedIntegerEnv(
+      'LINKEDIN_SHARE_API_TIMEOUT_MS',
+      DEFAULT_LINKEDIN_SHARE_API_TIMEOUT_MS,
+      { min: 1000, max: 30000 }
+    ),
+    intentTtlSeconds: readBoundedIntegerEnv(
+      'LINKEDIN_SHARE_INTENT_TTL_SECONDS',
+      DEFAULT_LINKEDIN_SHARE_INTENT_TTL_SECONDS,
+      { min: 300, max: 3600 }
+    ),
+    claimTimeoutSeconds: readBoundedIntegerEnv(
+      'LINKEDIN_SHARE_CLAIM_TIMEOUT_SECONDS',
+      DEFAULT_LINKEDIN_SHARE_CLAIM_TIMEOUT_SECONDS,
+      { min: 60, max: 1800 }
+    ),
+    explicitApprovalRequired: true,
+    tokenPersistence: 'none'
+  };
+}
+
+function buildLinkedInShareFailSafeConfig(error) {
+  const rawMode = String(readEnv('LINKEDIN_SHARE_MODE', DEFAULT_LINKEDIN_SHARE_MODE) || '').trim().toLowerCase();
+  return {
+    mode: rawMode === 'live' ? 'live' : 'off',
+    enabled: false,
+    configurationValid: false,
+    configurationError: {
+      code: 'linkedin_share_config_invalid',
+      message: error?.message || String(error)
+    },
+    scopes: parseScopes(readEnv('LINKEDIN_SHARE_SCOPES', DEFAULT_LINKEDIN_SHARE_SCOPES)),
+    postsApiVersion: String(readEnv('LINKEDIN_SHARE_POSTS_API_VERSION', DEFAULT_LINKEDIN_SHARE_POSTS_API_VERSION)),
+    visibility: DEFAULT_LINKEDIN_SHARE_VISIBILITY,
+    timeoutMs: DEFAULT_LINKEDIN_SHARE_API_TIMEOUT_MS,
+    intentTtlSeconds: DEFAULT_LINKEDIN_SHARE_INTENT_TTL_SECONDS,
+    claimTimeoutSeconds: DEFAULT_LINKEDIN_SHARE_CLAIM_TIMEOUT_SECONDS,
+    explicitApprovalRequired: true,
+    tokenPersistence: 'none'
+  };
+}
+
+export function getLinkedInShareConfig({ strict = false } = {}) {
+  try {
+    return parseLinkedInShareConfigStrict();
+  } catch (error) {
+    if (strict) throw error;
+    return buildLinkedInShareFailSafeConfig(error);
+  }
+}
+
 export function getLinkedInConfig() {
   const scopes = parseScopes(readEnv('LINKEDIN_SCOPES', DEFAULT_LINKEDIN_SCOPES));
   const stateSecret = readRequiredEnv('LINKEDIN_STATE_SECRET');
@@ -369,11 +456,13 @@ export function getPublicFlags() {
   );
 
   const linkedInVerification = getLinkedInVerificationConfig();
+  const linkedInShare = getLinkedInShareConfig();
 
   return {
     dbConfigured: dbConfig.configured,
     linkedInConfigured,
     linkedInVerificationConfigured: linkedInConfigured && linkedInVerification.enabled,
+    linkedInShareConfigured: linkedInConfigured && linkedInShare.enabled,
     telegramConfigured: Boolean(readEnv('TELEGRAM_BOT_TOKEN')),
     telegramWebhookSecretConfigured: Boolean(readEnv('TELEGRAM_WEBHOOK_SECRET')),
     runtimeGuardsConfigured: dbConfig.configured,

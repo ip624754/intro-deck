@@ -16,6 +16,7 @@ function createSignature(payloadToken, secret) {
 export function buildSignedLinkedInLaunchTicket({
   telegramUserId,
   purpose = 'verification_refresh',
+  shareIntentToken = null,
   ttlSeconds = 300,
   secret
 }) {
@@ -24,6 +25,7 @@ export function buildSignedLinkedInLaunchTicket({
     kind: 'linkedin_launch_ticket',
     telegramUserId: String(telegramUserId),
     purpose,
+    shareIntentToken: shareIntentToken ? String(shareIntentToken) : null,
     iat: now,
     exp: now + ttlSeconds,
     nonce: crypto.randomBytes(12).toString('hex')
@@ -72,10 +74,12 @@ export function buildSignedState({
   purpose = 'connect',
   verificationRequested = false,
   verificationMode = 'off',
+  shareRequested = false,
+  shareIntentToken = null,
   ttlSeconds,
   secret
 }) {
-  const normalizedPurpose = ['connect', 'verification_refresh'].includes(purpose) ? purpose : 'connect';
+  const normalizedPurpose = ['connect', 'verification_refresh', 'share_profile'].includes(purpose) ? purpose : 'connect';
   const normalizedVerificationMode = ['off', 'development', 'lite'].includes(verificationMode)
     ? verificationMode
     : 'off';
@@ -87,6 +91,8 @@ export function buildSignedState({
     purpose: normalizedPurpose,
     verificationRequested: Boolean(verificationRequested),
     verificationMode: normalizedVerificationMode,
+    shareRequested: Boolean(shareRequested),
+    shareIntentToken: shareIntentToken ? String(shareIntentToken) : null,
     iat: now,
     exp: now + ttlSeconds,
     nonce: crypto.randomBytes(12).toString('hex')

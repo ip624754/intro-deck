@@ -56,7 +56,8 @@ export function createInviteComposer({
   buildInvitePerformanceSurface,
   buildInviteRewardsSurface,
   buildInviteHistorySurface,
-  buildInviteCardMessage
+  buildInviteCardMessage,
+  buildDirectoryCardSurface
 }) {
   const composer = new Composer();
 
@@ -161,6 +162,15 @@ export function createInviteComposer({
 
   composer.command('start', async (ctx, next) => {
     const startParam = parseStartParam(ctx);
+    const sharedProfileMatch = /^profile_(\d+)$/.exec(String(startParam || ''));
+    if (sharedProfileMatch && typeof buildDirectoryCardSurface === 'function') {
+      await clearAllPendingInputs(ctx.from.id);
+      const profileId = Number.parseInt(sharedProfileMatch[1], 10);
+      const surface = await buildDirectoryCardSurface(ctx, profileId, 0, 'Opened from a member-approved LinkedIn share.');
+      await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
+      return undefined;
+    }
+
     const attribution = await attemptInviteAttributionForTelegramUser({
       telegramUserId: ctx.from.id,
       telegramUsername: ctx.from.username || null,
