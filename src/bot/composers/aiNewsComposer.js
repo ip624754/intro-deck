@@ -14,6 +14,10 @@ import {
   renderAiNewsHubText,
   renderAiNewsPublishAuthorizationKeyboard,
   renderAiNewsPublishAuthorizationText,
+  renderAiNewsPresetKeyboard,
+  renderAiNewsPresetText,
+  renderAiNewsPresetsKeyboard,
+  renderAiNewsPresetsText,
   renderAiNewsSourcesKeyboard,
   renderAiNewsSourcesText,
   renderAiNewsTopicPromptText
@@ -33,6 +37,15 @@ import {
   updateAiNewsPresetForTelegramUser,
   updateAiNewsToneForTelegramUser
 } from '../../lib/storage/aiNewsStore.js';
+import {
+  deleteAiNewsPresetForTelegramUser,
+  loadAiNewsPresetForTelegramUser,
+  loadAiNewsPresetsForTelegramUser,
+  runAiNewsPresetNowForTelegramUser,
+  saveCurrentAiNewsPreferencesAsPreset,
+  setAiNewsPresetPausedForTelegramUser,
+  updateAiNewsPresetScheduleForTelegramUser
+} from '../../lib/storage/aiNewsPresetStore.js';
 
 async function answer(ctx) {
   if (ctx.callbackQuery) await ctx.answerCallbackQuery().catch(() => null);
@@ -58,6 +71,24 @@ export async function buildAiNewsDraftSurface(ctx, publicToken = null, notice = 
   };
 }
 
+
+export async function buildAiNewsPresetsSurface(ctx, notice = null) {
+  const state = await loadAiNewsPresetsForTelegramUser({
+    telegramUserId: ctx.from.id,
+    telegramUsername: ctx.from.username || null
+  }).catch((error) => ({ eligible: false, reason: error?.message || String(error), presets: [], config: {} }));
+  return { text: renderAiNewsPresetsText({ state, notice }), reply_markup: renderAiNewsPresetsKeyboard({ state }) };
+}
+
+export async function buildAiNewsPresetSurface(ctx, publicToken, notice = null) {
+  const state = await loadAiNewsPresetForTelegramUser({
+    telegramUserId: ctx.from.id,
+    telegramUsername: ctx.from.username || null,
+    publicToken
+  }).catch((error) => ({ eligible: false, reason: error?.message || String(error), preset: null, config: {} }));
+  return { text: renderAiNewsPresetText({ state, notice }), reply_markup: renderAiNewsPresetKeyboard({ state }) };
+}
+
 export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
   const composer = new Composer();
 
@@ -68,6 +99,16 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
 
   async function showDraft(ctx, token, notice = null) {
     const surface = await buildAiNewsDraftSurface(ctx, token, notice);
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup, disable_web_page_preview: true });
+  }
+
+  async function showPresets(ctx, notice = null) {
+    const surface = await buildAiNewsPresetsSurface(ctx, notice);
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup, disable_web_page_preview: true });
+  }
+
+  async function showPreset(ctx, token, notice = null) {
+    const surface = await buildAiNewsPresetSurface(ctx, token, notice);
     await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup, disable_web_page_preview: true });
   }
 
@@ -185,6 +226,86 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
       reply_markup: renderAiNewsPublishAuthorizationKeyboard({ publishUrl, draftToken }),
       disable_web_page_preview: true
     });
+  });
+
+
+  composer.callbackQuery('news:presets', async (ctx) => {
+    await answer(ctx);
+    await clearAllPendingInputs(ctx.from.id);
+    await showPresets(ctx);
+  });
+
+  composer.callbackQuery('news:psave', async (ctx) => {
+    await answer(ctx);
+    const result = await saveCurrentAiNewsPreferencesAsPreset({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null
+    }).catch((error) => ({ created: false, reason: error?.message || String(error) }));
+    await showPresets(ctx, result.created ? '✅ Current topic, language, and tone saved as a preset.' : `⚠️ ${aiNewsReasonText(result.reason)}`);
+  });
+
+  composer.callbackQuery(/^news:ps:([0-9a-f-]{36})$/i, async (ctx) => {
+    await answer(ctx);
+    await showPreset(ctx, ctx.match?.[1]);
+  });
+
+  composer.callbackQuery(/^news:psrun:([0-9a-f-]{36})$/i, async (ctx) => {
+    await answer(ctx);
+    const token = ctx.match?.[1];
+    await safeEditOrReply(ctx, '🧠 Running this preset now. It will create a draft only…');
+    const result = await runAiNewsPresetNowForTelegramUser({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      publicToken: token
+    }).catch((error) => ({ generated: false, reason: error?.message || String(error) }));
+    if (!result.generated || !result.draft?.public_token) return showPreset(ctx, token, `⚠️ ${aiNewsReasonText(result.reason)}`);
+    await showDraft(ctx, result.draft.public_token, '✅ Draft created from this saved preset. Nothing was published.');
+  });
+
+  composer.callbackQuery(/^news:pskind:([0-9a-f-]{36}):(manual|daily|weekdays)$/i, async (ctx) => {
+    await answer(ctx);
+    const token = ctx.match?.[1];
+    const result = await updateAiNewsPresetScheduleForTelegramUser({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      publicToken: token,
+      scheduleKind: ctx.match?.[2]
+    }).catch((error) => ({ changed: false, reason: error?.message || String(error) }));
+    await showPreset(ctx, token, result.changed ? '✅ Delivery schedule updated. Draft delivery never publishes automatically.' : `⚠️ ${aiNewsReasonText(result.reason)}`);
+  });
+
+  composer.callbackQuery(/^news:pshour:([0-9a-f-]{36}):(6|9|12|15|18|21)$/i, async (ctx) => {
+    await answer(ctx);
+    const token = ctx.match?.[1];
+    const state = await loadAiNewsPresetForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, publicToken: token });
+    const result = await updateAiNewsPresetScheduleForTelegramUser({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      publicToken: token,
+      scheduleKind: state.preset?.schedule_kind || 'daily',
+      deliveryHourUtc: Number(ctx.match?.[2])
+    }).catch((error) => ({ changed: false, reason: error?.message || String(error) }));
+    await showPreset(ctx, token, result.changed ? '✅ UTC delivery hour updated.' : `⚠️ ${aiNewsReasonText(result.reason)}`);
+  });
+
+  composer.callbackQuery(/^news:pspause:([0-9a-f-]{36})$/i, async (ctx) => {
+    await answer(ctx);
+    const token = ctx.match?.[1];
+    const result = await setAiNewsPresetPausedForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, publicToken: token, paused: true });
+    await showPreset(ctx, token, result.changed ? '✅ Preset paused.' : `⚠️ ${aiNewsReasonText(result.reason)}`);
+  });
+
+  composer.callbackQuery(/^news:psresume:([0-9a-f-]{36})$/i, async (ctx) => {
+    await answer(ctx);
+    const token = ctx.match?.[1];
+    const result = await setAiNewsPresetPausedForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, publicToken: token, paused: false });
+    await showPreset(ctx, token, result.changed ? '✅ Preset resumed.' : `⚠️ ${aiNewsReasonText(result.reason)}`);
+  });
+
+  composer.callbackQuery(/^news:psdelete:([0-9a-f-]{36})$/i, async (ctx) => {
+    await answer(ctx);
+    const result = await deleteAiNewsPresetForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, publicToken: ctx.match?.[1] });
+    await showPresets(ctx, result.changed ? '✅ Preset deleted.' : `⚠️ ${aiNewsReasonText(result.reason)}`);
   });
 
   return composer;

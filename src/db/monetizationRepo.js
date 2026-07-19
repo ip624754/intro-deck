@@ -320,7 +320,8 @@ export async function getUserEntitlements(client, { userId }) {
     subscription,
     proActive,
     canUseDirectContactWithoutPayment: proActive,
-    canOpenDmWithoutPayment: proActive
+    canOpenDmWithoutPayment: proActive,
+    canUseAiNewsDrafts: proActive
   };
 }
 

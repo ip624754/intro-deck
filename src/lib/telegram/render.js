@@ -759,7 +759,7 @@ export function renderHelpText({ aiNewsVisible = false } = {}) {
   ];
 
   if (aiNewsVisible) {
-    lines.push('• create an evidence-bound AI/news draft with /news, edit it, and approve each LinkedIn post separately');
+    lines.push('• create evidence-bound AI/news drafts with /news, save personal presets, receive reviewable Telegram drafts, and approve each LinkedIn post separately');
   }
 
   lines.push(
@@ -830,6 +830,7 @@ export function renderPricingText({ pricingState = null } = {}) {
   const subscription = state.subscription || null;
   const recentReceipts = Array.isArray(state.recentReceipts) ? state.recentReceipts.slice(0, 5) : [];
   const allowance = state.proOutreachAllowance || null;
+  const aiNewsConfig = state.aiNewsConfig || null;
   const fairUseLimit = allowance?.limit || state.contactPolicy?.proOutreachDailyLimit || 0;
   const lines = [
     '⭐ Intro Deck Pro',
@@ -860,6 +861,15 @@ export function renderPricingText({ pricingState = null } = {}) {
   }
   lines.push('• Recipient approval is always required. Approval or reply is not guaranteed.');
   lines.push('• Decline or no reply alone does not trigger an automatic refund of a paid request-delivery fee.');
+
+  if (aiNewsConfig?.mode === 'pro') {
+    lines.push('');
+    lines.push('Pro AI/news drafts:');
+    lines.push(`• Up to ${aiNewsConfig.dailyLimit || 0} evidence-bound draft attempts per rolling 24 hours.`);
+    lines.push(`• Up to ${aiNewsConfig.presetLimit || 0} saved personalized presets.`);
+    lines.push(`• Scheduled delivery: ${aiNewsConfig.schedule?.enabled ? 'up to one reviewable Telegram draft per scheduler window' : 'currently off'}; never automatic LinkedIn publishing.`);
+    lines.push('• Every LinkedIn post requires preview and separate explicit authorization.');
+  }
 
   if (recentReceipts.length) {
     lines.push('');
@@ -2549,7 +2559,8 @@ export function renderOperatorDiagnosticsText({
   hotExhausted = [],
   notice = null,
   allowed = true,
-  aiNewsConfig = null
+  aiNewsConfig = null,
+  aiNewsPresetSummary = null
 } = {}) {
   const lines = [
     '🛠 Operator diagnostics',
@@ -2612,7 +2623,16 @@ export function renderOperatorDiagnosticsText({
     lines.push(`• configuration: ${aiNewsConfig.configurationValid === false ? 'invalid / fail-safe disabled' : aiNewsConfig.enabled ? 'enabled' : 'disabled'}`);
     lines.push(`• NewsData: ${aiNewsConfig.newsdata?.configured ? 'configured' : 'not configured'}`);
     lines.push(`• OpenAI model: ${aiNewsConfig.openai?.model || 'not configured'}`);
+    lines.push(`• access product: ${aiNewsConfig.mode === 'pro' ? 'Pro members + operators' : aiNewsConfig.mode === 'operator' ? 'operators only' : 'off'}`);
+    lines.push(`• preset limit: ${aiNewsConfig.presetLimit || 0}`);
+    lines.push(`• scheduler: ${aiNewsConfig.schedule?.enabled ? `${aiNewsConfig.schedule.driver} / live` : 'off'}`);
+    lines.push(`• scheduled effect: Telegram draft only`);
     lines.push('• automatic publishing: disabled');
+    if (aiNewsPresetSummary) {
+      lines.push(`• presets: active ${aiNewsPresetSummary.active_presets || 0} • paused ${aiNewsPresetSummary.paused_presets || 0} • due ${aiNewsPresetSummary.due_presets || 0}`);
+      lines.push(`• runs/24h: ${aiNewsPresetSummary.runs_24h || 0} • delivered ${aiNewsPresetSummary.delivered_24h || 0} • failed ${aiNewsPresetSummary.failed_24h || 0} • blocked ${aiNewsPresetSummary.blocked_24h || 0}`);
+      lines.push(`• delivery retry due: ${aiNewsPresetSummary.retry_due || 0}`);
+    }
     if (aiNewsConfig.configurationError?.code) {
       lines.push(`• config error: ${aiNewsConfig.configurationError.code}`);
     }

@@ -3,12 +3,18 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP060 — AI/News Drafts Approval Foundation
-- Current mode: HEAVY / AI EVIDENCE / EXTERNAL PROVIDERS / EXPLICIT PUBLISHING / IDEMPOTENCY / AUDIT
-- Current focus: apply migration 030, configure operator-only NewsData.io/OpenAI access, verify evidence-bound draft generation/editing, and reuse STEP059 for one explicit LinkedIn post.
+- Current baseline: STEP061 — Personalized News Presets & Subscription Productization
+- Current mode: HEAVY / SUBSCRIPTION ENTITLEMENTS / SCHEDULING / AI EVIDENCE / IDEMPOTENCY / EXPLICIT PUBLISHING
+- Current focus: apply migration 031, enable Pro access and the fail-closed draft scheduler, verify preset lifecycle and Telegram draft delivery, and keep STEP059 as the only explicit LinkedIn publisher.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP061 adds saved personalized news presets with manual, daily, and weekdays modes.
+- Pro membership controls access and bounded allowances; operators retain support/testing access.
+- Scheduled delivery creates a reviewable Telegram draft only and never invokes LinkedIn publishing.
+- Cron execution uses claims, unique scheduled-run keys, one due preset per user per execution, and retry-only Telegram delivery.
+- Migration 031 is required; migration 030 and STEP059 remain prerequisites.
 
 - STEP060 stores a minimized immutable source snapshot before generation and links each AI draft to that evidence hash.
 - NewsData.io and OpenAI are isolated providers; their API keys never enter Telegram surfaces or evidence artifacts.
@@ -419,3 +425,32 @@ Deploy STEP054, verify live positioning surfaces and BotFather copy, then procee
 4. Deploy and confirm STEP060 health/config.
 5. Run one exact operator source → draft → edit → approval → one LinkedIn post flow.
 6. Keep Pro mode off until runtime evidence is accepted.
+
+## STEP061 — Personalized News Presets & Subscription Productization
+
+Source implementation adds:
+
+- source step `STEP061`, package `0.59.0`;
+- migration `031_ai_news_presets_subscription.sql`;
+- saved member presets for topic, source filters, output language, and tone;
+- manual, daily, and weekdays schedule states;
+- Pro/operator entitlement gates and bounded preset/search/draft allowances;
+- authenticated `/api/cron/ai-news-drafts` execution;
+- Vercel daily and optional external-hourly scheduler drivers;
+- one due preset per user per scheduler execution;
+- unique scheduled run and one draft per run;
+- bounded Telegram delivery retry without provider-generation retry;
+- explicit reuse of STEP060 generation and STEP059 publication cores;
+- health, operator diagnostics, Privacy, Terms, landing, and rollout documentation.
+
+Required production sequence:
+
+1. Apply migration 031 after migrations 029 and 030.
+2. Configure `AI_NEWS_DRAFT_MODE=pro` for subscriber rollout.
+3. Configure the scheduler. The Vercel daily driver requires `CRON_SECRET` and a fixed 08:00 UTC window matching `vercel.json`.
+4. Deploy and confirm STEP061 health/config.
+5. Verify preset save/run-now/schedule/pause/resume/delete.
+6. Verify one authenticated cron execution produces at most one reviewable Telegram draft per user.
+7. Verify no LinkedIn post is created before a separate STEP059 authorization.
+
+Truth boundary: source QA does not prove production cron execution, provider calls, Telegram delivery, or Pro entitlement behavior.

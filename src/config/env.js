@@ -27,6 +27,14 @@ const DEFAULT_AI_NEWS_MAX_SOURCE_AGE_HOURS = 48;
 const DEFAULT_AI_NEWS_MAX_ARTICLES = 5;
 const DEFAULT_AI_NEWS_SOURCE_SELECTION_TTL_SECONDS = 1800;
 const DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS = 3600;
+const DEFAULT_AI_NEWS_PRESET_LIMIT = 3;
+const DEFAULT_AI_NEWS_SCHEDULE_MODE = 'off';
+const DEFAULT_AI_NEWS_SCHEDULE_DRIVER = 'vercel_daily';
+const DEFAULT_AI_NEWS_SCHEDULE_DAILY_HOUR_UTC = 8;
+const DEFAULT_AI_NEWS_SCHEDULE_BATCH_SIZE = 5;
+const DEFAULT_AI_NEWS_SCHEDULE_CLAIM_TIMEOUT_SECONDS = 900;
+const DEFAULT_AI_NEWS_SCHEDULE_RETRY_DELAY_SECONDS = 900;
+const DEFAULT_AI_NEWS_SCHEDULE_MAX_ATTEMPTS = 3;
 const DEFAULT_STATE_TTL_SECONDS = 600;
 const DEFAULT_JWKS_CACHE_TTL_SECONDS = 3600;
 const DEFAULT_DATABASE_SSLMODE = 'require';
@@ -346,6 +354,55 @@ function readHttpsUrlEnv(name, fallback) {
   return url.toString();
 }
 
+function parseAiNewsScheduleConfig() {
+  const mode = readEnumEnv('AI_NEWS_SCHEDULE_MODE', DEFAULT_AI_NEWS_SCHEDULE_MODE, ['off', 'live']);
+  const driver = readEnumEnv('AI_NEWS_SCHEDULE_DRIVER', DEFAULT_AI_NEWS_SCHEDULE_DRIVER, ['vercel_daily', 'external_hourly']);
+  const vercelCronSecret = readSecretEnv('CRON_SECRET');
+  const dedicatedCronSecret = readSecretEnv('AI_NEWS_CRON_SECRET');
+  const cronSecret = driver === 'vercel_daily' ? vercelCronSecret : (dedicatedCronSecret || vercelCronSecret);
+  if (mode === 'live' && !cronSecret) {
+    throw new Error(driver === 'vercel_daily'
+      ? 'CRON_SECRET is required for the Vercel daily AI/news scheduler'
+      : 'AI_NEWS_CRON_SECRET or CRON_SECRET is required for the external hourly AI/news scheduler');
+  }
+  const dailyHourUtc = readBoundedIntegerEnv('AI_NEWS_SCHEDULE_DAILY_HOUR_UTC', DEFAULT_AI_NEWS_SCHEDULE_DAILY_HOUR_UTC, { min: 1, max: 23 });
+  if (driver === 'vercel_daily' && dailyHourUtc !== DEFAULT_AI_NEWS_SCHEDULE_DAILY_HOUR_UTC) {
+    throw new Error(`AI_NEWS_SCHEDULE_DAILY_HOUR_UTC must be ${DEFAULT_AI_NEWS_SCHEDULE_DAILY_HOUR_UTC} when AI_NEWS_SCHEDULE_DRIVER=vercel_daily`);
+  }
+  return {
+    mode,
+    enabled: mode === 'live',
+    configurationValid: true,
+    configurationError: null,
+    cronSecret,
+    cronAuthSource: driver === 'vercel_daily' ? 'CRON_SECRET' : dedicatedCronSecret ? 'AI_NEWS_CRON_SECRET' : 'CRON_SECRET',
+    driver,
+    dailyHourUtc,
+    batchSize: readBoundedIntegerEnv('AI_NEWS_SCHEDULE_BATCH_SIZE', DEFAULT_AI_NEWS_SCHEDULE_BATCH_SIZE, { min: 1, max: 20 }),
+    claimTimeoutSeconds: readBoundedIntegerEnv('AI_NEWS_SCHEDULE_CLAIM_TIMEOUT_SECONDS', DEFAULT_AI_NEWS_SCHEDULE_CLAIM_TIMEOUT_SECONDS, { min: 60, max: 3600 }),
+    retryDelaySeconds: readBoundedIntegerEnv('AI_NEWS_SCHEDULE_RETRY_DELAY_SECONDS', DEFAULT_AI_NEWS_SCHEDULE_RETRY_DELAY_SECONDS, { min: 60, max: 86400 }),
+    maxAttempts: readBoundedIntegerEnv('AI_NEWS_SCHEDULE_MAX_ATTEMPTS', DEFAULT_AI_NEWS_SCHEDULE_MAX_ATTEMPTS, { min: 1, max: 10 })
+  };
+}
+
+function buildAiNewsScheduleFailSafeConfig(error) {
+  const rawMode = String(readEnv('AI_NEWS_SCHEDULE_MODE', DEFAULT_AI_NEWS_SCHEDULE_MODE) || '').trim().toLowerCase();
+  return {
+    mode: rawMode === 'live' ? 'live' : 'off',
+    enabled: false,
+    configurationValid: false,
+    configurationError: { code: 'ai_news_schedule_config_invalid', message: error?.message || String(error) },
+    cronSecret: null,
+    cronAuthSource: null,
+    driver: DEFAULT_AI_NEWS_SCHEDULE_DRIVER,
+    dailyHourUtc: DEFAULT_AI_NEWS_SCHEDULE_DAILY_HOUR_UTC,
+    batchSize: DEFAULT_AI_NEWS_SCHEDULE_BATCH_SIZE,
+    claimTimeoutSeconds: DEFAULT_AI_NEWS_SCHEDULE_CLAIM_TIMEOUT_SECONDS,
+    retryDelaySeconds: DEFAULT_AI_NEWS_SCHEDULE_RETRY_DELAY_SECONDS,
+    maxAttempts: DEFAULT_AI_NEWS_SCHEDULE_MAX_ATTEMPTS
+  };
+}
+
 function parseAiNewsDraftConfigStrict() {
   const mode = readEnumEnv('AI_NEWS_DRAFT_MODE', DEFAULT_AI_NEWS_DRAFT_MODE, ['off', 'operator', 'pro']);
   const enabled = mode !== 'off';
@@ -353,6 +410,12 @@ function parseAiNewsDraftConfigStrict() {
   const openaiApiKey = readEnv('OPENAI_API_KEY') || null;
   if (enabled && !newsdataApiKey) throw new Error('NEWSDATA_API_KEY is required when AI_NEWS_DRAFT_MODE is enabled');
   if (enabled && !openaiApiKey) throw new Error('OPENAI_API_KEY is required when AI_NEWS_DRAFT_MODE is enabled');
+  let schedule;
+  try {
+    schedule = parseAiNewsScheduleConfig();
+  } catch (error) {
+    schedule = buildAiNewsScheduleFailSafeConfig(error);
+  }
 
   return {
     mode,
@@ -366,6 +429,8 @@ function parseAiNewsDraftConfigStrict() {
     maxArticles: readBoundedIntegerEnv('AI_NEWS_MAX_ARTICLES', DEFAULT_AI_NEWS_MAX_ARTICLES, { min: 1, max: 10 }),
     sourceSelectionTtlSeconds: readBoundedIntegerEnv('AI_NEWS_SOURCE_SELECTION_TTL_SECONDS', DEFAULT_AI_NEWS_SOURCE_SELECTION_TTL_SECONDS, { min: 300, max: 7200 }),
     draftTtlSeconds: readBoundedIntegerEnv('AI_NEWS_DRAFT_TTL_SECONDS', DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS, { min: 900, max: 86400 }),
+    presetLimit: readBoundedIntegerEnv('AI_NEWS_PRESET_LIMIT', DEFAULT_AI_NEWS_PRESET_LIMIT, { min: 1, max: 10 }),
+    schedule,
     newsdata: {
       configured: Boolean(newsdataApiKey),
       apiKey: newsdataApiKey,
@@ -382,6 +447,7 @@ function parseAiNewsDraftConfigStrict() {
     },
     explicitApprovalRequired: true,
     automaticPublishing: false,
+    scheduledDeliveryCreatesDraftOnly: true,
     sourceEvidenceRequired: true
   };
 }
@@ -400,10 +466,13 @@ function buildAiNewsDraftFailSafeConfig(error) {
     maxArticles: DEFAULT_AI_NEWS_MAX_ARTICLES,
     sourceSelectionTtlSeconds: DEFAULT_AI_NEWS_SOURCE_SELECTION_TTL_SECONDS,
     draftTtlSeconds: DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS,
+    presetLimit: DEFAULT_AI_NEWS_PRESET_LIMIT,
+    schedule: buildAiNewsScheduleFailSafeConfig(error),
     newsdata: { configured: Boolean(readEnv('NEWSDATA_API_KEY')), apiKey: null, baseUrl: DEFAULT_NEWSDATA_BASE_URL, timeoutMs: DEFAULT_NEWSDATA_API_TIMEOUT_MS },
     openai: { configured: Boolean(readEnv('OPENAI_API_KEY')), apiKey: null, baseUrl: DEFAULT_OPENAI_BASE_URL, model: String(readEnv('OPENAI_DRAFT_MODEL', DEFAULT_OPENAI_DRAFT_MODEL)), timeoutMs: DEFAULT_OPENAI_API_TIMEOUT_MS, store: false },
     explicitApprovalRequired: true,
     automaticPublishing: false,
+    scheduledDeliveryCreatesDraftOnly: true,
     sourceEvidenceRequired: true
   };
 }
@@ -560,6 +629,7 @@ export function getPublicFlags() {
     linkedInVerificationConfigured: linkedInConfigured && linkedInVerification.enabled,
     linkedInShareConfigured: linkedInConfigured && linkedInShare.enabled,
     aiNewsDraftConfigured: dbConfig.configured && linkedInShare.enabled && aiNewsDraft.enabled,
+    aiNewsScheduleConfigured: dbConfig.configured && aiNewsDraft.enabled && aiNewsDraft.schedule.enabled && aiNewsDraft.schedule.configurationValid !== false && Boolean(aiNewsDraft.schedule.cronSecret),
     telegramConfigured: Boolean(readEnv('TELEGRAM_BOT_TOKEN')),
     telegramWebhookSecretConfigured: Boolean(readEnv('TELEGRAM_WEBHOOK_SECRET')),
     runtimeGuardsConfigured: dbConfig.configured,

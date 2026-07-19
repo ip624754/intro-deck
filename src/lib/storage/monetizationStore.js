@@ -1,4 +1,4 @@
-import { getContactPolicyConfig, getPricingConfig, getSubscriptionConfig, getTelegramConfig } from '../../config/env.js';
+import { getAiNewsDraftConfig, getContactPolicyConfig, getPricingConfig, getSubscriptionConfig, getTelegramConfig } from '../../config/env.js';
 import { isDatabaseConfigured, withDbTransaction } from '../../db/pool.js';
 import { acquirePaymentChargeLock, createConfirmedPurchaseReceipt, activateOrExtendProSubscription, findPurchaseReceiptByPaymentCharge, getMemberPricingStateByUserId, getProOutreachAllowance, listRecentPurchaseReceipts } from '../../db/monetizationRepo.js';
 import { getProfileSnapshotByUserId } from '../../db/profileRepo.js';
@@ -22,6 +22,7 @@ export async function loadPricingSurfaceState({ telegramUserId, telegramUsername
   const pricing = getPricingConfig();
   const subscriptionConfig = getSubscriptionConfig();
   const contactPolicy = getContactPolicyConfig();
+  const aiNewsConfig = getAiNewsDraftConfig();
   if (!isDatabaseConfigured()) {
     return {
       persistenceEnabled: false,
@@ -31,6 +32,7 @@ export async function loadPricingSurfaceState({ telegramUserId, telegramUsername
       pricing,
       subscriptionConfig,
       contactPolicy,
+      aiNewsConfig,
       proOutreachAllowance: { supported: false, allowed: false, used: 0, remaining: 0, limit: contactPolicy.proOutreachDailyLimit, reason: 'DATABASE_URL is not configured' },
       reason: 'DATABASE_URL is not configured'
     };
@@ -38,11 +40,9 @@ export async function loadPricingSurfaceState({ telegramUserId, telegramUsername
 
   return withDbTransaction(async (client) => {
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
-    const [profile, pricingState, proOutreachAllowance] = await Promise.all([
-      getProfileSnapshotByUserId(client, user.id),
-      getMemberPricingStateByUserId(client, { userId: user.id }),
-      getProOutreachAllowance(client, { userId: user.id, dailyLimit: contactPolicy.proOutreachDailyLimit })
-    ]);
+    const profile = await getProfileSnapshotByUserId(client, user.id);
+    const pricingState = await getMemberPricingStateByUserId(client, { userId: user.id });
+    const proOutreachAllowance = await getProOutreachAllowance(client, { userId: user.id, dailyLimit: contactPolicy.proOutreachDailyLimit });
     return {
       persistenceEnabled: true,
       profile,
@@ -51,6 +51,7 @@ export async function loadPricingSurfaceState({ telegramUserId, telegramUsername
       pricing,
       subscriptionConfig,
       contactPolicy,
+      aiNewsConfig,
       proOutreachAllowance,
       reason: 'pricing_state_loaded'
     };
@@ -61,6 +62,7 @@ export async function getProSubscriptionInvoiceForTelegramUser({ telegramUserId,
   const pricing = getPricingConfig();
   const subscriptionConfig = getSubscriptionConfig();
   const contactPolicy = getContactPolicyConfig();
+  const aiNewsConfig = getAiNewsDraftConfig();
   if (!isDatabaseConfigured()) {
     return {
       persistenceEnabled: false,
@@ -96,7 +98,9 @@ export async function getProSubscriptionInvoiceForTelegramUser({ telegramUserId,
         payload: buildProInvoicePayload('pro_monthly'),
         amountStars: pricing.proMonthlyPriceStars,
         title: 'Intro Deck Pro',
-        description: `Unlock Pro for ${subscriptionConfig.proMonthlyDurationDays} days. Includes up to ${contactPolicy.proOutreachDailyLimit} contact-request deliveries across private-chat and Telegram-contact options per rolling 24 hours. Recipient approval is still required.`
+        description: aiNewsConfig.mode === 'pro'
+          ? `Pro for ${subscriptionConfig.proMonthlyDurationDays} days: ${contactPolicy.proOutreachDailyLimit} contact-request deliveries/24h plus ${aiNewsConfig.dailyLimit} AI/news draft attempts/24h and up to ${aiNewsConfig.presetLimit} saved presets. Every contact and LinkedIn post still needs approval.`
+          : `Unlock Pro for ${subscriptionConfig.proMonthlyDurationDays} days. Includes up to ${contactPolicy.proOutreachDailyLimit} contact-request deliveries across private-chat and Telegram-contact options per rolling 24 hours. Recipient approval is still required.`
       }
     };
   });
@@ -200,7 +204,11 @@ export async function confirmProSubscriptionPaymentForTelegramUser({
         currency: TELEGRAM_STARS_CURRENCY,
         proOutreachDailyLimit: getContactPolicyConfig().proOutreachDailyLimit,
         recipientApprovalRequired: true,
-        unlimitedOutreach: false
+        unlimitedOutreach: false,
+        aiNewsDraftModeAtConfirmation: getAiNewsDraftConfig().mode,
+        aiNewsDraftDailyLimitAtConfirmation: getAiNewsDraftConfig().dailyLimit,
+        aiNewsPresetLimitAtConfirmation: getAiNewsDraftConfig().presetLimit,
+        automaticLinkedInPublishing: false
       }
     });
 

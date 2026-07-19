@@ -7,6 +7,7 @@ import { loadDmInboxState, loadDmThreadDetailForTelegramUser } from '../../lib/s
 import { touchTelegramUserAndLoadProfile } from '../../lib/storage/profileStore.js';
 import { loadNotificationOperatorSurface } from '../../lib/storage/notificationStore.js';
 import { loadPricingSurfaceState } from '../../lib/storage/monetizationStore.js';
+import { loadAiNewsPresetOperatorDiagnostics } from '../../lib/storage/aiNewsPresetStore.js';
 import { loadInviteHistoryState, loadInviteRewardsSummaryState, loadInviteSurfaceState } from '../../lib/storage/inviteStore.js';
 import { loadProfileEditorState } from '../../lib/storage/profileEditStore.js';
 import { getAiNewsDraftConfig, getLinkedInConfig, getLinkedInShareConfig, getLinkedInVerificationConfig, getPricingConfig, isOperatorTelegramUser } from '../../config/env.js';
@@ -29,7 +30,7 @@ function fallbackRenderHelpText({ aiNewsVisible = false } = {}) {
     '• /plans — open pricing and Pro status',
     '• /invite — share your invite',
     '• /share — preview and explicitly publish your listed profile on LinkedIn',
-    ...(aiNewsVisible ? ['• /news — create an evidence-bound draft with preview and explicit approval'] : []),
+    ...(aiNewsVisible ? ['• /news — create evidence-bound drafts, manage personal presets, and approve each LinkedIn post separately'] : []),
     '• /menu — return home'
   ].join('\n');
 }
@@ -319,7 +320,8 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         persistenceEnabled: state.persistenceEnabled,
         linkedinVerificationConfig: linkedinVerificationAccess,
         notice,
-        aiNewsConfig: getAiNewsDraftConfig()
+        aiNewsConfig: getAiNewsDraftConfig(),
+        aiNewsPresetSummary: aiNewsPresetDiagnostics.summary || null
       }),
       reply_markup: renderProfilePreviewKeyboard({
         profileSnapshot: state.profile,
@@ -833,6 +835,7 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
       hotFailed: [],
       hotExhausted: []
     }));
+    const aiNewsPresetDiagnostics = await loadAiNewsPresetOperatorDiagnostics().catch(() => ({ persistenceEnabled: false, summary: null }));
 
     return {
       text: renderOperatorDiagnosticsText({

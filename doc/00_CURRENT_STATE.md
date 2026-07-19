@@ -4,12 +4,19 @@
 Intro Deck
 
 ## Current source baseline
-STEP060 — AI/News Drafts Approval Foundation
+STEP061 — Personalized News Presets & Subscription Productization
 
 ## Layer
-HEAVY / AI evidence / external providers / explicit publishing / idempotency / audit
+HEAVY / subscription entitlements / scheduling / AI evidence / idempotency / explicit publishing
 
 ## Source-confirmed
+
+- STEP061 adds saved personal topic/language/tone presets and a deterministic manual/daily/weekdays schedule model.
+- Active Pro membership or operator status grants bounded access; subscription never grants publication authority.
+- Scheduled runs reuse STEP060 evidence/generation services and deliver a Telegram draft only. LinkedIn publishing remains exclusively in STEP059 after preview and explicit authorization.
+- Migration 031 adds preset/run tables, one scheduled run per preset/time, one draft per run, claim/retry state, and exact audit linkage.
+- Scheduler claims at most one due preset per user per cron execution, preventing multiple unresolved drafts from one delivery window.
+- Vercel daily is the default driver; external hourly execution is optional and must use the same cron secret.
 - STEP060 adds an operator-first AI/news drafting flow: topic preset/custom query → NewsData.io source selection → minimized evidence snapshot → OpenAI structured draft → exact preview/edit → explicit approval → existing STEP059 one-shot LinkedIn publishing.
 - No background or automatic publishing exists. OpenAI requests use `store=false`; NewsData/OpenAI keys and LinkedIn OAuth tokens are not persisted in draft evidence.
 - Draft validation requires the exact source URL, rejects unsupported numeric claims and quotations, and binds structured evidence claims to exact source substrings.

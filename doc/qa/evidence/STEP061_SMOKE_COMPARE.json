@@ -1,0 +1,49 @@
+{
+  "baseline": {
+    "step": "STEP060",
+    "total": 90,
+    "pass": 77,
+    "fail": 13,
+    "failing": [
+      "smoke:env",
+      "smoke:code-split",
+      "smoke:profile-session-schema",
+      "smoke:admin-allowlist",
+      "smoke:admin-users",
+      "smoke:admin-user-card",
+      "smoke:admin-intros",
+      "smoke:broadcast-idempotency",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-search",
+      "smoke:admin-russian-layer",
+      "smoke:admin-runbook-freeze"
+    ]
+  },
+  "target": {
+    "step": "STEP061",
+    "total": 91,
+    "pass": 78,
+    "fail": 13,
+    "failing": [
+      "smoke:env",
+      "smoke:code-split",
+      "smoke:profile-session-schema",
+      "smoke:admin-allowlist",
+      "smoke:admin-users",
+      "smoke:admin-user-card",
+      "smoke:admin-intros",
+      "smoke:broadcast-idempotency",
+      "smoke:admin-polish",
+      "smoke:admin-productivity",
+      "smoke:admin-search",
+      "smoke:admin-russian-layer",
+      "smoke:admin-runbook-freeze"
+    ]
+  },
+  "newFailures": [],
+  "resolvedFailures": [],
+  "newPassingContracts": [
+    "smoke:ai-news-productization"
+  ]
+}

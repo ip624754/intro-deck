@@ -71,8 +71,22 @@ export default async function handler(req, res) {
       searchDailyLimit: aiNewsDraft.searchDailyLimit,
       searchCooldownSeconds: aiNewsDraft.searchCooldownSeconds,
       maxSourceAgeHours: aiNewsDraft.maxSourceAgeHours,
+      presetLimit: aiNewsDraft.presetLimit,
+      schedule: {
+        enabled: aiNewsDraft.schedule.enabled,
+        mode: aiNewsDraft.schedule.mode,
+        driver: aiNewsDraft.schedule.driver,
+        configurationValid: aiNewsDraft.schedule.configurationValid !== false,
+        configurationError: aiNewsDraft.schedule.configurationError || null,
+        cronAuthConfigured: Boolean(aiNewsDraft.schedule.cronSecret),
+        cronAuthSource: aiNewsDraft.schedule.cronAuthSource || null,
+        batchSize: aiNewsDraft.schedule.batchSize,
+        dailyHourUtc: aiNewsDraft.schedule.dailyHourUtc,
+        scheduledEffect: 'telegram_draft_only'
+      },
       explicitApprovalRequired: true,
       automaticPublishing: false,
+      subscriptionControlsAccessNotPublishing: true,
       sourceEvidenceRequired: true,
       tokenPersistence: 'none'
     },

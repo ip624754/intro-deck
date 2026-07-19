@@ -96,6 +96,9 @@ export async function getSchemaCompat(client) {
       exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_drafts') as has_ai_news_drafts_table,
       exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_draft_events') as has_ai_news_draft_events_table,
       exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_input_sessions') as has_ai_news_input_sessions_table,
+      exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_presets') as has_ai_news_presets_table,
+      exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_preset_runs') as has_ai_news_preset_runs_table,
+      exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_drafts' and column_name='preset_run_id') as ai_news_drafts_has_preset_run_id,
       exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='linkedin_share_intents' and column_name='source_kind') as linkedin_share_has_source_kind
   `);
 
@@ -118,6 +121,9 @@ export async function getSchemaCompat(client) {
     hasAiNewsDraftsTable: Boolean(result.rows[0]?.has_ai_news_drafts_table),
     hasAiNewsDraftEventsTable: Boolean(result.rows[0]?.has_ai_news_draft_events_table),
     hasAiNewsInputSessionsTable: Boolean(result.rows[0]?.has_ai_news_input_sessions_table),
+    hasAiNewsPresetsTable: Boolean(result.rows[0]?.has_ai_news_presets_table),
+    hasAiNewsPresetRunsTable: Boolean(result.rows[0]?.has_ai_news_preset_runs_table),
+    aiNewsDraftsHasPresetRunId: Boolean(result.rows[0]?.ai_news_drafts_has_preset_run_id),
     linkedInShareHasSourceKind: Boolean(result.rows[0]?.linkedin_share_has_source_kind)
   };
 

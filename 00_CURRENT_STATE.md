@@ -3,12 +3,19 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP060
-- Phase: evidence-bound AI/news drafts with preview/edit and explicit one-post LinkedIn approval
-- Primary mode: HEAVY / AI EVIDENCE / EXTERNAL PROVIDERS / EXPLICIT PUBLISHING / IDEMPOTENCY / AUDIT
-- Runtime status: STEP059 is operator-confirmed deployed at artifact `18218eafe3942bc5ceee5319dc7117eada43d3c9`. STEP060 is source-implemented and awaits migration 030, provider ENV, deployment, and operator-only live acceptance.
+- Current STEP: STEP061
+- Phase: personalized news presets, Pro allowances, and scheduled reviewable Telegram draft delivery
+- Primary mode: HEAVY / SUBSCRIPTION ENTITLEMENTS / SCHEDULING / AI EVIDENCE / IDEMPOTENCY / EXPLICIT PUBLISHING
+- Runtime status: STEP060 is operator-confirmed deployed at artifact `f12e0e3e79de222d314da54f3164a2e9fa2a9d0b`. STEP061 is source-implemented and awaits migration 031, Pro/scheduler ENV, deployment, and live preset-delivery acceptance.
 
 ## What exists now
+
+- STEP061 adds saved personal news presets, Pro entitlement gating, bounded preset/draft/search allowances, and scheduled delivery of reviewable Telegram drafts.
+- Scheduled jobs reuse the canonical STEP060 source/evidence/generation core and never call LinkedIn; STEP059 remains the only publishing core.
+- A subscription controls access and allowance only. Every LinkedIn post still requires preview and one explicit OAuth authorization.
+- Migration `031_ai_news_presets_subscription.sql` adds presets, scheduler runs, claims/retries, and draft/run binding.
+- The default Vercel driver creates at most one scheduled draft per user in a daily window; an authenticated external hourly driver is optional for finer windows.
+- Duplicate cron execution, stale claims, duplicate source selection, and Telegram retry paths are fail-closed and auditable.
 
 - STEP060 adds an operator-first AI/news drafting flow: topic preset/custom query → NewsData.io source selection → minimized evidence snapshot → OpenAI structured draft → exact preview/edit → explicit approval → existing STEP059 one-shot LinkedIn publishing.
 - No background or automatic publishing exists. Provider tokens are not persisted, OpenAI request storage is disabled, and a subscription may grant allowance but never publication authority.

@@ -30,6 +30,7 @@ import {
   upsertAiNewsSource
 } from '../../db/aiNewsRepo.js';
 import { getUserEntitlements } from '../../db/monetizationRepo.js';
+import { listAiNewsPresets } from '../../db/aiNewsPresetRepo.js';
 import { withDbTransaction, isDatabaseConfigured } from '../../db/pool.js';
 import { getProfileSnapshotByUserId } from '../../db/profileRepo.js';
 import { getSchemaCompat } from '../../db/schemaCompat.js';
@@ -130,12 +131,18 @@ export async function loadAiNewsHubState({ telegramUserId, telegramUsername = nu
       userId: context.user.id,
       since: new Date(Date.now() - 24 * 60 * 60 * 1000)
     });
+    const presets = compat.hasAiNewsPresetsTable
+      ? await listAiNewsPresets(client, { userId: context.user.id })
+      : [];
     return {
       persistenceEnabled: true,
       enabled: config.enabled,
       ...eligibility,
       config,
       ...context,
+      presets,
+      presetPersistenceReady: Boolean(compat.hasAiNewsPresetsTable && compat.hasAiNewsPresetRunsTable && compat.aiNewsDraftsHasPresetRunId),
+      presetUsage: { used: presets.length, limit: config.presetLimit, remaining: Math.max(0, config.presetLimit - presets.length) },
       dailyUsage: { used, limit: config.dailyLimit, remaining: Math.max(0, config.dailyLimit - used) }
     };
   });
@@ -283,7 +290,7 @@ export async function applyAiNewsTextInput({ telegramUserId, telegramUsername = 
   });
 }
 
-export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegramUsername = null, fetchImpl = fetch }) {
+export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegramUsername = null, preferenceOverride = null, ignoreCooldown = false, fetchImpl = fetch }) {
   const config = getAiNewsDraftConfig();
   if (!isDatabaseConfigured()) return { ...persistenceUnavailable(), config, articles: [] };
   const prepared = await withDbTransaction(async (client) => {
@@ -292,18 +299,20 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
       return { ok: false, reason: 'migration_030_required' };
     }
     const context = await loadUserContext(client, { telegramUserId, telegramUsername });
+    const preferences = normalizePreferences({ ...context.preferences, ...(preferenceOverride || {}) });
     const eligibility = checkEligibility({ config, telegramUserId, entitlements: context.entitlements, profile: context.profile });
-    if (!eligibility.eligible) return { ok: false, reason: eligibility.reason, ...context };
+    if (!eligibility.eligible) return { ok: false, reason: eligibility.reason, ...context, preferences };
     await acquireAiNewsUserLock(client, context.user.id);
     const searchClaim = await claimAiNewsSourceSearch(client, {
       userId: context.user.id,
       cooldownSeconds: config.searchCooldownSeconds,
-      dailyLimit: config.searchDailyLimit
+      dailyLimit: config.searchDailyLimit,
+      ignoreCooldown
     });
     if (!searchClaim.claimed) return { ok: false, reason: searchClaim.reason, searchClaim, ...context };
     const used = await countAiNewsDraftsSince(client, { userId: context.user.id, since: new Date(Date.now() - 24 * 60 * 60 * 1000) });
     if (used >= config.dailyLimit) return { ok: false, reason: 'ai_news_daily_limit_reached', ...context, used };
-    return { ok: true, ...context, query: resolvePreferenceQuery(context.preferences), used };
+    return { ok: true, ...context, preferences, query: resolvePreferenceQuery(preferences), used };
   });
   if (!prepared.ok) return { persistenceEnabled: true, found: false, articles: [], config, ...prepared };
 
@@ -364,13 +373,14 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
   return { persistenceEnabled: true, found: true, articles: stored, query: prepared.query, preferences: prepared.preferences };
 }
 
-export async function generateAiNewsDraftForTelegramUser({ telegramUserId, telegramUsername = null, sourceToken, fetchImpl = fetch }) {
+export async function generateAiNewsDraftForTelegramUser({ telegramUserId, telegramUsername = null, sourceToken, preferenceOverride = null, presetId = null, presetRunId = null, deliveryKind = 'manual', fetchImpl = fetch }) {
   const config = getAiNewsDraftConfig();
   if (!isDatabaseConfigured()) return persistenceUnavailable();
   const prepared = await withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsDraftsTable || !compat.hasAiNewsSourcesTable) return { ok: false, reason: 'migration_030_required' };
     const context = await loadUserContext(client, { telegramUserId, telegramUsername });
+    const preferences = normalizePreferences({ ...context.preferences, ...(preferenceOverride || {}) });
     const eligibility = checkEligibility({ config, telegramUserId, entitlements: context.entitlements, profile: context.profile });
     if (!eligibility.eligible) return { ok: false, reason: eligibility.reason };
     await acquireAiNewsUserLock(client, context.user.id);
@@ -394,8 +404,8 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
         about: context.profile.about_user,
         skills: context.profile.skills
       },
-      postLanguage: context.preferences.post_language,
-      tone: context.preferences.tone,
+      postLanguage: preferences.post_language,
+      tone: preferences.tone,
       model: config.openai.model
     }));
     const draft = await createGeneratingAiNewsDraft(client, {
@@ -403,13 +413,16 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
       userId: context.user.id,
       profileId: context.profile.profile_id,
       sourceId: source.id,
-      postLanguage: context.preferences.post_language,
-      tone: context.preferences.tone,
+      postLanguage: preferences.post_language,
+      tone: preferences.tone,
       generationInputHash,
       sourceEvidenceHash: source.evidence_hash,
-      expiresAt: new Date(Date.now() + config.draftTtlSeconds * 1000)
+      expiresAt: new Date(Date.now() + config.draftTtlSeconds * 1000),
+      presetId,
+      presetRunId,
+      deliveryKind
     });
-    return { ok: true, ...context, source, sourceEvidence, draft };
+    return { ok: true, ...context, preferences, source, sourceEvidence, draft };
   });
   if (!prepared.ok) return { persistenceEnabled: true, generated: false, ...prepared };
 

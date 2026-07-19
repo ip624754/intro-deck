@@ -38,6 +38,7 @@ A Telegram-first professional directory:
 - STEP058B — Verified badges and fail-closed trust surfaces
 - STEP058B1 — verification compatibility + optional-config fail-safe
 - STEP059 — explicit user-approved Share Profile on LinkedIn
+- STEP061 — personalized AI/news presets, Pro access/allowances, and scheduled reviewable Telegram drafts
 - STEP060 — evidence-bound AI/news drafts with preview/edit and explicit one-post approval
 
 ## Core docs
@@ -106,6 +107,19 @@ Operator runbook: `doc/86_STEP059_OPERATOR_ROLLOUT.md`.
 Lite upgrade pack: `doc/85_LINKEDIN_LITE_UPGRADE_APPLICATION_PACK.md`.
 
 
+## STEP061 personalized news presets and subscription rollout
+
+1. Apply `migrations/031_ai_news_presets_subscription.sql` after migration 030.
+2. Set `AI_NEWS_DRAFT_MODE=pro` to grant active Pro members access while retaining operator access.
+3. Set `AI_NEWS_SCHEDULE_MODE=live`; use the default `vercel_daily` driver for one daily draft-delivery window, or an authenticated external hourly driver when finer delivery windows are required.
+4. Scheduled runs create reviewable Telegram drafts only. They never call LinkedIn and never authorize publication.
+5. Configure preset, claim, retry, and batch limits; keep the existing NewsData/OpenAI keys and STEP059 publishing ENV unchanged.
+6. Redeploy and confirm health reports STEP061, Pro mode, valid scheduler config, and `scheduledEffect=telegram_draft_only`.
+7. Test save preset → run now → daily/weekdays schedule → pause/resume/delete → Telegram delivery → explicit STEP059 approval.
+
+Operator runbook: `doc/88_STEP061_OPERATOR_ROLLOUT.md`.
+STEP specification: `doc/spec/STEP061_PERSONALIZED_NEWS_PRESETS_AND_SUBSCRIPTION_PRODUCTIZATION.md`.
+
 ## STEP060 AI/news drafts approval rollout
 
 1. Apply `migrations/030_ai_news_drafts_approval.sql` after migration 029.
@@ -116,7 +130,7 @@ Lite upgrade pack: `doc/85_LINKEDIN_LITE_UPGRADE_APPLICATION_PACK.md`.
 6. Confirm one approval produces at most one LinkedIn post and that provider-unknown outcomes remain blocked from automatic retry.
 7. Subscription access may control allowance, but it never authorizes automatic publishing.
 
-STEP060 is text-only. Source content is treated as untrusted prompt data. Media generation/upload, scheduling, background posting, organization posts, autonomous agents, and unattended subscriptions remain out of scope.
+STEP060 remains text-only and source-evidence-bound. STEP061 adds scheduled delivery of reviewable Telegram drafts, but media generation/upload, background LinkedIn posting, organization posts, autonomous publishing agents, and unattended publication remain out of scope.
 
 Operator runbook: `doc/87_STEP060_OPERATOR_ROLLOUT.md`.
 STEP specification: `doc/spec/STEP060_AI_NEWS_DRAFTS_APPROVAL_FOUNDATION.md`.

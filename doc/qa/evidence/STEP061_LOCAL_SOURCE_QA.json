@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-07-19T21:18:14Z",
+  "step": "STEP061",
+  "packageVersion": "0.59.0",
+  "baselineStep": "STEP060",
+  "nodeVersion": "v20.20.2",
+  "npmVersion": "10.9.2",
+  "checks": {
+    "npmCi": "PASS",
+    "npmCheck": "PASS",
+    "dedicatedSmoke": "PASS",
+    "step060Compatibility": "PASS",
+    "step059Compatibility": "PASS",
+    "schemaCompat": "PASS",
+    "storage": "PASS",
+    "legal": "PASS",
+    "landing": "PASS",
+    "router": "PASS",
+    "commands": "PASS",
+    "operatorDiagnostics": "PASS",
+    "npmAuditHigh": "PASS_0_VULNERABILITIES",
+    "gitDiffCheck": "PASS"
+  },
+  "fullSmoke": {
+    "pass": 78,
+    "fail": 13,
+    "total": 91,
+    "newFailures": 0,
+    "resolvedFailures": 0
+  },
+  "truthBoundary": {
+    "verified": [
+      "source implementation",
+      "canonical Node 20 source QA",
+      "scheduler fail-safe contract",
+      "Pro entitlement product copy",
+      "overlay preparation pending final artifact QA"
+    ],
+    "notVerified": [
+      "migration 031 on live Neon",
+      "production Pro access",
+      "production cron authentication/execution",
+      "real scheduled NewsData/OpenAI generation",
+      "Telegram scheduled draft delivery",
+      "live duplicate cron/retry behavior",
+      "live STEP059 publication after scheduled draft"
+    ]
+  }
+}

@@ -58,7 +58,7 @@ export async function patchAiNewsPreferences(client, { userId, patch }) {
 }
 
 
-export async function claimAiNewsSourceSearch(client, { userId, cooldownSeconds, dailyLimit }) {
+export async function claimAiNewsSourceSearch(client, { userId, cooldownSeconds, dailyLimit, ignoreCooldown = false }) {
   await client.query(
     `insert into ai_news_preferences (user_id) values ($1)
      on conflict (user_id) do nothing`,
@@ -71,7 +71,7 @@ export async function claimAiNewsSourceSearch(client, { userId, cooldownSeconds,
   const row = result.rows[0];
   const now = Date.now();
   const lastSearchAt = row?.last_search_started_at ? new Date(row.last_search_started_at).getTime() : 0;
-  if (lastSearchAt && lastSearchAt > now - (cooldownSeconds * 1000)) {
+  if (!ignoreCooldown && lastSearchAt && lastSearchAt > now - (cooldownSeconds * 1000)) {
     return { claimed: false, reason: 'ai_news_search_cooldown', retryAfterSeconds: Math.max(1, Math.ceil((lastSearchAt + cooldownSeconds * 1000 - now) / 1000)) };
   }
   const windowStartedAt = row?.search_window_started_at ? new Date(row.search_window_started_at).getTime() : 0;
@@ -227,20 +227,24 @@ export async function createGeneratingAiNewsDraft(client, {
   tone,
   generationInputHash,
   sourceEvidenceHash,
-  expiresAt
+  expiresAt,
+  presetId = null,
+  presetRunId = null,
+  deliveryKind = 'manual'
 }) {
   const result = await client.query(
     `insert into ai_news_drafts (
        public_token, user_id, profile_id, source_id, status,
-       post_language, tone, generation_input_hash, source_evidence_hash, expires_at
-     ) values ($1::uuid, $2, $3, $4, 'generating', $5, $6, $7, $8, $9)
+       post_language, tone, generation_input_hash, source_evidence_hash, expires_at,
+       preset_id, preset_run_id, delivery_kind
+     ) values ($1::uuid, $2, $3, $4, 'generating', $5, $6, $7, $8, $9, $10, $11, $12)
      returning *`,
-    [publicToken, userId, profileId, sourceId, postLanguage, tone, generationInputHash, sourceEvidenceHash, expiresAt]
+    [publicToken, userId, profileId, sourceId, postLanguage, tone, generationInputHash, sourceEvidenceHash, expiresAt, presetId, presetRunId, deliveryKind]
   );
   await insertAiNewsDraftEvent(client, {
     draftId: result.rows[0].id,
     eventType: 'generation_started',
-    detail: { sourceId, postLanguage, tone, allowanceConsumed: true }
+    detail: { sourceId, postLanguage, tone, allowanceConsumed: true, presetId, presetRunId, deliveryKind }
   });
   return result.rows[0];
 }

@@ -1,4 +1,5 @@
 import { AI_NEWS_PRESETS, AI_NEWS_TONES } from '../ai/newsDraftContract.js';
+import { AI_NEWS_DELIVERY_HOURS_UTC, scheduleLabel } from '../ai/newsPresetSchedule.js';
 
 function value(value, fallback = '—') {
   const text = String(value ?? '').trim();
@@ -25,7 +26,16 @@ function reasonText(reason) {
     openai_generation_failed: 'The AI provider could not produce a valid evidence-bound draft. Try another source later.',
     openai_internal_error: 'Draft generation is temporarily unavailable.',
     newsdata_request_failed: 'The news provider request failed. Try again later.',
-    linkedin_share_unavailable: 'LinkedIn publishing is not available right now.'
+    linkedin_share_unavailable: 'LinkedIn publishing is not available right now.',
+    migration_031_required: 'Migration 031 has not been applied yet.',
+    ai_news_preset_limit_reached: 'Your saved-preset limit is used.',
+    ai_news_preset_duplicate: 'This preset is already saved.',
+    ai_news_preferences_not_found: 'Choose topic, language, and tone before saving a preset.',
+    ai_news_preset_not_found: 'This saved preset is no longer available.',
+    ai_news_schedule_disabled: 'Scheduled delivery is disabled in this environment.',
+    ai_news_preset_paused: 'This preset is paused.',
+    ai_news_preset_deleted: 'This preset was deleted.',
+    ai_news_preset_run_not_found: 'This preset run is no longer available.'
   };
   return map[reason] || `Unavailable: ${reason || 'unknown_reason'}`;
 }
@@ -43,6 +53,8 @@ export function renderAiNewsHubText({ state, notice = null }) {
     `Post language: ${String(preferences.post_language || 'en').toUpperCase()}`,
     `Tone: ${tone}`,
     `Allowance: ${state?.dailyUsage?.remaining ?? 0}/${state?.dailyUsage?.limit ?? state?.config?.dailyLimit ?? 0} remaining in 24h`,
+    `Saved presets: ${state?.presetUsage?.used ?? state?.presets?.length ?? 0}/${state?.presetUsage?.limit ?? state?.config?.presetLimit ?? 0}`,
+    `Scheduled delivery: ${state?.config?.schedule?.enabled ? 'drafts only · no auto-posting' : 'off'}`,
     '',
     'Flow: source → evidence → draft → preview/edit → explicit LinkedIn approval.'
   ];
@@ -71,6 +83,15 @@ export function renderAiNewsHubKeyboard({ state }) {
   if (state?.eligible && (state?.dailyUsage?.remaining ?? 0) > 0) rows.push([{ text: '🔎 Find fresh news', callback_data: 'news:find' }]);
   if (state?.latestDraft && ['draft', 'editing', 'share_ready', 'unknown'].includes(state.latestDraft.status)) {
     rows.push([{ text: '📝 Open current draft', callback_data: `news:draft:${state.latestDraft.public_token}` }]);
+  }
+  if (state?.presetPersistenceReady) {
+    rows.push([
+      { text: `⚙️ Saved presets (${state?.presets?.length || 0})`, callback_data: 'news:presets' },
+      { text: '➕ Save current', callback_data: 'news:psave' }
+    ]);
+  }
+  if (!state?.eligible && state?.reason === 'pro_required') {
+    rows.push([{ text: '⭐ Get Pro', callback_data: 'plans:root' }]);
   }
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return { inline_keyboard: rows };
@@ -170,4 +191,98 @@ export function renderAiNewsEditPromptText() {
 
 export function aiNewsReasonText(reason) {
   return reasonText(reason);
+}
+
+
+function presetTopicLabel(preset) {
+  const base = AI_NEWS_PRESETS[preset?.preset_key]?.label || 'News';
+  return preset?.preset_key === 'custom' ? `${base}: ${value(preset?.custom_query)}` : base;
+}
+
+export function renderAiNewsPresetsText({ state, notice = null }) {
+  const presets = Array.isArray(state?.presets) ? state.presets : [];
+  const lines = [
+    '⚙️ Personalized news presets',
+    '',
+    'Saved presets reuse your topic, language, and tone. Scheduled delivery creates a Telegram draft only; every LinkedIn post still needs preview and explicit approval.',
+    '',
+    `Access: ${state?.eligible ? (state?.reason === 'operator_access' ? 'operator' : 'Pro') : 'locked'}`,
+    `Presets: ${state?.usage?.used ?? presets.length}/${state?.usage?.limit ?? state?.config?.presetLimit ?? 0}`,
+    `Scheduler: ${state?.config?.schedule?.enabled ? `${state.config.schedule.driver} · live` : 'off'}`
+  ];
+  if (state?.config?.schedule?.enabled) {
+    lines.push('Delivery guard: at most one scheduled draft per member per scheduler execution; multiple due presets rotate oldest-first.');
+  }
+  if (!state?.eligible) lines.push('', `⚠️ ${reasonText(state?.reason)}`);
+  if (!presets.length) {
+    lines.push('', 'No saved presets yet.', 'Configure the topic, language, and tone on the main news screen, then tap “Save current”.');
+  } else {
+    lines.push('', 'Saved presets:');
+    presets.forEach((preset, index) => {
+      lines.push(`${index + 1}. ${value(preset.name)} · ${preset.status} · ${scheduleLabel({ scheduleKind: preset.schedule_kind, deliveryHourUtc: preset.delivery_hour_utc })}`);
+    });
+  }
+  if (notice) lines.push('', notice);
+  return lines.join('\n');
+}
+
+export function renderAiNewsPresetsKeyboard({ state }) {
+  const rows = (state?.presets || []).map((preset, index) => ([{
+    text: `${index + 1}. ${String(preset.name || 'Preset').slice(0, 42)}`,
+    callback_data: `news:ps:${preset.public_token}`
+  }]));
+  if (state?.eligible && (state?.usage?.remaining ?? 0) > 0) rows.push([{ text: '➕ Save current settings', callback_data: 'news:psave' }]);
+  if (!state?.eligible && state?.reason === 'pro_required') rows.push([{ text: '⭐ Get Pro', callback_data: 'plans:root' }]);
+  rows.push([{ text: '← AI/news drafts', callback_data: 'news:home' }]);
+  return { inline_keyboard: rows };
+}
+
+export function renderAiNewsPresetText({ state, notice = null }) {
+  const preset = state?.preset;
+  if (!preset) return `⚠️ ${reasonText(state?.reason || 'ai_news_preset_not_found')}`;
+  const lines = [
+    '⚙️ News preset',
+    '',
+    `Name: ${value(preset.name)}`,
+    `Topic: ${presetTopicLabel(preset)}`,
+    `Post language: ${String(preset.post_language || 'en').toUpperCase()}`,
+    `Tone: ${AI_NEWS_TONES[preset.tone] || value(preset.tone)}`,
+    `Status: ${value(preset.status)}`,
+    `Delivery: ${scheduleLabel({ scheduleKind: preset.schedule_kind, deliveryHourUtc: preset.delivery_hour_utc })}`,
+    `Next run: ${preset.next_run_at ? new Date(preset.next_run_at).toISOString() : '—'}`,
+    `Last success: ${preset.last_success_at ? new Date(preset.last_success_at).toISOString() : '—'}`,
+    '',
+    'Scheduled delivery creates a reviewable Telegram draft. It never authorizes or publishes a LinkedIn post.',
+    'Delivery guard: at most one scheduled draft per member per scheduler execution; multiple due presets rotate oldest-first.'
+  ];
+  if (preset.last_error_code) lines.push(`Last issue: ${preset.last_error_code}`);
+  if (!state?.config?.schedule?.enabled) lines.push('', '⚠️ Scheduler is off. Run now still works.');
+  if (state?.config?.schedule?.driver === 'vercel_daily') {
+    lines.push(`Daily scheduler window: ${String(state.config.schedule.dailyHourUtc).padStart(2, '0')}:00 UTC.`);
+  }
+  if (notice) lines.push('', notice);
+  return lines.join('\n');
+}
+
+export function renderAiNewsPresetKeyboard({ state }) {
+  const preset = state?.preset;
+  if (!preset) return { inline_keyboard: [[{ text: '← Presets', callback_data: 'news:presets' }]] };
+  const token = preset.public_token;
+  const rows = [[{ text: '▶️ Run now', callback_data: `news:psrun:${token}` }]];
+  if (state?.config?.schedule?.enabled) {
+    rows.push([
+      { text: `${preset.schedule_kind === 'manual' ? '✓ ' : ''}Manual`, callback_data: `news:pskind:${token}:manual` },
+      { text: `${preset.schedule_kind === 'daily' ? '✓ ' : ''}Daily`, callback_data: `news:pskind:${token}:daily` },
+      { text: `${preset.schedule_kind === 'weekdays' ? '✓ ' : ''}Weekdays`, callback_data: `news:pskind:${token}:weekdays` }
+    ]);
+    if (state.config.schedule.driver === 'external_hourly' && preset.schedule_kind !== 'manual') {
+      const hours = AI_NEWS_DELIVERY_HOURS_UTC;
+      rows.push(hours.slice(0, 3).map((hour) => ({ text: `${preset.delivery_hour_utc === hour ? '✓ ' : ''}${String(hour).padStart(2, '0')}:00`, callback_data: `news:pshour:${token}:${hour}` })));
+      rows.push(hours.slice(3).map((hour) => ({ text: `${preset.delivery_hour_utc === hour ? '✓ ' : ''}${String(hour).padStart(2, '0')}:00`, callback_data: `news:pshour:${token}:${hour}` })));
+    }
+  }
+  rows.push([{ text: preset.status === 'paused' ? '▶️ Resume preset' : '⏸ Pause preset', callback_data: `news:${preset.status === 'paused' ? 'psresume' : 'pspause'}:${token}` }]);
+  rows.push([{ text: '🗑 Delete preset', callback_data: `news:psdelete:${token}` }]);
+  rows.push([{ text: '← Presets', callback_data: 'news:presets' }]);
+  return { inline_keyboard: rows };
 }
