@@ -1,0 +1,1673 @@
+{
+  "admin": {
+    "duel": {
+      "cancelled_by_operator": "⏹️ Your waiting duel was cancelled by an operator. The stake was released back to your balance."
+    },
+    "runtime": {
+      "demo_mode_enabled": "Demo Mode enabled"
+    }
+  },
+  "balance": {
+    "history": {
+      "deposits": "<b>Recent deposits</b>",
+      "no_deposits": "• No deposits yet.",
+      "no_withdrawals": "• No withdrawals yet.",
+      "title": "💸 <b>Balance History</b>",
+      "withdrawals": "<b>Recent withdrawals</b>"
+    },
+    "not_enough": {
+      "missing": "<b>Missing:</b> {miss:.2f} GRAM",
+      "need": "You need <b>{required:.2f} GRAM</b> to {action}.",
+      "next_step": "Next step:\n• deposit GRAM to enter real duels;\nor\n• go back to Demo Mode and test the flow without risk.",
+      "practice_available": "<b>Demo balance:</b> {amount:.2f} Demo GRAM",
+      "practice_locked": "<b>Demo balance:</b> not opened yet — enter Demo Mode to unlock {seed:.0f} Demo GRAM",
+      "real": "<b>Real balance:</b> {bal:.2f} GRAM",
+      "title": "⚠️ <b>Not enough GRAM for real mode</b>"
+    },
+    "topped_up": "✅ Your balance was topped up by {amount} GRAM!\nYou can now open Balance or start a duel."
+  },
+  "bet": {
+    "custom_prompt": "✏️ Enter a custom stake from <b>{min} to {max} GRAM</b>.",
+    "invalid_amount": "❌ Enter a valid number.",
+    "select_prompt": "💰 <b>Choose a stake</b>\n\nPick an amount or enter your own."
+  },
+  "btn": {
+    "accept_rematch": "⚔️ Accept Rematch",
+    "admin_panel": "👑 Admin Panel",
+    "back": "◀️ Back",
+    "back_balance": "◀️ Balance",
+    "back_cabinet": "◀️ Back to Cabinet",
+    "back_chats": "◀️ My Chats",
+    "back_giveaway": "◀️ Back to Giveaway",
+    "back_giveaways_page": "◀️ Back to Giveaways",
+    "back_group": "◀️ Back to group",
+    "back_help": "◀️ Back to Help",
+    "back_invite": "◀️ Back to Invite",
+    "back_legal": "◀️ Back to Legal",
+    "back_lobby": "🔍 Back to lobby",
+    "back_main": "◀️ Main Menu",
+    "back_profile": "◀️ Back to Profile",
+    "back_tiers": "◀️ Back to Tiers",
+    "back_tournament": "◀️ Back to Tournament",
+    "back_tournament_create": "◀️ Back to Create",
+    "back_tournament_status": "◀️ Back to Status",
+    "back_wallet": "◀️ Back to Wallet",
+    "balance": "💰 Balance",
+    "cancel": "◀️ Cancel",
+    "cancel_duel": "❌ Cancel duel",
+    "challenge_friend": "⚔️ Challenge Friend",
+    "community": "🌐 Community",
+    "copy_invite": "🔗 Short link",
+    "copy_link": "🔗 Copy link",
+    "create": "🎮 Create Duel",
+    "current_notice": "📣 Current Notice",
+    "custom_amount": "✏️ Custom amount",
+    "decline": "❌ Decline",
+    "deposit": "💰 Deposit",
+    "fair_play": "🎲 Fair Play Guarantee",
+    "find": "🔍 Find Duel",
+    "full_suite": "🧩 Full Suite →",
+    "full_terms": "⚖️ Full terms",
+    "giveaway_management": "🛠 Group Giveaways",
+    "giveaways": "🎁 Giveaways",
+    "help": "❓ Help",
+    "history": "📜 History",
+    "invite_card": "🧾 Invite card",
+    "invite_friends": "📨 Invite Friends",
+    "join_roll_duel": "🎲 Join Roll Duel",
+    "lang_switch_to_en": "🌐 English",
+    "lang_switch_to_ru": "🌐 Русский",
+    "leaderboard": "🏆 Leaderboard",
+    "legal": "⚖️ Legal & Terms",
+    "mini_app": "🧪 Open Mini App",
+    "money_flow": "🪙 How deposits & withdrawals work?",
+    "my_chats": "💬 My Chats",
+    "my_duels": "📜 My Duels",
+    "next": "Next →",
+    "open_ticket": "✉️ Open a ticket",
+    "play_mode": "🎮 Play Mode",
+    "practice": "🧪 Demo Mode",
+    "prev": "← Prev",
+    "private_duel": "🔒 Private Duel",
+    "private_giveaways": "🛠 Group Giveaways",
+    "profile": "👤 Profile",
+    "quick": "⚡ Quick Duel",
+    "quick_waiting": "⚡ Quick Duel · {n} waiting",
+    "ref_cabinet": "🏆 Ref Cabinet",
+    "refresh": "🔄 Refresh",
+    "rematch": "⚡ Rematch",
+    "rematch_from_history": "⚡ Rematch: {opponent} · {stake}",
+    "risk_queue": "⚠️ Risk Queue",
+    "roll_dice": "🎲 Roll Dice",
+    "share_challenge": "📤 Share challenge",
+    "share_duel": "📨 Share duel",
+    "share_invite": "🔗 Share Invite Link",
+    "share_result": "📨 Share result",
+    "share_telegram": "📨 Share in Telegram",
+    "support": "🛟 Support",
+    "tournament": "🏆 Tournament",
+    "try_again": "🔄 Try again",
+    "use_full_balance": "💰 Use full balance",
+    "verify": "🛡️ Verify",
+    "vip": "💎 VIP",
+    "wallet": "🔗 Wallet",
+    "web_admin": "🌐 Web Admin",
+    "withdraw": "💸 Withdraw"
+  },
+  "community": {
+    "btn": {
+      "all_topics": "🌐 All community topics",
+      "feedback": "💡 Ideas & Feedback",
+      "official_channel": "📢 Official Channel",
+      "open_duels": "🎲 Open Duels",
+      "players_chat": "💬 Players Chat",
+      "rules": "📌 Rules & Safety",
+      "support": "🛠 Support & Bugs",
+      "wins": "🏆 Wins & Highlights"
+    },
+    "intro": "Follow official updates, find open duels, meet players, and get community support.",
+    "language_note": "Open Duels and player chat open in your selected language. Every public duel is open to all Roll Duel players.",
+    "safety": "🔒 <b>Safety</b>\n• 18+ only. Play responsibly.\n• Admins never contact users first.\n• Never share seed phrases, private keys, or private payment details.\n• Use only links published by the official bot and channel.",
+    "title": "🌐 <b>Roll Duel Community</b>",
+    "duel_feed": {
+      "found": "⚔️ <b>Open Duel Found!</b>\n\nStake: <b>{amount} GRAM</b>\n⏳ Available for: <b>{time}</b>\nTap below to join.",
+      "join": "⚔️ Join Duel #{game_id} ({amount} GRAM)",
+      "unavailable": "⌛ This open duel is no longer available. Choose another duel from the community feed."
+    },
+    "ephemeral": {
+      "play": "🎮 <b>Roll Duel in this community</b>\n\nThis menu is visible only to you.\n\n⚡ <b>Quick Duel</b> — one round\n🎯 <b>Best of 3</b> — first to two wins\n🧪 <b>Demo</b> — no real GRAM",
+      "private_note": "This response is visible only to you.",
+      "tournament_title": "🏆 <b>Tournaments</b>",
+      "tournament_empty": "No open tournament is forming right now.",
+      "tournament_open": "Open registrations:",
+      "format_bo3": "Best of 3",
+      "format_single": "Single Round",
+      "help": "🌐 <b>Roll Duel Players</b>\n\nUse this group for open challenges, chat, highlights, support and feedback.\n\nCommands <code>/play</code>, <code>/balance</code>, <code>/tournament</code> and <code>/help</code> return private menus inside the group.",
+      "btn": {
+        "open_balance": "💰 Open Balance",
+        "play": "🎮 Play",
+        "open_tournaments": "🏆 Open Tournaments",
+        "open_bot": "🎮 Open Roll Duel",
+        "demo": "🧪 Demo",
+        "tournaments": "🏆 Tournaments"
+      }
+    }
+  },
+  "deposit": {
+    "btn": {
+      "check_paid": "✅ I paid — check",
+      "open_invoice": "👉 Open CryptoBot invoice",
+      "refresh_balance": "🔄 Refresh balance",
+      "create_new_anyway": "🔄 Create new invoice"
+    },
+    "check": {
+      "credit_error": "⚠️ Payment was found, but balance was not updated. Please contact support.",
+      "error": "⚠️ Could not check the payment right now. Please try again in a few seconds.",
+      "invalid": "Invoice not found.",
+      "paid": "✅ Deposit received: <b>{amount}</b>.\n\nYour balance is updated below.",
+      "pending": "⏳ Payment not found yet. If you just paid, wait a few seconds and tap check again.",
+      "already_credited": "✅ This invoice is already credited. Balance is up to date.\nAmount: <b>{amount}</b>"
+    },
+    "creating": "⏳ Creating a CryptoBot invoice...",
+    "error": {
+      "api": "❌ Could not create invoice. Please try again in a moment.",
+      "min": "❌ Minimum deposit is <b>{min} GRAM</b>."
+    },
+    "invoice_ready": "💸 <b>Deposit via CryptoBot</b>\n\nAmount you'll receive: <b>{amount} GRAM</b>\nCryptoBot fee (3%): <b>{fee} GRAM</b>\nTotal to pay: <b>{total} GRAM</b>\n\n<a href=\"{pay_url}\">👉 Open CryptoBot invoice</a>\n\n<i>Invoice expires in 15 minutes. Balance will be credited automatically after payment.</i>",
+    "prompt": "💸 Enter the deposit amount (minimum 0.1 GRAM).\nCryptoBot invoice fee: 3%.",
+    "existing_unpaid_warning": "⚠️ You already have an unpaid invoice for <b>{amount} GRAM</b>.\n\nIf you tried to pay it and didn't have enough balance in CryptoBot, you can open the same invoice again or create a new one for a different amount."
+  },
+  "duel": {
+    "action": {
+      "cancel_demo": "❌ Cancel demo duel",
+      "check_status": "📊 Duel status",
+      "create_real": "create this real duel",
+      "join_real": "join this real duel",
+      "leave": "❌ Leave duel",
+      "leave_demo": "❌ Leave demo duel",
+      "start_real": "start a real duel",
+      "status": "📊 Duel status",
+      "create_again": "🔁 Create another duel",
+      "renew_invite": "🔁 Renew private challenge"
+    },
+    "active_conflict": "You already have an active duel in progress.",
+    "already_rolled_practice": "❗ You already rolled in this demo duel.",
+    "cancel": {
+      "error": "❌ Could not cancel the duel.",
+      "failed": "❌ Could not cancel the duel.",
+      "not_found": "❌ Duel not found or it has already started.",
+      "ok": "✅ Duel cancelled.\n💰 Stake {amount} returned to your balance.",
+      "success": "✅ Duel cancelled.\n💰 Stake {amount} was released back to balance."
+    },
+    "conflict": {
+      "practice": "❌ You already have an active demo duel. Finish or leave it before starting something else.",
+      "practice_detail": "🧪 <b>You already have an active demo duel.</b>\n\nDuel: <b>#{game_id}</b>\nStake: <b>{amount} Demo GRAM</b>\nStatus: <b>{status}</b>\n\n{next_step}",
+      "real": "❌ You already have an active duel. Finish or leave it before starting another one.",
+      "real_detail": "⚔️ <b>You already have an active duel.</b>\n\nDuel: <b>#{game_id}</b>\nStake: <b>{amount} GRAM</b>\nStatus: <b>{status}</b>\n\n{next_step}",
+      "next_step": {
+        "practice_waiting": "Next step: wait for another player, or cancel this demo duel with the button below.",
+        "practice_active": "Next step: send a fresh 🎲 dice roll in this chat. If you already rolled, wait for the opponent.",
+        "real_waiting": "Next step: wait for an opponent, share this duel, or cancel it with the buttons below.",
+        "real_active": "Next step: send a fresh 🎲 dice roll in this chat. If you already rolled, wait for the opponent.",
+        "real_settling": "Next step: the result is being recorded. Wait a moment, then refresh your balance or open duel status."
+      }
+    },
+    "create": {
+      "error": "❌ Could not create the duel: {error}",
+      "prompt": "💰 <b>Create Duel</b>\n\nChoose a GRAM stake for the new duel:",
+      "published": "👥 Duel published to your default group. Message #{message_id}.",
+      "stake_prompt_with_format": "💰 <b>Create Duel</b>\n\nFormat: <b>{format}</b>\nOne stake covers the entire match. Choose a GRAM stake:"
+    },
+    "created": "✅ <b>Duel created.</b>\n\n🎲 Duel ID: {game_id}\n💰 Stake: {amount} GRAM\n⏳ Another player can join for <b>15 minutes</b>.\n💸 If nobody joins, your stake is returned automatically.\n\n",
+    "error": {
+      "already_active_short": "You already have an active duel. Finish or cancel it first.",
+      "already_rolled": "❗ You already rolled in this duel.",
+      "already_rolled_practice": "❗ You already rolled in this practice duel.",
+      "forwarded_dice": "❌ Forwarded dice do not count. Send a fresh roll instead.",
+      "insufficient": "Insufficient balance. Your balance: {balance} GRAM",
+      "insufficient_balance_short": "Not enough GRAM in your balance for this duel.",
+      "no_active": "❌ You do not have an active duel.\nCreate one or join an open duel first.",
+      "not_available": "❌ This duel is no longer available.",
+      "opponent_blocked": "❌ Opponent blocked the bot or is unavailable.",
+      "own_duel": "❌ You cannot join your own duel.",
+      "send_dice_failed": "❌ Failed to send dice to opponent.",
+      "stake_max": "Maximum stake: 1000 GRAM",
+      "stake_min": "Minimum stake: {min_stake} GRAM",
+      "stake_min_too_low": "❌ Minimum stake is <b>{min_stake} GRAM</b>.",
+      "stake_positive": "Stake must be greater than 0 GRAM",
+      "system_error": "❌ System error sending dice."
+    },
+    "find": {
+      "empty": "😔 No open duels yet.\nCreate one to start the lobby.",
+      "open_duels": "Open duels:",
+      "title": "🔍 <b>Find Duel</b>"
+    },
+    "finish": {
+      "practice": "🧪 <b>Demo Duel finished.</b>",
+      "real": "🏁 <b>Duel finished.</b>",
+      "stakes_returned": "💰 Stakes returned: {amount}",
+      "winner_gets": "🏆 Winner gets: {amount}"
+    },
+    "flavor": {
+      "clean_roll": "🎯 A clean roll wins duels!",
+      "duel_on": "🎊 Duel on!",
+      "form": "⭐ Time to show your duel form!",
+      "fortune": "🎲 Fortune favors bold duelers!",
+      "heating": "🔥 The dice are heating up!",
+      "luck": "🍀 May luck stay on your side!",
+      "strong_roll": "🌟 A strong roll can change everything!",
+      "talking": "💫 Let the dice do the talking!"
+    },
+    "forwarded_error": "❌ Forwarded dice do not count. Send a fresh 🎲 roll instead.",
+    "integrity_recorded": "🔐 Game integrity data recorded.",
+    "join": {
+      "confirm_button": "✅ Join for {amount} GRAM",
+      "confirm_text": "🎮 <b>Join Duel</b>\n\n🎲 Opponent: <b>{opponent}</b>\n💰 Stake: <b>{amount}</b>\n⏳ Available for: <b>{time}</b>\n\nConfirm the join:",
+      "confirm_text_with_format": "🎮 <b>Join Duel</b>\n\n🎲 Opponent: <b>{opponent}</b>\n🎮 Format: <b>{format}</b>\n💰 Stake: <b>{amount}</b> for the entire match\n⏳ Available for: <b>{time}</b>\n\nConfirm the join:",
+      "confirm_button_with_format": "✅ Join {format} for {amount} GRAM"
+    },
+    "live_prompt": "🎮 The duel is live. Send a fresh 🎲 dice roll in this chat.",
+    "next_step_roll": "Next step: send a fresh 🎲 dice roll in this chat, or leave the duel from the duel screen.",
+    "next_step_wait": "Next step: send a fresh 🎲 dice roll in this chat, or wait for the opponent if you already rolled.",
+    "no_active": "❌ You have no active duel.",
+    "no_balance": "❌ Insufficient balance.",
+    "opponent_left": "😔 Your opponent left the duel.\n💰 Stake {amount} was returned to your balance.",
+    "opponent_left_practice": "😔 Your opponent left the demo duel.\n💎 Demo stake {amount} returned to your demo balance.",
+    "play_again": "🎲 Want to open another duel?",
+    "play_again_practice": "🧪 Want to open another demo duel?",
+    "practice_ready": "🧪 Choose what to do next:",
+    "practice_roll_confirm": "✅ Demo roll: {emoji} ({value})",
+    "practice_roll_waiting": "✅ Demo roll: {emoji} ({value})\n⏳ Waiting for the opponent's roll...",
+    "reminder": {
+      "practice": "⏰ You have 30 seconds left to send your dice roll in the demo duel!",
+      "real": "⏰ You have 30 seconds left to send your dice roll!"
+    },
+    "result": {
+      "draw": "🤝 Draw!",
+      "lose": "😔 You lost.",
+      "title": "🎲 Duel result:",
+      "win": "🏆 You won!",
+      "winner": "🏆 Winner: {name}!"
+    },
+    "roll": {
+      "already_rolled": "❗ You already rolled in this duel.",
+      "you_rolled": "✅ Your roll: 🎲 ({value})\n⏳ Waiting for opponent's roll..."
+    },
+    "roll_confirm": "✅ Your roll: {emoji} ({value})",
+    "roll_prompt": "🎲 Send your dice roll now.\n\n⏱ You have 60 seconds from the start of the duel. A reminder arrives after 30 seconds.",
+    "roll_prompt_full": "🎲 Send your dice roll now.\n\nAfter both players roll, the bot will determine the winner automatically.",
+    "roll_waiting": "✅ Your roll: {emoji} ({value})\n⏳ Waiting for the opponent's roll...",
+    "settle_error": "❌ Could not settle the duel result.",
+    "settle_error_practice": "❌ Could not settle the demo duel result.",
+    "settle_recovery": "⚠️ The dice rolls were saved, but the duel result could not be finalized immediately. The system will retry automatically.",
+    "started": "🎮 <b>Duel started.</b>\n\n🎲 Duel #{game_id}\n💰 Stake: <b>{amount}</b>\n\n⏱ Each player has <b>60 seconds</b> to roll. A reminder arrives after 30 seconds.",
+    "started_practice_note": "Both players can send a fresh 🎲 dice roll now. No real GRAM is used.",
+    "started_real_note": "Both players can send a fresh 🎲 dice roll now. Good luck!",
+    "status": {
+      "active": "Active",
+      "cancelled": "Cancelled",
+      "finished": "Finished",
+      "header": "🎮 <b>Duel #{game_id}</b>\n\n👤 Opponent: {opponent}\n💰 Stake: {amount}\n",
+      "opponent": "Opponent",
+      "player1_roll": "\n🎲 Player 1: {emoji} ({value})",
+      "player2_roll": "\n🎲 Player 2: {emoji} ({value})",
+      "rolling": "Waiting for dice rolls",
+      "settling": "Finishing duel",
+      "timed_out": "Timed out",
+      "waiting": "Waiting for opponent",
+      "waiting_join": "⏳ Waiting for another player. Time remaining: <b>{time}</b>.\n💸 The stake returns automatically if nobody joins.",
+      "waiting_opponent": "waiting for opponent",
+      "waiting_roll": "⏳ Waiting for the opponent's roll...",
+      "your_turn": "⚡ Your turn. Send a fresh 🎲 dice message.",
+      "expired_refunded": "⌛ The waiting time expired.\n💸 The reserved stake was returned automatically.",
+      "roll_deadline": "⏱ Time to roll: <b>{time}</b>.\n"
+    },
+    "timeout": {
+      "cancel": "⏰ Time expired. The duel was cancelled and both stakes were returned.",
+      "lose": "❌ You did not roll in time, so the duel was closed.",
+      "practice_cancel": "⏰ Demo duel timed out. Demo GRAM returned.",
+      "practice_lose": "❌ Demo duel timeout. You did not roll in time.",
+      "practice_win": "⏰ Demo duel timeout. You win because your opponent did not roll in time.",
+      "win": "⏰ Time expired. You win because your opponent did not roll in time."
+    },
+    "waiting_opponent": "⏳ Waiting for opponent to join...",
+    "withdrawals_paused": "Withdrawals are currently paused.",
+    "share": {
+      "message": "⚔️ I created a {amount} {asset} duel.\n\n⏳ Time left: {time}.\n🎲 One roll each. Higher number wins.\n\nPlay:\n{url}",
+      "private_message": "⚔️ I challenge you to a {amount} {asset} duel.\n\n⏳ Time left: {time}.\n🎲 One roll each. Higher number wins.\n\nAccept the challenge:\n{url}",
+      "inline_description": "{amount} {asset} • {time} left",
+      "inline_description_private": "Private • {amount} {asset} • {time} left",
+      "inline_title_private": "📨 Share private challenge",
+      "message_bo3": "🎯 I created a {amount} {asset} Best of 3 duel.\n\nFirst to win 2 rounds. One stake covers the whole match.\n⏳ Time left: {time}.\n\nPlay:\n{url}",
+      "private_message_bo3": "🎯 I challenge you to a {amount} {asset} Best of 3 duel.\n\nFirst to win 2 rounds. One stake covers the whole match.\n⏳ Time left: {time}.\n\nAccept the challenge:\n{url}"
+    },
+    "format": {
+      "choose": "🎮 <b>Choose duel format</b>\n\n⚡ <b>Single round</b> — fastest result.\n🎯 <b>Best of 3</b> — first to win two rounds.\n\nOne stake and one settlement cover the entire match.",
+      "single": {
+        "button": "⚡ Single round · instant result",
+        "label": "Single round",
+        "short": "1 round"
+      },
+      "bo3": {
+        "button": "🎯 Best of 3 · first to 2 wins",
+        "label": "Best of 3 · first to 2 wins",
+        "short": "BO3",
+        "disabled": "Best of 3 is currently disabled."
+      }
+    },
+    "created_with_format": "✅ <b>Duel created.</b>\n\n🎲 Duel ID: {game_id}\n🎮 Format: <b>{format}</b>\n💰 Stake: {amount} GRAM for the entire match\n⏳ Another player can join for <b>15 minutes</b>.\n💸 If nobody joins, your stake is returned automatically.\n\n",
+    "started_with_format": "🎮 <b>Duel started.</b>\n\n🎲 Duel #{game_id}\n🎮 Format: <b>{format}</b>\n💰 Stake: <b>{amount}</b> for the entire match\n\n⏱ Each player has <b>60 seconds</b> to roll in the current round.",
+    "series": {
+      "roll_prompt": "🎯 Round 1 · Best of 3\n🎲 Send your dice now. First to two round wins takes the match.",
+      "roll_prompt_current": "🎯 Round {round} · Best of 3\n📊 Score: {score1}–{score2}\n🎲 Send a fresh dice roll now.",
+      "roll_waiting": "✅ Round {round} roll: {emoji} ({value})\n📊 Score: {score1}–{score2}\n⏳ Waiting for the opponent's roll...",
+      "already_rolled": "❗ You already rolled in this round. Wait for your opponent.",
+      "roll_error": "❌ The round could not be recorded. Please refresh the duel status.",
+      "round_draw": "🤝 <b>Round {round} is a draw.</b>\n\n{player1}: {roll1} — {player2}: {roll2}\nScore: <b>{score}</b>\n\n🎲 Replay the same round. Send a fresh dice roll.",
+      "round_complete": "🎯 <b>Round {round}: {winner} wins.</b>\n\n{player1}: {roll1} — {player2}: {roll2}\nScore: <b>{score}</b>\n\n🎲 Round {next_round}: send a fresh dice roll.",
+      "finished": "🏆 <b>{winner} wins the Best of 3!</b>\n\nFinal score: <b>{score}</b>\n💰 Stake per player: <b>{amount}</b>\n✅ One final settlement was applied for the whole match.",
+      "finished_draw": "🤝 <b>Best of 3 finished as a draw.</b>\n\nThe safety draw limit was reached.\nFinal score: <b>{score}</b>\n💰 Both stakes were returned. No platform fee was charged.",
+      "settle_recovery": "⚠️ The match score was saved, but settlement could not be completed immediately. The durable recovery job will retry automatically.",
+      "status": "🎯 Format: <b>Best of 3</b>\n📊 Score: <b>{score1}–{score2}</b>\n🎲 Current round: <b>{round}</b>\n",
+      "timeout_win": "⏰ You win the Best of 3 because your opponent did not roll in time.",
+      "timeout_lose": "❌ You did not roll in time, so the Best of 3 was awarded to your opponent.",
+      "timeout_refund": "⚠️ The Best of 3 entered an impossible recovery state. Both stakes were returned; no fee was charged."
+    },
+    "share_result": {
+      "bo3_score": "🎯 Best of 3 · Final score: {my_score}–{opponent_score}",
+      "single_score": "🎲 {my_emoji} {my_roll} vs {opponent_roll} {opponent_emoji}",
+      "outcome_win_bo3": "🔥 I just won a Best of 3 duel on Roll Duel!",
+      "outcome_win_single": "🔥 I just won {amount} in Roll Duel!",
+      "outcome_draw": "💰 I got my stake back in a draw!",
+      "outcome_loss": "😤 I just played a duel on Roll Duel. Rematch?",
+      "streak": "🏆 Current streak: {streak}🔥",
+      "play_now": "Play now: {url}",
+      "composer_intro": "🎲 I just played an epic duel on Roll Duel!",
+      "composer_win": "🏆 I won!",
+      "composer_loss": "💪 Rematch?",
+      "composer_draw": "💰 Stake returned",
+      "join_me": "Join me: {url}"
+    }
+  },
+  "error": {
+    "generic": "❌ Could not complete action. Please try again.",
+    "generic_short": "An error occurred. Please try again."
+  },
+  "find_duel": {
+    "empty": "🎲 Nobody is waiting for an opponent right now.\n\nStart a quick duel — another player can join when they enter.\nOr challenge a friend directly with a private link.",
+    "hint": "Quick Duel = automatic opponent search.\nChallenge Friend = private invite link.",
+    "intro_with_games": "Choose an open duel below, or start a quick duel and let the bot find an opponent for you.",
+    "join_button": "🎲 {player} · {amount} GRAM · {time}",
+    "no_open_button": "⚡ Start quick duel",
+    "open_duels": "Open duels:",
+    "refresh": "🔄 Refresh list",
+    "summary": "⚔️ Open duels: <b>{waiting}</b>\n🎮 Games in progress: <b>{active}</b>",
+    "title": "🎲 <b>Find a Duel</b>",
+    "join_button_with_format": "🎲 {player} · {amount} GRAM · {format} · {time}"
+  },
+  "giveaway": {
+    "block": {
+      "basic": "<b>Basics</b>",
+      "state": "<b>State</b>",
+      "timing": "<b>Timing</b>"
+    },
+    "browse": {
+      "active_title": "🎁 <b>Active Giveaways</b>",
+      "empty": "🎁 <b>Giveaways</b>\n\n😔 No active public giveaways right now.\nCreate one in your group.",
+      "no_more": "🎁 No more giveaways on this page.",
+      "sort_by": "<i>Sort: {label}</i>"
+    },
+    "btn": {
+      "activate": "✅ Activate",
+      "add_sponsor": "➕ Add sponsor channel/chat",
+      "back": "↩️ Back to giveaway",
+      "cancel": "🗑️ Cancel giveaway",
+      "cancel_empty": "🗑️ Cancel (no participants)",
+      "check_eligibility": "🔍 Check eligibility (me)",
+      "create": "🎁 Create giveaway",
+      "create_next": "🎁 Create new giveaway",
+      "deadline_1h": "⏱ In 1 hour",
+      "deadline_24h": "⏱ In 24 hours",
+      "deadline_30m": "⏱ In 30 min",
+      "draw": "🎲 Draw winners",
+      "edit_deadline": "⏰ Deadline",
+      "edit_prize": "🎁 Prize",
+      "edit_starts": "🕒 Start time",
+      "edit_title": "✏️ Title",
+      "edit_winners": "👥 Winners",
+      "end": "🛑 End giveaway",
+      "exact_utc": "🕒 Exact UTC time",
+      "join": "🎁 Join Giveaway",
+      "join_not_started": "⏳ Not started yet",
+      "make_private": "🔒 Make Private",
+      "make_public": "🌐 Make Public",
+      "not_started": "⏳ Not started yet",
+      "open_bot": "🎲 Open Roll Duel",
+      "publish": "📣 Publish results",
+      "publish_live": "📣 Publish giveaway",
+      "publish_no_winner": "🏁 Publish no-winner result",
+      "refresh": "🔄 Refresh",
+      "remove_sponsor": "🗑️ Remove: {name}",
+      "require_real_duel_off": "🎲 Real duel: OFF",
+      "require_real_duel_on": "🎲 Real duel: 1+",
+      "require_subscription_off": "🔓 Subscription: OFF",
+      "require_subscription_on": "🔐 Subscription: ON",
+      "start_15m": "⏱ In 15 min",
+      "start_1h": "⏱ In 1 hour",
+      "start_5m": "⏱ In 5 min",
+      "start_now": "▶️ Immediately",
+      "confirm_remove_sponsor": "🗑️ Yes, remove",
+      "cancel_remove_sponsor": "↩️ Cancel"
+    },
+    "confirm": {
+      "activate": "✅ Yes, activate",
+      "cancel": "✅ Yes, cancel",
+      "cancel_empty": "Cancel this empty giveaway and clear the slot for the next round?",
+      "draw": "✅ Yes, draw winners",
+      "end": "✅ Yes, end",
+      "results": "✅ Yes, mark published"
+    },
+    "confirm_text": {
+      "activate": "✅ <b>Activate giveaway?</b>\n\nAfter activation, participants can join immediately if the giveaway is published.",
+      "activate_scheduled": "🕓 <b>Schedule giveaway?</b>\n\nParticipants can join after: <b>{start}</b>.\nBefore start, the public button will show: <b>⏳ Not started yet</b>.\n\nNote: auto-activation runs periodically. For precise launch, choose “Immediately”.",
+      "cancel": "Cancel this giveaway now? This cannot be undone from the bot.",
+      "draw": "Draw winners now? This action is final for this giveaway.",
+      "end": "End this giveaway now? New entries will stop immediately.",
+      "results": "Mark results as published now?"
+    },
+    "dashboard": {
+      "back": "⬅️ Giveaways",
+      "back_group": "⬅️ Group",
+      "counts": "• Drafts: <b>{drafts}</b> · Active: <b>{active}</b> · Finished: <b>{finished}</b>",
+      "current": "🎁 Current giveaway",
+      "current_block": "<b>Current slot</b>",
+      "current_stats": "• Entries: <b>{entries}</b> · Winners: <b>{winners}</b>",
+      "empty": "No connected groups for giveaways yet.",
+      "empty_hint": "Connect a group from My Chats first.",
+      "error": "❌ Could not open giveaway management.",
+      "group_btn": "🎁 {title} · 📝 {drafts} · 🟢 {active} · 📣 {finished}",
+      "group_counts": "Drafts: <b>{drafts}</b> · Active: <b>{active}</b> · Finished: <b>{finished}</b>",
+      "group_name": "<b>Group:</b> {title}",
+      "group_settings": "⚙️ Group settings",
+      "group_title": "🎁 <b>Group Giveaways</b>",
+      "history": "📜 Giveaway history",
+      "intro": "Manage giveaways in connected groups: current rounds, drafts, history, and publishing.",
+      "lifecycle_hint": "Draft means setup. Active means it can be published and accept entries. Finished means draw/publish results.",
+      "new": "➕ New giveaway",
+      "no_current": "No current giveaway. You can create one.",
+      "select_hint": "Choose a group below to open the current giveaway, history, or create a new one.",
+      "title": "🎁 <b>Giveaway Management</b>"
+    },
+    "default_prize": "Set the prize",
+    "default_title": "New giveaway",
+    "detail": {
+      "active_note": "\nThis giveaway is live. Publish it in the group, collect entries, then end it before drawing winners.",
+      "cancelled": "\nThis giveaway was cancelled. You can start a fresh one for this group.",
+      "deadline": "<b>Deadline:</b> {deadline}",
+      "draft_note": "\n⏳ <b>Important:</b> Activation may take up to 30 minutes. Finish the basics, then activate when ready.",
+      "eligible": "• Eligible: {count}",
+      "ended_entries": "\nEntries are closed. You can now draw winners.",
+      "ended_no_entries": "\nNo entries were recorded. Cancel this round or publish a no-winner result, then start the next one.",
+      "entries": "• Entries: {count}",
+      "group": "<b>Group:</b> {title}",
+      "ineligible": "• Ineligible: {count}",
+      "live_post": "<b>Live post:</b> {status}",
+      "prize": "<b>Prize:</b> {prize}",
+      "results_post": "<b>Results post:</b> {status}",
+      "results_published": "\nThis giveaway is complete. You can create the next one when ready.",
+      "results_published_none": "\nThis round closed with no entries. You can create the next giveaway when ready.",
+      "starts": "<b>Starts:</b> {starts}",
+      "stats": "<b>Stats</b>",
+      "status": "<b>Status:</b> {status}",
+      "title": "🎁 <b>Giveaway</b>",
+      "title_label": "<b>Title:</b> {title}",
+      "visibility": "<b>Visibility:</b> {visibility}",
+      "winners": "<b>Winners:</b> {count}",
+      "winners_drawn": "\n<b>Winners</b>",
+      "winners_selected": "• Winners selected: {count}"
+    },
+    "edit_prompt": {
+      "deadline": "🎁 <b>Edit deadline</b>\n\nCurrent giveaway: <b>{title}</b>\n\nWhen should entries close? Use quick buttons below or send UTC time.\nExamples: <code>30m</code>, <code>1h</code>, <code>24h</code>, <code>2026-06-28 09:30</code>.",
+      "prize": "🎁 <b>Edit prize</b>\n\nCurrent giveaway: <b>{title}</b>\n\nSend the new prize text.",
+      "starts": "🎁 <b>Edit start time</b>\n\nCurrent giveaway: <b>{title}</b>\nCurrent start: <b>{start}</b>\nCurrent deadline: <b>{deadline}</b>\n\nWhen should users be able to join? Use quick buttons below or send UTC time.\n\nImportant: start time must be before the deadline.",
+      "title": "🎁 <b>Edit title</b>\n\nCurrent giveaway: <b>{title}</b>\n\nSend the new title in one message.",
+      "winners": "🎁 <b>Edit winners count</b>\n\nCurrent giveaway: <b>{title}</b>\n\nSend a number like <b>1</b>, <b>3</b>, or <b>5</b>."
+    },
+    "eligibility": {
+      "check_again": "Then press Check eligibility again.",
+      "check_subscription": "🔐 Press Check to confirm your subscription.",
+      "eligible": "✅ You are eligible! All subscriptions verified.",
+      "need_real_duel": "🎲 Complete at least {required} real GRAM duel. Current: {current}/{required}.",
+      "need_subscription": "🔐 Subscribe to the sponsor channel and press Check.",
+      "not_eligible_title": "Not eligible yet.",
+      "not_joined": "Join the giveaway first from the public post.",
+      "real_duel_ok": "🎲 Real GRAM duels: {current}/{required}.",
+      "recheck": "🔄 Re-check",
+      "subscribe_prompt": "Please subscribe to:",
+      "subscription_unknown_short": "⚠️ Subscription could not be verified: the bot needs access to the sponsor channel.",
+      "unknown_note": "<i>Note: {count} channel(s) could not be checked. Make sure the bot is added to the channel/group.</i>",
+      "unknown_verify": "<i>({count} channel(s) could not be verified.)</i>"
+    },
+    "error": {
+      "draw_failed": "❌ Could not draw winners. Open the giveaway again and retry.",
+      "edit_session_expired": "❌ Giveaway edit session expired. Open the giveaway again.",
+      "giveaway_not_started": "This giveaway has not started yet. Start: {start}.",
+      "giveaway_not_started_with_time": "Giveaway has not started yet. Start: {start}.",
+      "invalid_giveaway_deadline": "Invalid time. Use quick buttons or UTC format: 2026-06-28 09:30.",
+      "invalid_window": "Start time must be before the deadline. Current deadline: {deadline}. Choose an earlier start time or move the deadline first.",
+      "missing_giveaway_deadline": "Send UTC time or use quick buttons.",
+      "not_found": "❌ Giveaway not found",
+      "patch_empty": "No changes to apply.",
+      "whole_number": "❌ Send a whole number like 1, 3, or 5."
+    },
+    "field": {
+      "deadline": "🏁 Deadline",
+      "group": "👥 Group",
+      "live_post": "📣 Live post",
+      "prize": "🏆 Prize",
+      "results_post": "🏁 Results",
+      "rules": "Rules",
+      "starts": "🕒 Start",
+      "status": "📌 Status",
+      "title": "📝 Title",
+      "visibility": "🌐 Visibility",
+      "winners": "🎯 Winners"
+    },
+    "hint": {
+      "active": "Giveaway is live. Publish it in the group.",
+      "cancelled": "Giveaway cancelled. Start a fresh one.",
+      "draft_action": "Fill in the basics then activate.",
+      "draft_activation": "Activation may take up to 30 minutes.",
+      "draft_title": "Important",
+      "ended_has_entries": "Entries closed. You can draw winners.",
+      "ended_no_entries": "No entries were recorded.",
+      "ended_no_entries_action": "Cancel this round or publish a no-winner result.",
+      "no_winners_selected": "No winners were selected.",
+      "publish_no_winner": "Publish a no-winner result to close.",
+      "publish_results": "Publish results in the group when ready.",
+      "results_done": "Giveaway complete. Start the next one.",
+      "results_no_entries": "Closed with no entries. Start the next one."
+    },
+    "history": {
+      "empty": "No giveaways in this group yet.",
+      "error": "❌ Could not open giveaway history.",
+      "filter_active": "🟢 Active",
+      "filter_all": "All",
+      "filter_cancelled": "⚪ Cancelled",
+      "filter_draft": "📝 Drafts",
+      "filter_finished": "📣 Finished",
+      "filter_hint": "Filter: <b>{filter}</b>",
+      "filter_label": {
+        "active": "Active",
+        "all": "All except empty cancelled",
+        "cancelled": "Cancelled",
+        "draft": "Drafts",
+        "finished": "Finished"
+      },
+      "group": "<b>Group:</b> {title}",
+      "page_hint": "Showing {start}-{end}. Newest giveaways first.",
+      "row": "• {status} — <b>{title}</b> · entries {entries} · winners {winners}",
+      "title": "📜 <b>Giveaway History</b>"
+    },
+    "info": {
+      "start_already_now": "ℹ️ Start is already set to immediately.",
+      "start_already_now_visible": "ℹ️ <b>Start is already set to immediately.</b>\n\nChoose another time or go back to the giveaway."
+    },
+    "join": {
+      "already_joined": "ℹ️ You already joined this giveaway.",
+      "eligible_warning": "⚠️ To be eligible, please subscribe to:\n{missing}\n\nThen use /check_eligibility_{giveaway_id} to confirm.",
+      "error": "❌ Could not join the giveaway. Please try again.",
+      "group_notice": "✅ {user} joined the giveaway.",
+      "joined": "✅ Joined {title}!",
+      "success": "✅ You joined {title}! Good luck!",
+      "target_group_only": "Open the live giveaway post in the target group to join.",
+      "toast_pending": "✅ Entry accepted, but you must satisfy the rules to enter the draw.",
+      "toast_success": "✅ You joined the giveaway.",
+      "toast_success_eligible": "✅ You joined the giveaway. Requirements are satisfied.",
+      "usage": "Usage: /join_giveaway <id>"
+    },
+    "label": {
+      "joined": "participants",
+      "winners": "winners"
+    },
+    "my": {
+      "eligible": "✅ Eligible",
+      "eligible_short": "✅",
+      "empty": "📋 You haven't joined any giveaways yet.\n\nUse /giveaways to browse active ones!",
+      "not_checked": "❓ Not checked",
+      "not_checked_short": "❓",
+      "not_eligible": "❌ Not eligible",
+      "not_eligible_short": "❌",
+      "status_line": "🎁 <b>{title}</b>\n  Status: {status} · {eligible} · ⏳ {remaining}",
+      "status_line_short": "🎁 <b>{title}</b> · {status} · {eligible} · ⏳ {remaining}\n  <code>{giveaway_id}</code>",
+      "title": "📋 <b>My Giveaway Participations</b>"
+    },
+    "not_published": "Not published",
+    "not_set": "Not set",
+    "not_setup": "No giveaway set up for this group yet.",
+    "prize_tba": "Prize will be announced",
+    "public": {
+      "live_now": "Giveaway is live. Tap below to join.",
+      "no_entries_recorded": "ℹ️ No entries were recorded, so no winners were selected.",
+      "no_winners": "• This round had no winners.",
+      "not_enough_entries": "ℹ️ Not all places were filled: not enough eligible participants.",
+      "not_started": "⏳ Giveaway has not started yet.\nStarts: {start}.",
+      "post_pending": "🎁 <b>Giveaway</b>\n\n<b>{title}</b>\nPrize: {prize}\nWinners: {winners}\nDeadline: {deadline}\nGroup: {group}\nEntries so far: {entries}\n\n⏳ This giveaway has not started yet.\nStart: {start}.",
+      "post_title": "🎁 <b>Giveaway</b>\n\n<b>{title}</b>\nPrize: {prize}\nWinners: {winners}\nDeadline: {deadline}\nGroup: {group}\nEntries so far: {entries}\n\n{state_line}",
+      "requirements": "Requirements: {rules}",
+      "requirements_none": "Requirements: open the bot and press Join",
+      "result_title": "🏁 <b>Giveaway finished</b>\n\n🎁 <b>{title}</b>\n🏆 Prize: {prize}\n👥 Entries: {entries}\n✅ Winners selected: {drawn}/{requested}\n\n🏅 <b>Winners</b>",
+      "rule": {
+        "real_duel": "🎲 at least {count} completed real GRAM duel",
+        "subscription": "🔐 sponsor channel subscription"
+      },
+      "tbd": "TBD"
+    },
+    "published": "Published",
+    "rule": {
+      "real_duel_off": "🎲 real duel OFF",
+      "real_duel_on": "🎲 real duel 1+",
+      "subscription_off": "🔓 subscription OFF",
+      "subscription_on": "🔐 subscription ON"
+    },
+    "setup_hint": "Create a draft, fill in the basics, then activate it.",
+    "sort": {
+      "ends": "⏳ Ending soon",
+      "newest": "🆕 Newest",
+      "popular": "👥 Popular",
+      "popular_short": "👥 Popular"
+    },
+    "sponsor": {
+      "add_error": "❌ Could not add sponsor channel/chat. Check the username/link and try again.",
+      "added": "✅ Sponsor channel/chat <b>{channel}</b> added.\n\nUsers will need to be subscribed to be eligible.",
+      "invalid_id": "Invalid sponsor ID",
+      "no_input": "❌ No input received. Please try again.",
+      "not_found": "Sponsor channel/chat not found.",
+      "prompt": "➕ <b>Add Sponsor Channel/Chat</b>\n\nSend the public @username or link:\nSupported: <code>@my_channel</code>, <code>@my_chat</code>, <code>https://t.me/my_channel</code>, or a numeric chat_id if the bot is already in that chat.\n\nNot supported: private invite links (<code>t.me/+...</code>, <code>t.me/joinchat/...</code>).\n\nImportant: the bot must already be a member of this channel/chat, otherwise subscription cannot be checked.\n\nUsers will need to be subscribed to be eligible.",
+      "removed": "Sponsor channel/chat removed ✓",
+      "invite_link_unsupported": "❌ Private invite links are not supported.\n\nSend a public @username of the channel/chat or a link like <code>https://t.me/my_channel</code>.\n\nIf the channel/chat is private but you know its numeric chat_id (e.g. <code>-1001234567890</code>), send it directly — the bot must already be a member of that channel/chat.",
+      "confirm_remove": "🗑️ <b>Remove this sponsor?</b>\n\nChannel/chat: <b>{name}</b>\n\nIf this is the only sponsor and subscription is required, new entrants will fail the check until you add a sponsor again."
+    },
+    "starts_immediately": "Immediately",
+    "starts_in": "⏳ Starts: {time}",
+    "stats": {
+      "eligible": "Eligible",
+      "entries": "Entries",
+      "ineligible": "Ineligible",
+      "title": "Statistics",
+      "winners": "Winners selected"
+    },
+    "status": {
+      "active": "🟢 Active",
+      "cancelled": "⚪ Cancelled",
+      "draft": "📝 Draft",
+      "ended": "🛑 Ended",
+      "results_published": "📣 Results published",
+      "scheduled_note": "🕓 scheduled start",
+      "winners_drawn": "🎉 Winners drawn"
+    },
+    "time": {
+      "days_hours": "{days}d {hours}h",
+      "ended": "Ended",
+      "hours": "{hours}h",
+      "minutes": "{minutes}m"
+    },
+    "title": "Giveaway",
+    "toast": {
+      "activated": "Giveaway activated",
+      "cancelled": "Giveaway cancelled",
+      "deadline_set": "Deadline updated.",
+      "draft_created": "Draft created",
+      "draw_error_short": "❌ Could not draw winners.",
+      "ended": "Giveaway ended",
+      "no_winners_drawn": "No winners selected: no entries.",
+      "public_visible": "🌐 This giveaway is now visible to all Roll Duel users.",
+      "publish_live_error": "❌ Could not publish the giveaway post to the group.",
+      "publish_results_error": "❌ Could not publish the giveaway results to the group.",
+      "published": "Giveaway published",
+      "real_duel_rule_off": "🎲 Real GRAM duel requirement is OFF.",
+      "real_duel_rule_on": "🎲 1 completed real GRAM duel is required.",
+      "results_marked": "Results marked published",
+      "results_published": "Results published",
+      "start_set": "Start time updated.",
+      "subscription_rule_off": "🔓 Subscription is no longer required.",
+      "subscription_rule_on": "🔐 Subscription is required.",
+      "updated": "✅ Giveaway updated.",
+      "visibility": "✅ Giveaway is now {status}",
+      "winners_drawn": "Winners drawn"
+    },
+    "untitled": "Untitled giveaway",
+    "untitled_group": "Unnamed group",
+    "visibility": {
+      "private": "🔒 Private",
+      "public": "🌐 Public"
+    }
+  },
+  "group": {
+    "giveaway_open_bot": "🎁 To create or join a giveaway for this group, open the bot:",
+    "leaderboard_soon": "🏆 Group leaderboard will be shown here soon. For now, check it in the bot.",
+    "open_bot_private": "🎮 To play from this group, open the bot in private chat:",
+    "open_to_play": "Open Roll Duel in a private chat to play!"
+  },
+  "history": {
+    "btn": {
+      "refresh": "🔄 Refresh history"
+    },
+    "empty": "No duels yet.\nStart a real duel or open Demo Mode to try the flow.",
+    "item": {
+      "stake": "💰 Stake: {stake} {outcome}",
+      "vs": "🆚 vs <b>{opponent}</b>"
+    },
+    "mode": {
+      "practice": "Demo",
+      "real": "Real"
+    },
+    "status": {
+      "active": "Active",
+      "cancelled": "Cancelled",
+      "draw": "Draw",
+      "loss": "Loss",
+      "timeout": "Timeout",
+      "waiting": "Waiting",
+      "win": "Win",
+      "expired": "Expired"
+    },
+    "subtitle": "Your latest duel activity:",
+    "title": "📜 <b>My Duels</b>",
+    "opponent": {
+      "waiting": "Waiting for opponent",
+      "unknown": "Unknown player"
+    }
+  },
+  "invite": {
+    "activated_hint": "<i>“Activated” = an invited friend who has completed at least 3 real duels. Your tier bonus counts only activated friends.</i>",
+    "card_bonuses": "🎁 Get bonuses for inviting friends",
+    "card_forward": "Or forward this message to your friends!",
+    "card_join": "👉 {link}",
+    "card_play": "⚔️ PvP GRAM dice duels in Telegram",
+    "card_title": "🎲 <b>Join me on Roll Duel</b>",
+    "card_title_short": "Get invite card",
+    "card_win": "🏆 Win GRAM and climb the leaderboard",
+    "contacts_title": "📨 <b>Invite Friends</b>",
+    "copy_1": "🎲 I play fast GRAM dice duels in Telegram. Join me: {link}",
+    "copy_2": "If you want simple 1v1 GRAM duels without a separate app, here is the link: {link}",
+    "copy_3": "In Roll Duel you choose a stake, play against a real opponent, and win GRAM if your roll is higher. Open: {link}",
+    "inline_description": "Send your personal Roll Duel invite into any chat",
+    "inline_title": "Invite to Roll Duel 🎲",
+    "invited_label": "👥 <b>Invited:</b> {invited}    ✅ <b>Activated:</b> {activated}",
+    "link_hint": "Tap to copy, then paste into any Telegram chat, group, or DM.",
+    "link_title": "🔗 <b>Your invite link</b>",
+    "long_link_hint": "Telegram will show the large preview card with image and text.",
+    "long_link_label": "<b>Preview link (groups / chats):</b>",
+    "ready_messages_label": "<b>Ready invite messages:</b>",
+    "share_text": "Choose the link format that fits where you want to share Roll Duel.",
+    "short_link_hint": "Compact format — best when you just need the link itself.",
+    "short_link_label": "<b>Short link (DM / X / fast share):</b>",
+    "short_link_screen": "🔗 <b>Your short invite link</b>\n\n<code>{link}</code>\n\nUse this link in Twitter, DM, or any place where you need a short URL.",
+    "use_share": "Use <b>Share invite</b> for the fastest Telegram-native flow."
+  },
+  "language": {
+    "updated": "✅ Language updated"
+  },
+  "leaderboard": {
+    "btn": {
+      "elo": "🏆 ELO",
+      "elo_active": "🟢 ELO",
+      "global": "🌐 Global",
+      "global_active": "🟢 Global",
+      "this_chat": "💬 This Chat",
+      "this_chat_active": "🟢 This Chat",
+      "weekly": "📆 Weekly",
+      "weekly_active": "🟢 Weekly"
+    },
+    "connect_group": "Connect a group in <b>My Chats</b> to unlock this chat leaderboard.",
+    "no_results": "No ranked duel results yet. Play more to build this leaderboard.",
+    "player_fallback": "Player",
+    "row": {
+      "elo": "#{rank} {name} — ELO {elo} • {wins} wins",
+      "standard": "#{rank} {name} — {wins} wins • {amount} GRAM won"
+    },
+    "scope_all": "<b>Scope:</b> all valid completed duels",
+    "scope_elo": "<b>Scope:</b> ELO rating — skill-based ranking (K=32)",
+    "stat_elo": "• ELO: <b>{rating}</b> ({rank})",
+    "stat_streak": "• Best streak: <b>{n}</b>",
+    "stat_ton_won": "• GRAM won: <b>{amount}</b>",
+    "stat_winrate": "• Win rate: <b>{rate}%</b>",
+    "stat_wins": "• Wins: <b>{n}</b>",
+    "this_chat_title": "This Chat",
+    "title": {
+      "elo": "🏆 <b>ELO Rating Leaderboard</b>",
+      "global": "🌐 <b>Global Leaderboard</b>",
+      "weekly": "🏆 <b>Weekly Leaderboard</b>"
+    },
+    "top_players": "<b>Top players</b>",
+    "window": "<b>Window:</b> last {days} days",
+    "workspace_note": "Only duels published to this group are counted here.",
+    "your_rank": "<b>Your rank:</b> #{rank}",
+    "your_stats": "<b>Your stats</b>"
+  },
+  "legal": {
+    "btn_confirm": "✅ I confirm (18+)",
+    "btn_decline": "❌ Decline",
+    "notice": "⚠️ <b>Important legal notice</b>\n\nRoll Duel is a peer‑to‑peer dice game, not a casino.\nYou must be <b>18+</b> and accept responsibility for compliance with your local laws.\n\nDo you confirm that you are 18+ and agree to the Terms?",
+    "declined_short": "Access declined",
+    "declined_message": "❌ <b>Access declined.</b>\n\nYou must confirm you are 18+ and agree to the Terms to use Roll Duel.\n\nSend /start to try again.",
+    "btn_try_again": "↩️ Try again"
+  },
+  "menu": {
+    "balance_line": "💰 Balance: <b>{balance} GRAM</b>",
+    "body": "⚔️ Real opponents, real stakes — right here in Telegram.",
+    "cta": "What do you want to do?",
+    "giveaway_hint_first": "\n🎁 <b>Giveaways</b> — start your first prize draw\n<i>{num} group(s) ready</i>",
+    "giveaway_hint_no_group": "\n🎁 <b>Giveaways</b> — create prize draws in your groups\n<i>Connect a group first</i>",
+    "hint_full": "\n🎮 Tap «Play Mode» for a cleaner duel-only view.",
+    "hint_play": "\n🎮 Play Mode just for duels and essentials.\n🧩 Tap «Full Suite →» for all features.",
+    "invite_footer": "👥 Invite friends and earn bonuses from their games.\n➡️ Share your link in Profile.",
+    "ref_invite": "\n🎁 <b>Invite friends</b> — earn up to 25% from their games + bonuses!\nShare your link from the <b>Profile</b> menu.",
+    "ref_legend": "\n👑 <b>Top tier:</b> {tier} — you've unlocked maximum bonuses!",
+    "ref_progress": "\n🏆 <b>Ref progress:</b> {current} → {next} (+{bonus}% bonus)\n{bar} {progress}% ({remaining} more to unlock)",
+    "ref_progress_small": "\n🏆 <b>Ref progress:</b> {current} → {next}\n{bar} {cur}/{total} — {remaining} more to unlock {next}!",
+    "title": "🎲 Roll Duel"
+  },
+  "practice": {
+    "about": {
+      "body": "• Demo Duels use Demo GRAM only.\n• Your real GRAM balance is never touched here.\n• Demo settlement mirrors the live platform-fee calculation, but creates no real fee or ledger entry.\n• Demo results do not enter real leaderboards, referral activation, or community posts.\n• Waiting Demo Duels expire after 10 minutes; active rolls use the same 30-second reminder and 60-second timeout.\n• If your Demo balance falls below the minimum stake, you can restore it to the training balance.\n• When ready, deposit GRAM and play a real duel.",
+      "title": "ℹ️ <b>How Demo Mode works</b>"
+    },
+    "balance": {
+      "available": "<b>Available:</b> {amount} Demo GRAM\n",
+      "note": "Demo balance is only for Demo Duels. It cannot be withdrawn or used in real GRAM duels.",
+      "restore_available": "\n♻️ Your Demo balance is below the minimum stake. Open Demo Balance to restore it to {amount} Demo GRAM.\n",
+      "restore_hint": "Your balance is below the minimum Demo stake. Use <b>Restore Demo Balance</b> to return to the training balance.",
+      "restored": "♻️ <b>Demo balance restored.</b>\n\nAvailable: {amount} Demo GRAM",
+      "restore_blocked": "Demo balance cannot be restored right now: {reason}",
+      "title": "💎 <b>Demo Balance</b>"
+    },
+    "btn": {
+      "back_lobby": "🔍 Back to demo list",
+      "balance": "💎 Demo Balance",
+      "cancel": "❌ Cancel demo duel",
+      "create": "🧪 Create Demo Duel",
+      "find": "🔍 Find Demo Duel",
+      "how": "ℹ️ How it works",
+      "join_for": "✅ Join for {amount} Demo GRAM",
+      "menu_back": "◀️ Demo Mode",
+      "real_balance": "💰 Real Balance",
+      "real_duel": "🎮 Start Real Duel",
+      "restore": "♻️ Restore Demo Balance",
+      "refresh": "🔄 Refresh list",
+      "menu": "🧪 Demo Mode",
+      "share": "📨 Share Demo Duel",
+      "rematch": "⚡ Rematch",
+      "share_result": "📨 Share Demo Result",
+      "accept_rematch": "⚡ Accept Demo Rematch",
+      "all_balance": "💎 All Demo Balance",
+      "custom_amount": "✏️ Custom Amount"
+    },
+    "cancel": {
+      "error": "❌ Could not cancel the demo duel.",
+      "not_found": "❌ Demo duel not found or it has already started.",
+      "success": "✅ Demo duel cancelled. Demo GRAM returned."
+    },
+    "create": {
+      "title": "🧪 <b>Create Demo Duel</b>\n\nChoose your Demo GRAM stake:",
+      "title_with_balance": "🧪 <b>Create Demo Duel</b>\n\nAvailable: <b>{balance} Demo GRAM</b>\nChoose your stake:",
+      "affordable_note": "Only stakes available within your current Demo balance are shown. Use <b>All Demo Balance</b> or <b>Custom Amount</b> for another value.",
+      "title_with_balance_and_format": "🧪 <b>Create Demo Duel</b>\n\nFormat: <b>{format}</b>\nAvailable: <b>{balance} Demo GRAM</b>\nOne Demo stake covers the whole match. Choose your stake:"
+    },
+    "created": {
+      "balance": "💼 Remaining demo balance: {balance} Demo GRAM",
+      "id": "🧪 Demo Duel ID: {id}",
+      "note": "This is a demo duel: no real GRAM is used.",
+      "stake": "💎 Stake: {stake}",
+      "title": "✅ <b>Demo duel created.</b>",
+      "waiting": "⏳ Waiting for another player... The duel expires in 10 minutes.",
+      "format": "🎮 Format: {format}"
+    },
+    "disabled": "🧪 Demo Mode is currently disabled. You can still play real GRAM duels from the main menu.",
+    "error": {
+      "create": "❌ Could not create practice duel: {error}",
+      "join": "Could not join the demo duel.",
+      "active": "❌ You already have an active Demo Duel."
+    },
+    "find": {
+      "empty": "😔 No open demo duels yet.\n\nCreate one — another player can join without real GRAM.",
+      "empty_button": "😔 No open demo duels yet",
+      "open": "Open demo duels:",
+      "title": "🔍 <b>Find Demo Duel</b>",
+      "open_count": "Open Demo Duels: <b>{count}</b>\nTap a player to review the stake and join. Times show when each lobby expires.",
+      "item": "🧪 {name} · {stake} · {time}"
+    },
+    "join": {
+      "balance": "💼 Your demo balance: {balance} Demo GRAM",
+      "confirm": "Confirm joining this demo duel:",
+      "insufficient": "❌ Not enough Demo GRAM.\n\n💎 Available: {balance} Demo GRAM",
+      "not_available": "❌ This demo duel is no longer available.",
+      "opponent": "👤 Opponent: {name}",
+      "stake": "💎 Stake: {stake}",
+      "title": "🧪 <b>Join Demo Duel</b>",
+      "format": "🎮 Format: {format}"
+    },
+    "menu": {
+      "balance_line": "<b>Demo balance:</b> {amount} Demo GRAM\n",
+      "intro": "Try a duel without real GRAM: create a game, join from another account, roll the dice, and see the result.",
+      "note": "<b>Demo Mode never affects:</b> real balance, leaderboards, or group posts. When you are ready, switch to a real duel.",
+      "title": "🧪 <b>Demo Mode</b>"
+    },
+    "result": {
+      "stakes_returned": "💎 Demo stakes returned: {amount}",
+      "winnings": "🏆 Demo winnings: {amount}",
+      "payout": "🏆 Demo payout: {amount}",
+      "fee": "💸 Demo platform fee: {amount} ({percent:.2f}%)",
+      "timeout_payout": "🏆 Demo payout: {payout}\n💸 Demo platform fee: {fee} ({percent:.2f}%)"
+    },
+    "started": {
+      "id": "🧪 Demo Duel #{id}",
+      "note": "No real GRAM is used. Each player has 60 seconds to roll; a reminder arrives after 30 seconds.",
+      "roll_prompt": "🎲 Send your Demo dice roll now.\n⏱ You have 60 seconds from the start; a reminder arrives after 30 seconds.",
+      "stake": "💎 Stake: {stake}",
+      "title": "🧪 <b>Demo Duel started.</b>",
+      "format": "🎮 Format: {format}"
+    },
+    "waiting": {
+      "expired": "⌛ The Demo Duel expired because nobody joined. Your Demo stake was returned."
+    },
+    "stats_line": "📊 <b>Demo stats:</b> {played} played • {won} won • {draws} draws ({rate}% win rate)\n",
+    "share": {
+      "detected": "🧪 <b>Demo Duel invite detected:</b> the exact training duel is opened below.",
+      "inline_description": "Invite a friend to this exact Demo Duel — no real GRAM needed.",
+      "inline_title": "📨 Share Demo Duel",
+      "join": "🧪 Join Demo Duel",
+      "message": "🧪 Try a Demo Duel with me on Roll Duel.\n\n💎 Stake: {stake} Demo GRAM\nNo deposit and no real GRAM.\n⏳ Time left: {time}.\n🎲 One roll each. Higher number wins.\n\nJoin:\n{url}",
+      "owner_body": "Share it with a friend. Their link opens this exact Demo Duel and can attribute your referral, while Demo play never counts as real referral activation.",
+      "owner_title": "🧪 <b>Your Demo Duel is waiting.</b>",
+      "unavailable": "⌛ This Demo Duel is no longer available. Open Demo Mode to create or find another one.",
+      "message_legacy": "🧪 Try a Demo Duel with me on Roll Duel — no deposit and no real GRAM.\n\nJoin this Demo Duel:\n{url}",
+      "inline_description_context": "{stake} Demo GRAM • {time} left • no deposit",
+      "message_bo3": "🎯 Try a Demo Best of 3 with me on Roll Duel.\n\n💎 Stake: {stake} Demo GRAM for the whole match\nFirst to win 2 rounds. No deposit and no real GRAM.\n⏳ Time left: {time}.\n\nJoin:\n{url}"
+    },
+    "rematch": {
+      "invalid": "❌ Invalid Demo rematch request.",
+      "insufficient": "❌ Not enough Demo GRAM for this rematch. Restore your Demo balance or create a new Demo Duel with a different stake.",
+      "unavailable": "❌ This Demo rematch is no longer available.",
+      "created": "⚡ <b>Demo rematch created.</b>",
+      "challenged": "⚡ <b>{name} challenges you to a Demo rematch.</b>\n\n💎 Stake: <b>{stake} Demo GRAM</b>\nNo real GRAM is used.",
+      "started": "⚡ <b>Demo rematch started.</b>",
+      "stake_locked": "The rematch keeps the previous stake: <b>{stake}</b>. To change it, create a new Demo Duel."
+    },
+    "share_result": {
+      "outcome_win": "Win",
+      "outcome_loss": "Loss",
+      "outcome_draw": "Draw",
+      "message": "🧪 Demo Duel result on Roll Duel\n\n🎲 Score: {p1}–{p2}\nResult: {outcome}\nNo real GRAM was used.\n\nTry Demo Mode:\n{url}",
+      "inline_title": "📨 Share Demo Result",
+      "inline_description": "Share the score and invite someone to try Demo Mode.",
+      "open_demo": "🧪 Try Demo Mode",
+      "message_bo3": "🧪 Demo Best of 3 result on Roll Duel\n\n🎯 Final score: {p1}–{p2}\nResult: {outcome}\nNo real GRAM was used.\n\nTry Demo Mode:\n{url}"
+    },
+    "custom": {
+      "prompt": "✏️ Enter a Demo stake from <b>{min}</b> to <b>{max} Demo GRAM</b>.",
+      "invalid": "❌ Enter a valid number, for example <b>2.5</b>.",
+      "minimum": "❌ Minimum Demo stake is <b>{min} Demo GRAM</b>.",
+      "exceeds_balance": "❌ This stake exceeds your available Demo balance of <b>{balance} Demo GRAM</b>.",
+      "unavailable": "❌ Custom Demo stake is unavailable because your balance is below the minimum stake."
+    },
+    "format": {
+      "choose": "🎮 <b>Choose Demo duel format</b>\n\n🎯 <b>Best of 3</b> — recommended: first to two round wins.\n⚡ <b>Single Round</b> — quickest way to try one dice result.\n\nOne Demo stake covers the whole match. No real GRAM is used.",
+      "single": {
+        "button": "⚡ Single Round · quick demo",
+        "label": "Single Round",
+        "short": "⚡ Single"
+      },
+      "bo3": {
+        "button": "🎯 Best of 3 · recommended",
+        "label": "Best of 3 · first to 2 wins",
+        "short": "🎯 BO3",
+        "disabled": "Demo Best of 3 is currently disabled."
+      }
+    },
+    "series": {
+      "roll_prompt_current": "🎲 Send your Demo dice roll for round {round}.\n📊 Current score: {score1}–{score2}.",
+      "roll_waiting": "✅ Demo round {round} roll: {emoji} ({value})\n📊 Score: {score1}–{score2}\n⏳ Waiting for the opponent's roll...",
+      "already_rolled": "❗ You already rolled in this Demo round. Wait for your opponent.",
+      "roll_error": "❌ The Demo round could not be recorded. Refresh Demo Mode and try again.",
+      "round_draw": "🤝 <b>Demo round {round} is a draw.</b>\n\n{player1}: {roll1} — {player2}: {roll2}\nScore: <b>{score}</b>\n\n🎲 Replay the same round. Send a fresh Demo dice roll.",
+      "round_complete": "🎯 <b>Demo round {round}: {winner} wins.</b>\n\n{player1}: {roll1} — {player2}: {roll2}\nScore: <b>{score}</b>\n\n🎲 Demo round {next_round}: send a fresh dice roll.",
+      "finished": "🏆 <b>{winner} wins the Demo Best of 3!</b>\n\nFinal score: <b>{score}</b>\n💎 Demo stake per player: <b>{stake}</b>\n🏆 Demo payout: <b>{payout}</b>\n💸 Demo fee: <b>{fee}</b> ({percent:.2f}%)\nNo real GRAM was used.",
+      "finished_draw": "🤝 <b>Demo Best of 3 finished as a draw.</b>\n\nThe safety draw limit was reached.\nFinal score: <b>{score}</b>\n💎 Both Demo stakes were returned. No real GRAM was used.",
+      "settle_recovery": "⚠️ The Demo match score was saved, but Demo settlement could not be completed immediately. Restart recovery will retry safely.",
+      "stale_roll": "↩️ That dice update belongs to the previous Demo round and was ignored. Use the current round prompt."
+    }
+  },
+  "private_duel": {
+    "already_started": "❌ This private duel has already started.",
+    "created": "⚔️ <b>Private Duel created!</b>\n\n🎮 Format: <b>{format}</b>\n💰 Stake: <b>{amount} GRAM</b> for the whole match\n\nSend this link to your friend:\n👉 {link}\n\n⏳ The invitation works for <b>15 minutes</b>.\n💸 If your friend does not join, the stake is returned automatically.",
+    "error": "❌ Could not create the challenge: {error}",
+    "expired": "❌ This private duel link has expired.",
+    "joined": "⚔️ <b>You joined the challenge.</b>\n\nStake: <b>{amount} GRAM</b>\n\n⏱ You have <b>60 seconds</b> to roll. A reminder arrives after 30 seconds.\n🎲 Send your dice now.",
+    "no_balance": "💸 Not enough balance for a friend challenge.\n\nMinimum stake: <b>{min} GRAM</b>"
+  },
+  "quick_duel": {
+    "error": "❌ Could not start quick duel: {error}",
+    "how_it_works": "⚡ <b>Quick Duel</b>\n\nOne tap starts the search. We match you with a real player, never the house.\n\n🔍 <b>Matching</b>\n• Similar stake range: ±20%\n• Uses your last stake or the minimum\n• The match screen shows the exact stake reserved from each player\n\n⏱ <b>Timeouts</b>\n• No opponent in 30 seconds? Refund\n• No roll in 1 minute? You lose\n\n💰 <b>Payouts</b>\n• Platform fee: 5%\n• Winner gets 95% of the pot\n• Draw returns both stakes\n\nReady? Deposit GRAM and start a quick duel.",
+    "how_it_works_btn": "ℹ️ How Quick Duel works",
+    "no_balance": "⚡ <b>Quick Duel</b>\n\nFast PvP matching with a similar stake.\n\n🎯 Target stake: <b>{amount} GRAM</b>\n💰 Balance: <b>{balance} GRAM</b>\n\n❌ Not enough GRAM to start.\n\n<b>How it works</b>\n• We look for a player with a similar stake (±20%)\n• The match screen shows the exact stake reserved\n• No opponent in 30 seconds? Your stake returns\n• You have 1 minute to roll\n• Winner gets 95% of the pot\n• Draw means both stakes return\n\nDeposit at least <b>{min_stake} GRAM</b> to play.",
+    "opponent_found": "⚔️ <b>Opponent found!</b>\n\nFinal stake: <b>{amount} GRAM</b>\n💰 This exact amount is reserved from each player.\n⏱ Each player has <b>60 seconds</b> to roll. A reminder arrives after 30 seconds.",
+    "searching": "⚡ <b>Quick Duel</b>\n\n🔍 Searching for opponent...\nTarget stake: <b>{amount} GRAM</b>\nThe final matched stake may vary by up to ±20% and will be shown exactly when a match is found.",
+    "waiting": "⏳ <b>Waiting for opponent...</b>\n\nReserved stake: <b>{amount} GRAM</b>\n⚡ Quick duel expires in <b>30 seconds</b> — you'll be refunded automatically if no one joins."
+  },
+  "rate_limit": {
+    "message": "⏳ You're tapping too fast. Please wait a moment and try again.",
+    "withdraw": "⏳ Withdrawals are limited to 3 per 5 minutes. Please try again later.",
+    "withdraw_title": "⏳ Withdrawal limit"
+  },
+  "rating": {
+    "card": "🏆 <b>ELO Rating Card</b>\n\n• Rating: <b>{rating}</b>\n• Rank: <b>{rank}</b>\n• Games played: <b>{games}</b>\n• Peak rating: <b>{peak}</b>\n\nELO updates after every duel. Win against higher-rated opponents to climb faster!",
+    "disabled": "🏆 <b>ELO Rating</b>\n\nELO rating is currently <b>disabled</b> on this platform.\nWhen enabled, your skill-based rating will update after every duel.\n\nDefault rating: <b>1000</b> (Bronze)"
+  },
+  "ref": {
+    "diamond": {
+      "bonus": "🎁 Instant one-time +50 GRAM bonus!",
+      "diamond_title": "💎 DIAMOND (500 referrals)",
+      "earnings_title": "📊 Earnings from a 10 GRAM duel:",
+      "example": "💰 Passive-income example: 1,000 active friends × 1 duel/day = up to 50 extra GRAM/day.",
+      "forever": "♾️ Legend is the maximum 45% share under the current rules.",
+      "legend_share": "🔥 45% total rake share: 20% base + 25% tier bonus.",
+      "legend_title": "👑 LEGEND (1,000 referrals)",
+      "row_bronze": "🥉 Bronze: 0.25 GRAM  (+5%)",
+      "row_diamond": "💎 Diamond: 0.40 GRAM  (+20%) + 50 GRAM",
+      "row_gold": "🥇 Gold: 0.35 GRAM  (+15%)",
+      "row_legend": "👑 Legend: 0.45 GRAM  (45% total share)",
+      "row_silver": "🥈 Silver: 0.30 GRAM  (+10%)",
+      "row_starter": "🆕 Starter: 0.20 GRAM  (20% of rake)",
+      "share": "📈 40% rake share instead of the base 20%.",
+      "title": "💎👑 <b>Diamond and Legend — Maximum Rewards</b>"
+    },
+    "earn": {
+      "bronze": "🥉 Bronze (10+): <b>0.25 GRAM</b>",
+      "diamond": "💎 Diamond (500+): <b>0.40 GRAM</b> + 50 GRAM",
+      "gold": "🥇 Gold (150+): <b>0.35 GRAM</b>",
+      "instant": "✅ Earnings are credited automatically after every game.",
+      "legend": "👑 Legend (1000+): <b>0.45 GRAM</b> (45% total share)",
+      "math_1": "• Your friend stakes 10 GRAM → pot = 20 GRAM",
+      "math_2": "• The platform takes 5% = 1 GRAM rake",
+      "math_3": "• You receive 20% of that rake = <b>0.20 GRAM</b>",
+      "math_title": "📌 <b>Simple math:</b>",
+      "real_example": "📈 <b>Example:</b> 100 active referrals × 1 duel/day at 10 GRAM → up to ~1,050 GRAM/month at Gold tier.",
+      "share_title": "🎯 <b>Your share from a 10 GRAM duel:</b>",
+      "silver": "🥈 Silver (50+): <b>0.30 GRAM</b>",
+      "starter": "🆕 Starter (0–9 referrals): <b>0.20 GRAM</b>",
+      "tip": "💡 Active players create steady earnings. Quality matters more than quantity.",
+      "title": "💰 <b>How to Earn from Referral Rake</b>"
+    },
+    "how": {
+      "example_body": "Your friend stakes 10 GRAM → pot 20 GRAM\nRake = 1 GRAM → your share = <b>0.20 GRAM</b>",
+      "example_title": "📊 <b>Example</b>",
+      "instant": "⚡ Earnings are credited immediately after every game.",
+      "step1": "📩 <b>Step 1 — Invite</b>",
+      "step1_body": "Share your link. Your friend registers and becomes your referral.",
+      "step2": "🎲 <b>Step 2 — They Play</b>",
+      "step2_body": "The platform receives a 5% fee from each duel pot.",
+      "step3": "💸 <b>Step 3 — You Earn</b>",
+      "step3_body": "You automatically receive <b>20% of that rake</b> after every game.",
+      "tiers_body": "🆕 Starter: 20%\n🥉 Bronze: 25%\n🥈 Silver: 30%\n🥇 Gold: 35%\n💎 Diamond: 40% + 50 GRAM\n👑 Legend: 45%, permanent",
+      "tiers_title": "🏅 <b>Tiers Increase Your Share</b>",
+      "title": "🤝 <b>How Referrals Work</b>",
+      "withdraw": "💰 Withdraw your earnings from your balance at any time.",
+      "note1": "✅ The bot doesn't lose — we share part of our revenue with you."
+    },
+    "leaderboard": {
+      "row": "{i}. {name} — {n} invites",
+      "title": "Top referrers"
+    },
+    "no_data": "No data yet.",
+    "share_duel": {
+      "active_text": "⚔️ <b>Challenge me on Roll Duel!</b>\n\nI created a duel for <b>{bet:.2f} GRAM</b> — join and let's roll!\n\n🎲 Tap the link to join the bot and enter the duel directly:\n👇 {link}\n\nWinner takes all. First come, first served!",
+      "copy_invite_btn": "📋 Copy invite link",
+      "join_btn": "⚔️ Join this Duel",
+      "no_active_text": "ℹ️ <b>No active duel found.</b>\n\nCreate a duel first, then share it so friends can join directly.\n\nOr share your general invite link to bring friends to Roll Duel:",
+      "share_btn": "📨 Share in Telegram"
+    },
+    "stats": {
+      "activity_row": "• {name} — {n} duels",
+      "growth": "<b>Growth over the last 10 days:</b>",
+      "title": "📊 <b>Referral Statistics</b>",
+      "top_activity": "<b>🏆 Most Active Referrals:</b>"
+    },
+    "tab": {
+      "diamond_legend": "👑 Diamond & Legend",
+      "earnings": "💰 Earnings",
+      "get_link": "🔗 My Link",
+      "how": "❓ How It Works",
+      "how_earn": "💰 How to Earn More?",
+      "invitees": "👥 Invitees",
+      "leaderboard": "🏆 Leaderboard",
+      "share_duel": "📤 Share Duel",
+      "stats": "📊 Statistics",
+      "tiers": "🏅 Tiers"
+    },
+    "back_to_cabinet": "◀️ Back to cabinet",
+    "filter": {
+      "active": "Active",
+      "all": "All",
+      "waiting": "Waiting"
+    },
+    "invitees": {
+      "empty": "No referrals found in this filter.",
+      "title": "My referrals"
+    }
+  },
+  "referral": {
+    "active_players": "🟢 Active players: <b>{active}</b>",
+    "notify_joined": "🎉 <b>New referral joined!</b>\n\n👤 {name} just registered via your link.\n🏆 You'll earn a share of their rake on every game they play — {base:.0f}% base, growing with your tier (up to {max:.0f}% at Legend).",
+    "active_refs": "Active referrals: <b>{active}</b>",
+    "available": "Available: <b>{available:.4f} GRAM</b>",
+    "bronze": "🥉 Bronze — 10+ refs → +5%",
+    "cabinet_title": "🏆 <b>Referral Cabinet</b>",
+    "diamond": "💎 Diamond — 500+ refs → +20% + 50 GRAM one-time bonus",
+    "diamond_note": "💎 <b>50 GRAM</b> is credited immediately when you reach Diamond.",
+    "earn_rate": "💰 You earn <b>20%</b> of the rake from each referral game.",
+    "earnings_title": "💰 <b>Referral Earnings</b>",
+    "example": "💡 Example: your friend stakes 10 GRAM, rake = 1 GRAM",
+    "example_levels": "• Bronze: 0.25 GRAM  |  Gold: 0.35 GRAM  |  Legend: 0.45 GRAM",
+    "example_starter": "• Starter: you receive 0.20 GRAM (20%)",
+    "gold": "🥇 Gold — 150+ refs → +15%",
+    "how_earn_detail": "💡 Earnings are credited instantly when your referral plays a duel.\nWithdraw them anytime from your main Balance.",
+    "legend": "👑 Legend — 1000+ refs → 45% total, permanent",
+    "legend_note": "👑 <b>Legend</b> locks the maximum 45% tier share under the current ladder.",
+    "need_more": "Need {invites} more invites for {next}",
+    "paid": "Paid to balance: <b>{paid:.4f} GRAM</b>",
+    "progress": "Progress to next tier:",
+    "progress_to": "Progress to {next}:",
+    "recent_label": "<b>Recent referrals:</b>",
+    "silver": "🥈 Silver — 50+ refs → +10%",
+    "tiers_title": "🎁 <b>Referral Tiers & Bonuses</b>",
+    "total_earned": "Total earned:   <b>{earned:.4f} GRAM</b>",
+    "total_invited": "👥 Total invited: <b>{total}</b>",
+    "total_rake": "Total rake from your players: <b>{rake:.4f} GRAM</b>",
+    "weekly": {
+      "invite": "Invite {target} friends this week",
+      "reward": "🎁 Reward: +{reward:.1f} GRAM",
+      "title": "🎯 <b>Weekly Challenge</b>"
+    },
+    "weekly_challenge": "🎯 <b>Weekly Challenge</b>",
+    "weekly_reward": "🎁 Reward: +{reward:.1f} GRAM",
+    "weekly_target": "Invite {target} friends this week",
+    "your_code": "🔗 Your code: <code>{code}</code>",
+    "your_level": "Your level: {icon} <b>{name}</b> (+{bonus}% to referral share)"
+  },
+  "rematch": {
+    "challenged": "⚡ <b>{name} challenges you to a rematch!</b>\n\n🎮 Format: <b>{format}</b>\n💰 Stake: <b>{amount} GRAM</b> for the whole match",
+    "created": "⚡ <b>Rematch challenge sent!</b>\n\n🎮 Format: <b>{format}</b>\n💰 Stake: <b>{amount} GRAM</b> for the whole match\n\nWaiting for opponent to accept...",
+    "no_balance": "💸 Not enough balance for rematch.\n\nRequired: <b>{amount} GRAM</b>",
+    "not_finished": "❌ Rematch is available after the duel is finished.",
+    "create_failed": "❌ Could not create this rematch: {error}"
+  },
+  "screen": {
+    "balance": {
+      "deposit_note": "• You can top up in a couple of minutes via CryptoBot.",
+      "how_it_works": "<b>How it works</b>",
+      "not_ready": "⚠️ To play with real GRAM, top up your balance — minimum {min_stake} GRAM.",
+      "practice": "<b>Demo balance:</b> {amount} Demo GRAM",
+      "practice_none": "<b>Demo balance:</b> not opened yet — open Demo Mode and get {seed} Demo GRAM free, no risk.",
+      "ready": "✅ You can play real GRAM duels.\nMinimum stake — {min_stake} GRAM.",
+      "real": "<b>Your balance:</b>",
+      "real_note": "• With real GRAM, you place stakes and receive winnings.",
+      "title": "💰 <b>Balance</b>",
+      "wallet_connected": "🔗 <b>TON wallet:</b> ✅ {addr}",
+      "wallet_disconnected": "🔗 <b>TON wallet:</b> not connected.\nYou do not need it for CryptoBot duels. You can connect it from Wallet.",
+      "withdraw_from": "• Withdraw from {min} GRAM — funds arrive on your @CryptoBot balance.",
+      "withdraw_paused": "• Withdrawals are paused right now."
+    },
+    "help": {
+      "fair_play_text": "🎲 <b>Fair Play Guarantee</b>\n\nRoll Duel is built on <b>provably fair</b> randomness.\n\n━━━━━━━━━━━━━━━━━━━━\n🔒 <b>How it works</b>\n━━━━━━━━━━━━━━━━━━━━\n1. Before each duel, the server generates a secret <b>seed</b>.\n2. A <b>SHA-256 hash</b> is published to both players.\n3. After rolls, the seed is revealed for verification.\n4. Check: <code>sha256(seed) == published_hash</code>\n\n━━━━━━━━━━━━━━━━━━━━\n🎲 <b>Dice rolls</b>\n━━━━━━━━━━━━━━━━━━━━\n• Telegram built-in dice used (not manipulable).\n• Results generated by Telegram — not Roll Duel.\n• Bot cannot influence or predict outcome.\n\n━━━━━━━━━━━━━━━━━━━━\n💰 <b>Payouts</b>\n━━━━━━━━━━━━━━━━━━━━\n• Winner receives <b>95%</b> of the total pot.\n• Platform fee: <b>5%</b> (keeps servers running).\n• Draws: both players get <b>full refund</b>.\n• All transactions logged on ledger.\n\n✅ <b>Roll Duel never manipulates outcomes.</b>\nContact support if you have any concerns.",
+      "how_body": "1. Create a duel and choose a GRAM stake.\n2. Wait for another player or join an open duel.\n3. Each player sends one fresh 🎲 dice message in the bot chat.\n4. The higher roll wins the pot.",
+      "how_title": "<b>How duels work</b>",
+      "legal_info_text": "⚖️ <b>Legal Information</b>\n\n<b>What is Roll Duel?</b>\nA peer‑to‑peer dice game. Players compete directly — the platform never plays against you.\n\n<b>Service fee:</b> 5% of the total pot.\n\n<b>Age restriction:</b> 18+ only.\n\n<b>No warranty:</b> Use at your own risk. The platform is not liable for losses due to technical failures, user errors, or blockchain network issues.\n\n<b>Your responsibility:</b> You are solely responsible for compliance with the laws of your country.\n\nSend /terms for the full legal notice.",
+      "min_deposit": "Minimum deposit: {amount} GRAM.",
+      "min_withdraw": "Minimum withdrawal: {amount} GRAM.",
+      "money_deposit": "• <b>Deposits:</b> Only via CryptoBot invoice.",
+      "money_flow_text": "💸 <b>How do deposits &amp; withdrawals work?</b>\n\n• <b>Deposit (top-up):</b> Only via CryptoBot invoice. You pay the invoice, funds appear on your Roll Duel balance.\n\n• <b>Withdrawal:</b> Sent to your CryptoBot balance automatically.\n  If you connect a TON wallet via TON Connect, direct wallet withdrawals will be available in a future update.\n\n• Always use the <b>Deposit</b> button — never transfer GRAM directly to any address yourself!\n\nAfter depositing via CryptoBot, your balance is available for duels immediately.",
+      "money_title": "<b>Money flow</b>",
+      "money_withdraw": "• <b>Withdrawals:</b> Sent to your CryptoBot balance by default. If you connected a TON wallet via TON Connect, future versions will support direct wallet withdrawals.",
+      "terms_full_text": "⚖️ <b>Terms of Use</b>\n\n<b>1. Nature of service</b>\nRoll Duel is a peer‑to‑peer dice game. Players wager crypto against each other. The platform takes a fixed 5% service fee for matching and settlement.\n\n<b>2. Not a casino</b>\nThis service is not a casino or bookmaker. We do not offer games against the house.\n\n<b>3. Age restriction</b>\nYou must be at least 18 years old. By using this service you confirm you meet this requirement.\n\n<b>4. Jurisdiction</b>\nYou are solely responsible for determining whether your use of Roll Duel complies with the laws of your country.\n\n<b>5. No warranty</b>\nThe service is provided \"as is\". We are not liable for any losses including losses due to technical failures, user errors, or blockchain network issues.\n\n<b>6. Responsible play</b>\nOnly play with funds you can afford to lose. If you feel you may have a problem, seek professional help.",
+      "tips_body": "• Demo Mode uses Demo GRAM and never touches your real balance.\n• Use My Chats to manage connected groups and leaderboard posting.\n• Use only fresh dice rolls — forwarded dice do not count.\n• If a player times out, the duel is settled by backend truth.",
+      "tips_title": "<b>Useful tips</b>",
+      "title": "🎲 <b>Roll Duel — quick guide</b>",
+      "ton_connect_note": "💡 <b>TON Connect</b> — links your wallet for future direct withdrawals. Deposits and current withdrawals use CryptoBot."
+    },
+    "profile": {
+      "balance": "Balance: <b>{balance}</b>",
+      "elo": "• Rating: <b>{rating}</b>",
+      "friends": "• Friends invited: <b>{n}</b>",
+      "giveaways_stats": "• Created: <b>{created}</b> • Joined: <b>{joined}</b> • Won: <b>{won}</b>",
+      "giveaways_title": "🎁 <b>Giveaways</b>",
+      "identity_title": "<b>Player</b>",
+      "invite_code": "<b>Your invite code:</b> <code>{code}</code>",
+      "league": {
+        "bronze": "Bronze",
+        "diamond": "Diamond",
+        "gold": "Gold",
+        "master": "Master",
+        "platinum": "Platinum",
+        "silver": "Silver"
+      },
+      "league_line": "• League: <b>{icon} {league}</b>",
+      "name": "Name: {name}",
+      "next_league": "• Next league: <b>{points}</b> rating points away",
+      "progress_title": "🏅 <b>Player rating</b>",
+      "rating": "• Rating: <b>{rating}</b>",
+      "real_stats_title": "⚔️ <b>Game stats</b>",
+      "streak_best": "• Best streak: <b>{n}</b>",
+      "streak_cur": "• Current streak: <b>{n}</b>",
+      "title": "👤 <b>Roll Duel Player Card</b>",
+      "ton_won": "• Total won: <b>{amount} GRAM</b>",
+      "top_league": "• Top league reached",
+      "total_duels": "• Duels played: <b>{n}</b>",
+      "username": "Username: @{username}",
+      "winrate": "• Win rate: <b>{rate}%</b>",
+      "wld": "• Wins / losses / draws: <b>{w}</b> / <b>{l}</b> / <b>{d}</b>"
+    },
+    "stats": {
+      "title": "📊 <b>Your stats</b>",
+      "balance": "💰 Balance: {balance}",
+      "played": "🎮 Played: {n}",
+      "win_rate": "📈 Win rate: {rate:.1f}%",
+      "wins": "🏆 Wins: {n}"
+    },
+    "support": {
+      "contact_bot": "• You can also continue in this bot chat if something looks stuck.",
+      "contact_tg": "• Telegram: {handle}",
+      "contact_title": "<b>Contact</b>",
+      "intro": "Questions, bug reports, and product feedback are welcome.",
+      "notes_group": "• If a group looks disconnected, open My Chats and recheck it there.",
+      "notes_stale": "• If something looks stale, refresh and try again.",
+      "notes_title": "<b>Notes</b>",
+      "payments_balance": "• Withdrawals are sent to your CryptoBot balance automatically after processing.",
+      "payments_deposits": "• Deposits and withdrawals use CryptoBot.",
+      "payments_title": "<b>Payments</b>",
+      "title": "🛟 <b>Roll Duel — Support</b>",
+      "ton_title": "<b>GRAM support address</b>"
+    }
+  },
+  "start": {
+    "choose_action": "Choose what you want to do.",
+    "main_text": "Play duels, manage your balance, track results, and manage your groups — all here in Telegram.\n\nChoose what you want to do.",
+    "no_user_text": "Play GRAM duels, track results, and manage your groups — all here in Telegram.\n\nChoose what you want to do.",
+    "play_gram_duels": "Play GRAM duels, track results, and manage your groups — all here in Telegram."
+  },
+  "status": {
+    "active": "Active",
+    "failed": "Failed",
+    "paid": "Paid",
+    "pending": "Pending",
+    "sent": "Sent"
+  },
+  "support": {
+    "entry": {
+      "text": "🆘 <b>Support</b>\n\nTap <b>Open a ticket</b>, then send one clear message:\n• what happened;\n• which screen you were on;\n• what you expected to see.\n\nWhen support replies, just write here again to continue the same ticket."
+    },
+    "ticket": {
+      "already_closed": "Ticket #{ticket_id} is already closed. Use Support to open a new one.",
+      "close_btn": "🔒 Close ticket #{ticket_id}",
+      "closed_by_support_text": "✅ <b>Ticket #{ticket_id} has been closed by support.</b>\n\nIf you have a new issue, tap Support to open a new ticket.",
+      "closed_by_user_text": "🔒 Ticket #{ticket_id} closed. Open a new one any time via Support.",
+      "closed_short": "Ticket closed.",
+      "created": "✅ <b>Ticket #{ticket_id} created.</b>\n\nSupport will reply soon. You can send more details here anytime.",
+      "empty_message": "❌ Please send a non-empty message.",
+      "error_create": "❌ Could not create ticket. Please try again later.",
+      "error_send": "❌ Could not send message. Try again.",
+      "message_added": "✅ Message added to ticket.",
+      "new_message_prompt": "💬 <b>New support request</b>\n\nSend one clear message with the issue details, or go back to the main menu.",
+      "not_found": "❌ Ticket not found. Start a new one via Support.",
+      "open_text": "💬 <b>Ticket #{ticket_id} is open</b>\n\nSend a message to add more details, or close the ticket if your issue is resolved.",
+      "operator_close_btn": "🔒 Close ticket"
+    }
+  },
+  "ticket": {
+    "closed_by_user": "🔒 Ticket #{ticket_id} was closed by the user."
+  },
+  "tournament": {
+    "active_notice": "📌 <i>You are currently in Tournament #{tid} ({status})</i>",
+    "btn": {
+      "back": "◀️ Back",
+      "bracket": "📊 View Bracket",
+      "cancel": "❌ Cancel Tournament",
+      "change_stake": "◀️ Change stake",
+      "copy_link": "📋 Copy link",
+      "create": "🏆 Create Tournament",
+      "custom_amount": "✏️ Custom amount",
+      "dice_help": "🎲 How to roll?",
+      "history": "📜 Tournament History",
+      "how": "❓ How it works",
+      "join": "🔍 Join a Tournament",
+      "join_list": "Join #{tid} — {stake:.2f} GRAM ({joined}/{total})",
+      "join_number": "✅ Join Tournament #{tid}",
+      "join_one": "✅ Join Tournament",
+      "menu": "🏆 Tournament Menu",
+      "my_tournament": "📊 My Tournament #{tid}",
+      "players4": "4 players",
+      "players8": "8 players",
+      "share": "📨 Share",
+      "start": "🚀 Start Tournament",
+      "status": "📊 View Status"
+    },
+    "cancel_success": "✅ <b>Tournament #{tid} cancelled.</b>\n\nNo funds were charged — no duels had started.",
+    "copy_link_text": "📋 <b>Invite link for Tournament #{tid}</b>\n\n<code>{share_link}</code>\n\nTap the link above to copy, then share with friends.\nAnyone who opens it will see the tournament and a Join button.",
+    "create": {
+      "usage": "Usage: <code>/createtournament &lt;stake&gt; &lt;4|8&gt;</code>\n\nExamples:\n  <code>/createtournament 1 4</code>\n  <code>/createtournament 5 8</code>"
+    },
+    "create_prompt": "➕ <b>Create a Tournament</b>\n\nHow many players?",
+    "created_command": "🏆 <b>Tournament #{tid} created!</b>\n\nStake: <b>{stake:.2f} GRAM</b> per player\nSize: <b>{size} players</b>\nMatch format: <b>{format}</b>\nPrize pool: <b>{prize:.2f} GRAM</b> (winner takes all)\n\n<b>How to invite players:</b>\nForward this message and ask them to press Join, or send:\n<code>/jointournament {tid}</code>\n\n{joined_auto}",
+    "created_text": "🏆 <b>Tournament #{tid} created!</b>\n\nPlayers: <b>{size}</b> | Stake: <b>{stake:.1f} GRAM</b>\nMatch format: <b>{format}</b>\nPrize pool: <b>{prize:.2f} GRAM</b> (winner takes all)\n\n📨 <b>Invite friends:</b>\n<code>{share_link}</code>\n\n{joined_auto}",
+    "custom_stake_prompt": "✏️ <b>Custom stake — {size} players</b>\n\nType the stake amount, e.g. <code>2.5</code>:",
+    "dice_help": "🎲 <b>How to roll</b>\n\nOpen the duel chat and send the 🎲 emoji using Telegram's dice button near the message field.\nThe roll must come from your account: the bot does not roll for players or replace the result.",
+    "duel_starting": "⚔️ <b>Tournament #{tournament_id} — Your duel is starting!</b>\n\n",
+    "duel_starting_full": "⚔️ <b>Tournament #{tournament_id} — your duel is starting!</b>\n\nGame #{game_id} — send 🎲 in the chat to roll.\n\nTap the button below if you are not sure where the dice button is.",
+    "error": {
+      "already_active": "You are already in Tournament #{tid}. Finish it first.",
+      "already_joined": "You have already joined this tournament.",
+      "create_failed": "❌ <b>Could not create tournament</b>\n\n{error}",
+      "disabled": "Tournaments are currently disabled.",
+      "insufficient_balance": "💸 <b>Insufficient balance</b>\n\nEntry stake: <b>{stake:.1f} GRAM</b>\nYour balance: <b>{balance:.2f} GRAM</b>\nYou need <b>{missing:.2f} GRAM</b> more.",
+      "insufficient_balance_short": "Insufficient balance",
+      "invalid_amount": "❌ Invalid amount. Please enter a number, e.g. <code>2.5</code>",
+      "invalid_create_args": "❌ Invalid arguments. Stake must be a number, size must be 4 or 8.",
+      "invalid_id": "❌ Invalid tournament ID.",
+      "not_found": "Tournament not found.",
+      "session_expired": "❌ <b>Session expired</b>\n\nPlease start over.",
+      "size": "Tournament size must be 4 or 8 players.",
+      "stake_invalid": "Invalid tournament stake.",
+      "stake_range": "Stake must be between {min_stake} and {max_stake} GRAM.",
+      "unknown": "Unknown error"
+    },
+    "help_text": "🏆 <b>How Tournaments Work</b>\n\n<b>1.</b> Any player creates a tournament with <code>/createtournament &lt;stake&gt; &lt;4|8&gt;</code>\n   Example: <code>/createtournament 5 4</code>\n\n<b>2.</b> Other players join until the bracket is full.\n\n<b>3.</b> Any participant presses <b>Start</b> — the bot automatically pairs players and opens duels.\n\n<b>4.</b> Each bracket match uses the format shown in the tournament card. In Best of 3, the first player to win two rounds advances; tied rounds are replayed. Losers are eliminated.\n\n<b>5.</b> The last player standing wins the entire prize pool (total stakes − 5% fee).\n\n📌 <b>Prize pool example</b> (4 players, 5 GRAM each):\nTotal: 20 GRAM → Fee: 1 GRAM → <b>Champion gets: 19 GRAM</b>\n\n✅ No manual seeding. No complex settings. One entry stake covers the whole tournament. Just stake, join, and play!",
+    "join": {
+      "command_full": "🔔 Tournament is full! Any participant can press Start.",
+      "command_success": "✅ Joined Tournament #{tid}! ({joined}/{total} players)\n\n",
+      "command_waiting": "⏳ Waiting for {remaining} more player(s).",
+      "joined_full": "✅ You joined! Tournament is full ({joined}/{total}). Any participant can press Start.",
+      "joined_progress": "✅ You joined! ({joined}/{total} players)",
+      "usage": "Usage: /jointournament <tournament_id>"
+    },
+    "joined_auto": "You joined automatically. Once all {size} spots are filled, any participant can press <b>Start</b>.",
+    "list": {
+      "empty": "🔍 <b>Find a Tournament</b>\n\nNo tournaments are currently forming.\n\nBe the first — create one with <code>/createtournament &lt;stake&gt; &lt;4|8&gt;</code>!",
+      "line": "• <b>#{tid}</b> — {stake:.2f} GRAM × {total}p → 🏆 {prize:.2f} GRAM | {joined}/{total} joined | {format}",
+      "title": "🔍 <b>Open Tournaments</b>"
+    },
+    "match": {
+      "draw_resolved": "🏆 Tournament draw will be resolved by a fair system coin flip for bracket advancement.",
+      "no_payout_result": "🏆 Tournament duel: the winner advances. The prize is paid only to the tournament champion.",
+      "bo3_finished": "🏆 <b>{winner} wins the tournament match!</b>\n\nFormat: Best of 3\nFinal score: <b>{score}</b>\n✅ The winner advances. There is no separate payout for this match.",
+      "bo3_manual_review": "⚠️ <b>The Best of 3 tournament match was paused.</b>\n\nFinal score: <b>{score}</b>\nNo verified winner exists, so the bracket is paused for operator review.",
+      "manual_review": "⚠️ The tournament match was paused for review. The bracket will not advance without a verified winner.",
+      "timeout_review": "⚠️ The tournament match was paused for review; the bracket did not advance.",
+      "timeout_advance": "⏰ You advance because your opponent did not roll in time.",
+      "timeout_eliminated": "❌ You are eliminated because you did not roll in time.",
+      "next_actions": "🏆 Open the tournament bracket:"
+    },
+    "menu_text": "🏆 <b>Tournament Mode</b>\n\nBracket-style PvP for 4 or 8 players.\nEach tournament card shows its match format: Single Round or Best of 3.\nWinner takes the entire prize pool (minus the platform fee).\nOne entry stake covers the whole tournament; bracket matches have no separate payout.",
+    "next_round": {
+      "duel_starting": "🏆 <b>Tournament #{tid} — round {round}!</b>\n\nYour next duel is game #{game_id}. Send 🎲 in the duel chat.",
+      "duel_starting_bo3": "🏆 <b>Tournament #{tid} — round {round}!</b>\n\nYour next duel is game #{game_id}. It is Best of 3; send 🎲 for Round 1."
+    },
+    "share_inline": "Join my Roll Duel Tournament #{tid} — tap the link below to join.",
+    "share_text": "Join my Roll Duel tournament #{tid} — tap the link below to join.",
+    "size_chosen": "➕ <b>Tournament — {size} players</b>\n\nChoose the entry stake per player:\n<i>Prize pool = stake × {size} × 95%</i>",
+    "stake_chosen": "✅ <b>Confirm Tournament</b>\n\nPlayers: <b>{size}</b>\nEntry stake: <b>{stake:.1f} GRAM</b>\nPrize pool: <b>{prize:.2f} GRAM</b> (winner takes all)\n\nYour balance must cover your own entry ({stake:.1f} GRAM).",
+    "start": {
+      "duels_created": "⚔️ <b>{count} duels created.</b> Each pair has been notified.\n",
+      "errors": "⚠️ <i>{count} match(es) could not start. Check balances.</i>",
+      "roll_hint": "Roll your dice when your duel begins!\n",
+      "started": "🏆 <b>Tournament #{tournament_id} — Round 1 started!</b>\n",
+      "roll_hint_bo3": "Every match is Best of 3. Send a dice roll when each round begins!\n"
+    },
+    "you_won": "🥇 <b>You won Tournament #{tid}!</b>\n\n",
+    "format": {
+      "single": "Single Round",
+      "bo3": "Best of 3"
+    },
+    "duel_starting_bo3": "🎯 <b>Tournament #{tournament_id} — Best of 3 match starts!</b>\n\nGame #{game_id}. One entry stake covers the whole tournament; there is no separate payout for this match.\n\nRound 1: send 🎲.",
+    "complete": {
+      "champion": "🥇 <b>You won Tournament #{tid}!</b>\n\n💰 <b>{prize:.2f} GRAM</b> was credited to your balance.\n\nCongratulations, champion! 🎉",
+      "participant": "🏆 <b>Tournament #{tid} is complete!</b>\n\nChampion: <b>{champion}</b>\n\nThanks for playing!"
+    }
+  },
+  "vip": {
+    "btn": {
+      "club": "💎 VIP Club",
+      "upgrade": "⬆️ Upgrade VIP"
+    },
+    "card": {
+      "autorenew": "Auto-renew",
+      "benefits": "📋 <b>Benefits</b>:",
+      "days": "days",
+      "expired": "Subscription expired",
+      "expires": "Expires",
+      "extra_slots": "Extra concurrent games",
+      "fee_discount": "Fee discount",
+      "no_benefits": "No active benefits — upgrade to unlock!",
+      "permanent": "Permanent (auto-tier)",
+      "priority": "Priority matching",
+      "title": "🏆 <b>VIP Club</b>",
+      "vip_tournaments": "VIP tournaments",
+      "volume": "Volume"
+    },
+    "club": {
+      "auto": "• 📈 Auto-tier: Play more → accumulate volume → unlock higher tiers",
+      "base_tier": "Base tier",
+      "desc": "Earn rewards, reduce fees, and unlock exclusive features!",
+      "extra_games_short": "+{n} games",
+      "fee_discount_short": "Fee −{pct}%",
+      "how": "📋 <b>How it works</b>:",
+      "nav_hint": "Want to see how you're tracking toward the next tier?",
+      "paid": "• 💳 Paid subscription: Instant access with monthly TON payment",
+      "priority_short": "Priority",
+      "tiers": "🏅 <b>Tiers</b>:",
+      "title": "🏆 <b>VIP Club</b>",
+      "unlock_buy": "💳 {price} TON/month — buy now",
+      "unlock_or": "or",
+      "unlock_volume": "📊 {volume} TON wagered — free auto-tier",
+      "upgrade": "Use /vip to see your current status or upgrade!",
+      "vip_tournaments_short": "VIP tournaments"
+    },
+    "max_tier": "✅ You already have the highest VIP tier.",
+    "purchase": {
+      "expires": "Expires: {date}",
+      "failed": "❌ VIP purchase failed: {error}",
+      "paid": "Paid: {amount} GRAM",
+      "success": "✅ VIP upgrade completed.",
+      "tier": "VIP tier: {tier}"
+    },
+    "retired": "💎 <b>VIP is no longer part of Roll Duel.</b>\n\nThere is no paid status to buy. The only way to earn extra rewards is the referral program — invite real players and your referral level grows as they actually play.",
+    "subs_disabled": "VIP subscriptions are currently disabled.",
+    "upgrade": {
+      "fee_discount": "💰 Fee discount: {pct}%",
+      "price_line": "{price} TON/month",
+      "title": "💎 <b>VIP Upgrade</b>"
+    }
+  },
+  "wallet": {
+    "btn": {
+      "connect": "🔗 Connect TON Wallet",
+      "disconnect": "🔌 Disconnect",
+      "mytonwallet": "🔗 MyTonWallet",
+      "telegram": "📱 Telegram Wallet (built-in)",
+      "tonhub": "🔗 Tonhub",
+      "tonkeeper": "🔗 Tonkeeper (recommended)"
+    },
+    "connect": {
+      "title": "🔐 <b>Connect your TON Wallet</b>\n\nChoose your preferred wallet:\n\n• <b>📱 Telegram Wallet</b> — most convenient (built into Telegram)\n• <b>Tonkeeper</b> — most popular\n• <b>Tonhub</b> — fast & secure\n• <b>MyTonWallet</b> — great for desktop\n\nAfter connecting you'll be able to withdraw your winnings."
+    },
+    "connected": {
+      "address": "<b>Address:</b> {addr}",
+      "balance": "<b>Balance:</b> {balance}",
+      "note": "⚡️ <b>To deposit, use the \"💰 Deposit\" button below.</b>\nTON Connect is for withdrawals and future features.",
+      "status": "<b>Status:</b> ✅ Connected",
+      "title": "🔗 <b>Your TON Wallet</b>"
+    },
+    "disconnected": {
+      "title": "🔗 <b>Connect Your TON Wallet</b>",
+      "why": "TON Connect is used for <b>withdrawing winnings</b> and future features.\n\n<b>➕ Deposits are made ONLY through CryptoBot</b> (button below).\n\n<b>Why connect your TON Wallet?</b>\n• Withdraw prizes in future directly to your address\n• Get access to future updates & automation\n• Better security & control"
+    },
+    "info": {
+      "text": "ℹ️ <b>How Deposits and Withdrawals Work</b>\n\n• <b>CryptoBot</b> — top up your Roll Duel balance. You pay an invoice, and GRAM is credited to your internal bot balance.\n\n• <b>TON Connect</b> — connect your TON wallet for future direct withdrawals and additional features.\n\n<b>⚠️ Direct deposits through TON Connect are not supported yet.</b>\n\nAfter topping up through CryptoBot, you can play and withdraw your available balance under the platform rules."
+    },
+    "deposit": "💰 Deposit GRAM"
+  },
+  "withdraw": {
+    "blocked_active_duel": "❌ You cannot withdraw while an active duel is open. Finish it first.",
+    "error": {
+      "generic": "Could not create the withdrawal request.",
+      "insufficient": "❌ <b>Insufficient balance</b>\n\nRequested: <code>{amount} GRAM</code>\nYour balance: <code>{balance} GRAM</code>\n\nDeposit GRAM first to be able to withdraw.",
+      "invalid": "❌ Please enter a valid number, e.g. <b>5</b> or <b>2.5</b>",
+      "min": "❌ Minimum withdrawal is <b>{min} GRAM</b>."
+    },
+    "prompt": "💸 Enter the withdrawal amount. Minimum — {min} GRAM.\nFunds will be sent to your CryptoBot balance (@CryptoBot).",
+    "status": {
+      "processing": "⏳ Withdrawal of <b>{amount} GRAM</b> is being processed via CryptoBot. Check @CryptoBot — you'll receive the funds shortly.",
+      "review": "🕒 Withdrawal of <b>{amount} GRAM</b> submitted for review. An operator will process it shortly."
+    }
+  },
+  "workspace": {
+    "btn": {
+      "back_chats": "◀️ My Chats",
+      "back_profile": "↩️ Back to profile",
+      "champion": "👑 Champion",
+      "chat_leaderboard": "🏁 Chat leaderboard",
+      "connect": "➕ Connect group",
+      "default_target": "⭐ Default target",
+      "disconnect": "🔌 Disconnect group",
+      "disconnect_keep": "↩️ Keep this group",
+      "disconnect_yes": "✅ Yes, disconnect",
+      "duel_posts_off": "⚪ Duel posts",
+      "duel_posts_on": "🟢 Duel posts",
+      "giveaway": "🎁 Giveaway",
+      "how": "ℹ️ How to connect",
+      "leaderboard_posts_off": "⚪ Leaderboard posts",
+      "leaderboard_posts_on": "🟢 Leaderboard posts",
+      "my_chats": "👥 My Groups",
+      "preview": "🧪 Preview",
+      "recheck": "🔄 Recheck status",
+      "refresh": "🔄 Refresh groups",
+      "result_posts_off": "⚪ Result posts",
+      "result_posts_on": "🟢 Result posts",
+      "scope": "🔁 Scope: {scope}",
+      "set_default": "☆ Set as default",
+      "test_post": "🧪 Test post",
+      "weekly_leaders": "🏆 Weekly leaders",
+      "weekly_summary_off": "⚪ Weekly summary",
+      "weekly_summary_on": "🟢 Weekly summary"
+    },
+    "connect": {
+      "text": "👥 <b>Connect Group</b>\n\n1. Add <b>Roll Duel</b> to your Telegram group.\n2. Make sure <b>you</b> are a group admin.\n3. Send this command inside that group within the token window:\n\n<code>{command}</code>\n\nThe connect token is one-time and bound to your user.\nIt expires in about <b>{ttl} minutes</b>."
+    },
+    "detail": {
+      "action_needed": "<b>Action needed</b>",
+      "bot_in_group": "• Bot in group: {val}",
+      "configured": "Configured",
+      "default_target": "<b>Default target:</b> {val}",
+      "default_target_hint": "(This group receives results when no specific group is selected)",
+      "duel_posts": "• Duel posts: {val}",
+      "group_title": "<b>Title:</b> {title}",
+      "heads_up": "<b>Heads-up</b>",
+      "lb_scope": "• Default leaderboard scope: {scope}",
+      "leaderboard_posts": "• Chat leaderboard: {val}",
+      "leaderboard_posts_hint": "(manual, via the button below)",
+      "live_checks": "<b>Live checks</b>",
+      "manual_hint": "Manual leaderboard publishing is live here. Use Recheck status before publishing if this group changed recently.",
+      "no": "❌ No",
+      "off": "❌ Off",
+      "on": "✅ On",
+      "posting_surface": "• Posting surface: {val}",
+      "posting_title": "<b>Posting settings</b>",
+      "result_posts": "• Result posts: {val}",
+      "setup_needed": "Setup needed",
+      "status": "<b>Status:</b> {status}",
+      "title": "👥 <b>Group settings</b>",
+      "use_controls": "Use the controls below to manage this group.",
+      "weekly_summary": "• Weekly leaders: {val}",
+      "weekly_summary_hint": "(manual, via the button below — no automatic weekly schedule)",
+      "yes": "✅ Yes",
+      "your_status": "• Your status: {val}"
+    },
+    "disconnect": {
+      "confirm_text": "🔌 <b>Disconnect group</b>\n\n<b>Group:</b> {title}\n\nThis removes the group from your active My Chats surface and turns off posting for this connection.\n\nYou can connect the same group again later with a new connect token."
+    },
+    "error": {
+      "not_found": "❌ Group not found."
+    },
+    "how_to_connect": "To connect a group:\n1. Add @rollduelbot to your Telegram group as admin.\n2. Use /connect in the group to get a token.\n3. Paste the token here.",
+    "list": {
+      "connect_hint": "Use <b>Connect Group</b>, add Roll Duel to a group, then send the one-time token inside that group.",
+      "count": "<b>Connected groups:</b> {n}",
+      "empty": "No groups connected yet.",
+      "empty_giveaway": "🎁 Connect a group to create Giveaways and run prize draws for members.",
+      "intro": "Connect groups and configure posts: duels, results, leaderboards, and giveaways.",
+      "open_hint": "Open a group below to check connection and settings. Use Giveaway management for prize draws.",
+      "ready_count": "<b>Publish-ready:</b> {ready} · <b>Needs setup:</b> {setup}",
+      "row_settings": "  duels {d} · results {r} · leaderboard {l} · weekly {w}",
+      "title": "👥 <b>My Groups</b>"
+    },
+    "scope": {
+      "chat": "Chat",
+      "global": "Global",
+      "weekly": "Weekly"
+    },
+    "status": {
+      "no": "No",
+      "off": "OFF",
+      "on": "ON",
+      "yes": "Yes"
+    },
+    "untitled": "Untitled Group"
+  },
+  "share": {
+    "payload": {
+      "invite_text": "Roll against real players, win GRAM, and climb the leaderboard.",
+      "duel_text": "Join my duel on Roll Duel.",
+      "practice_text": "🧪 Join my Demo Duel on Roll Duel — no real GRAM needed.",
+      "demo_text": "🧪 Try Roll Duel in Demo Mode — no deposit and no real GRAM needed.",
+      "result_win": "🔥 I just won a duel on Roll Duel! Think you can beat me?",
+      "result_draw": "🤝 We rolled a draw on Roll Duel. Join the next one!",
+      "result_loss": "😤 I just played a duel on Roll Duel. Rematch?",
+      "result_default": "🎲 I just played a duel on Roll Duel. Join the next one!",
+      "invite_composer": "Want to play a quick duel in Telegram?\n\nJoin Roll Duel:\n{url}",
+      "practice_composer": "🧪 Try a Demo Duel with me on Roll Duel — no deposit and no real GRAM.\n\nJoin this Demo Duel:\n{url}",
+      "demo_composer": "🧪 Try Roll Duel in Demo Mode — no deposit and no real GRAM.\n\nOpen Demo Mode:\n{url}",
+      "result_composer": "🎲 I just played an epic duel on Roll Duel!\n\nJoin me: {url}"
+    }
+  },
+  "group_context": {
+    "unknown": "Unknown Group",
+    "opened": "🎲 <b>You are playing from group:</b> {group}\n\nDuels created now will have results published to this group (if enabled).\n\nChoose what you want to do:"
+  },
+  "shared_live": {
+    "practice": {
+      "open_bo3": "🎯 Demo Best of 3 challenge is open\n\n💎 Stake: {stake} Demo GRAM for the whole match\n🆓 No deposit and no real GRAM\n🔥 An opponent is still needed — join while the spot is open.",
+      "open_single": "⚡ Demo Duel challenge is open\n\n💎 Stake: {stake} Demo GRAM\n🆓 No deposit and no real GRAM\n🔥 One opponent spot is still open.",
+      "open_description": "{stake} Demo GRAM • free challenge • spot open",
+      "join": "🎲 Accept Demo Challenge",
+      "active": "🔥 Opponent found — the Demo match has started\n\nThis challenge is already occupied. Create your own free Demo Duel in a few taps.",
+      "create": "🧪 Create Free Demo Duel",
+      "finished": "🏆 Demo match finished\n\nFinal score: {score}\nWant to try the same format without real GRAM?",
+      "play": "🎮 Play Free Demo",
+      "expired": "⌛ This Demo challenge has expired\n\nCreate your own free duel — no deposit and no real GRAM.",
+      "closed": "⛔ This Demo challenge is no longer available\n\nStart a new free Demo Duel instead."
+    },
+    "duel": {
+      "open_bo3": "🎯 Best of 3 challenge is open\n\n💰 Stake: {amount} {asset}\nOne stake covers the whole match.\n🔥 An opponent is still needed — accept while the spot is open.",
+      "open_single": "⚔️ Roll Duel challenge is open\n\n💰 Stake: {amount} {asset}\n🔥 One opponent spot is still open.",
+      "open_description": "{amount} {asset} • challenge open",
+      "open_description_private": "{amount} {asset} • private challenge open",
+      "join": "⚔️ Accept Challenge",
+      "active": "🔥 Opponent found — this duel has started\n\nThe spot is already taken. Open Roll Duel and create your own challenge.",
+      "create": "🎮 Create Your Duel",
+      "finished": "🏆 Duel finished\n\nFinal score: {score}\nReady to create your own Roll Duel challenge?",
+      "play": "🎲 Play Roll Duel",
+      "expired": "⌛ This duel challenge has expired\n\nCreate a fresh challenge and invite an opponent.",
+      "closed": "⛔ This duel challenge is no longer available\n\nOpen Roll Duel to create a new one."
+    }
+  }
+}

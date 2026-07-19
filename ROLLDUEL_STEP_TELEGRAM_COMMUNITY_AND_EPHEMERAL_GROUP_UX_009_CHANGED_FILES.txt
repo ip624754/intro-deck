@@ -1,0 +1,24 @@
+STEP-TELEGRAM-COMMUNITY-AND-EPHEMERAL-GROUP-UX-009
+Base: RollDuel_BASELINE_2026-07.18_STEP_SHARED_DUEL_BRANDED_PREVIEW_008_FULL.zip
+Base SHA-256: f574265b034673a02669f7a5709aef76bbfd2c2a9fc3cf0ab8f4a7e5b3db88c4
+
+Changed files:
+- .env.example
+- handlers.py
+- main.py
+- locales/en.json
+- locales/ru.json
+- services/telegram_ephemeral.py
+- tests/test_telegram_community_ephemeral_group_ux_009.py
+- docs/operations/STEP-TELEGRAM-COMMUNITY-AND-EPHEMERAL-GROUP-UX-009_OPERATOR_RUNBOOK.md
+- docs/process/STEP-TELEGRAM-COMMUNITY-AND-EPHEMERAL-GROUP-UX-009_RPT.md
+- docs/knowledge/STEP_REGISTRY.md
+- docs/knowledge/DECISION_REGISTRY.md
+- docs/knowledge/ARTIFACT_REGISTRY.md
+- handoff-current.md
+
+No files deleted.
+No database migration.
+- ROLLDUEL_STEP_TELEGRAM_COMMUNITY_AND_EPHEMERAL_GROUP_UX_009_CHANGED_FILES.txt
+- ROLLDUEL_STEP_TELEGRAM_COMMUNITY_AND_EPHEMERAL_GROUP_UX_009_QA_REPORT.md
+- ROLLDUEL_STEP_TELEGRAM_COMMUNITY_AND_EPHEMERAL_GROUP_UX_009_APPLY_THIS_README.md
