@@ -319,9 +319,7 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         profileSnapshot: state.profile,
         persistenceEnabled: state.persistenceEnabled,
         linkedinVerificationConfig: linkedinVerificationAccess,
-        notice,
-        aiNewsConfig: getAiNewsDraftConfig(),
-        aiNewsPresetSummary: aiNewsPresetDiagnostics.summary || null
+        notice
       }),
       reply_markup: renderProfilePreviewKeyboard({
         profileSnapshot: state.profile,
@@ -848,7 +846,8 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
         hotFailed: state.hotFailed,
         hotExhausted: state.hotExhausted,
         notice,
-        aiNewsConfig: getAiNewsDraftConfig()
+        aiNewsConfig: getAiNewsDraftConfig(),
+        aiNewsPresetSummary: aiNewsPresetDiagnostics.summary || null
       }),
       reply_markup: renderOperatorDiagnosticsKeyboard({
         allowed: true,

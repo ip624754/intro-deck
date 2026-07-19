@@ -3,9 +3,9 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP061 — Personalized News Presets & Subscription Productization
-- Current mode: HEAVY / SUBSCRIPTION ENTITLEMENTS / SCHEDULING / AI EVIDENCE / IDEMPOTENCY / EXPLICIT PUBLISHING
-- Current focus: apply migration 031, enable Pro access and the fail-closed draft scheduler, verify preset lifecycle and Telegram draft delivery, and keep STEP059 as the only explicit LinkedIn publisher.
+- Current baseline: STEP061H1 — Profile Preview Runtime Hotfix
+- Current mode: HEAVY / PRODUCTION WEBHOOK RECOVERY / RUNTIME REGRESSION GUARD
+- Current focus: deploy the profile-preview hotfix, rotate the exposed Telegram bot token, verify `p:prev`, then continue STEP061 live acceptance.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
@@ -454,3 +454,11 @@ Required production sequence:
 7. Verify no LinkedIn post is created before a separate STEP059 authorization.
 
 Truth boundary: source QA does not prove production cron execution, provider calls, Telegram delivery, or Pro entitlement behavior.
+
+## STEP061H1 — Profile Preview Runtime Hotfix
+
+- Fixes production `ReferenceError: aiNewsPresetDiagnostics is not defined` on `p:prev`.
+- Removes operator-only diagnostics arguments from profile preview and passes the preset summary to the operator diagnostics renderer where it belongs.
+- Adds `smoke:step061-profile-preview-hotfix`, including a real invocation of `buildProfilePreviewSurface`.
+- Webhook exception logging now emits a bounded token-redacted summary and does not serialize grammY `ctx` or `api.token`.
+- No migration required. Telegram token rotation is an outstanding operator security action because the token appeared in copied logs.

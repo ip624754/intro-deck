@@ -3,12 +3,19 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP061
-- Phase: personalized news presets, Pro allowances, and scheduled reviewable Telegram draft delivery
+- Current STEP: STEP061H1
+- Phase: production hotfix for profile preview runtime safety on top of STEP061
 - Primary mode: HEAVY / SUBSCRIPTION ENTITLEMENTS / SCHEDULING / AI EVIDENCE / IDEMPOTENCY / EXPLICIT PUBLISHING
-- Runtime status: STEP060 is operator-confirmed deployed at artifact `f12e0e3e79de222d314da54f3164a2e9fa2a9d0b`. STEP061 is source-implemented and awaits migration 031, Pro/scheduler ENV, deployment, and live preset-delivery acceptance.
+- Runtime status: STEP061 is operator-confirmed deployed at artifact `10d2288f9354312444cfdd4957a6c4a7e9da245d`; profile preview is currently broken in production until STEP061H1 is deployed. Migration 031 and scheduler configuration are operator-confirmed present through health, while full preset/cron delivery acceptance remains pending.
 
 ## What exists now
+
+- STEP061H1 fixes the live `p:prev` crash caused by an undefined `aiNewsPresetDiagnostics` reference in `buildProfilePreviewSurface`.
+- Profile preview no longer receives operator-only AI/news diagnostics; those diagnostics are passed only to the operator surface.
+- A runtime smoke now invokes the actual profile-preview builder and guards against reintroducing the undefined symbol.
+- No schema, migration, entitlement, scheduler, AI/news, LinkedIn publishing, or payment behavior changed.
+- Future webhook errors are logged as bounded redacted summaries and no longer serialize the grammY context/API token.
+- Operator action remains required: rotate the Telegram bot token exposed in copied production logs and redeploy the replacement secret.
 
 - STEP061 adds saved personal news presets, Pro entitlement gating, bounded preset/draft/search allowances, and scheduled delivery of reviewable Telegram drafts.
 - Scheduled jobs reuse the canonical STEP060 source/evidence/generation core and never call LinkedIn; STEP059 remains the only publishing core.

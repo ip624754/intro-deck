@@ -1,0 +1,25 @@
+{
+  "step": "STEP061H1",
+  "packageVersion": "0.59.1",
+  "nodeVersion": "20.20.2",
+  "npmVersion": "10.9.2",
+  "npmCi": "PASS",
+  "npmCheck": "PASS",
+  "dedicatedSmoke": "PASS",
+  "step061Compatibility": "PASS",
+  "guidedActivationCompatibility": "PASS",
+  "fullSmoke": {
+    "pass": 79,
+    "fail": 13,
+    "total": 92,
+    "newFailures": 0
+  },
+  "npmAudit": {
+    "status": "PASS",
+    "vulnerabilities": 0
+  },
+  "liveDeployment": "NOT_VERIFIED",
+  "telegramTokenRotation": "OPERATOR_ACTION_REQUIRED",
+  "webhookErrorLogRedaction": "PASS",
+  "repositoryTelegramTokenScan": "PASS_NO_HITS"
+}

@@ -4,13 +4,18 @@
 Intro Deck
 
 ## Current source baseline
-STEP061 — Personalized News Presets & Subscription Productization
+STEP061H1 — Profile Preview Runtime Hotfix
 
 ## Layer
-HEAVY / subscription entitlements / scheduling / AI evidence / idempotency / explicit publishing
+HEAVY / production webhook recovery / runtime regression guard
 
 ## Source-confirmed
 
+- STEP061H1 fixes the live profile preview callback crash caused by an undefined operator-diagnostics variable.
+- Operator-only AI/news preset diagnostics are no longer referenced by profile preview and are passed only to the operator diagnostics renderer.
+- A runtime smoke invokes the real profile-preview builder and proves the fallback surface renders without persistence.
+- No migration or business-state change is introduced.
+- Webhook errors are now logged through a token-redacted structured summary instead of serializing the full grammY context.
 - STEP061 adds saved personal topic/language/tone presets and a deterministic manual/daily/weekdays schedule model.
 - Active Pro membership or operator status grants bounded access; subscription never grants publication authority.
 - Scheduled runs reuse STEP060 evidence/generation services and deliver a Telegram draft only. LinkedIn publishing remains exclusively in STEP059 after preview and explicit authorization.
