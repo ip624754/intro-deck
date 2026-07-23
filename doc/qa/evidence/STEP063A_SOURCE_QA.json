@@ -1,0 +1,89 @@
+{
+  "step": "STEP063A",
+  "status": "SOURCE_IMPLEMENTED_FOCUSED_QA_PASSED_PRODUCTION_NOT_VERIFIED",
+  "generated_at": "2026-07-23T00:00:00Z",
+  "canonical_baseline": {
+    "artifact": "IntroDeck_STEP061A_FULL_2026-07-20.zip",
+    "sha256": "658d8fa38fd4340d4fd0bc82c3b7fca796a5a929b80930ffb1c0d9a07250c04e",
+    "zip_integrity": "PASS"
+  },
+  "workspace": {
+    "node": "22.16.0",
+    "npm": "10.9.2",
+    "repository_engine": "20.x"
+  },
+  "passed": [
+    {
+      "command": "npm run check",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/smoke_ai_news_multi_source_quality.js",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/smoke_ai_news_drafts_approval.js",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/smoke_ai_news_presets_subscription.js",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/smoke_ai_news_live_acceptance.js",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/smoke_linkedin_verified_development_integration.js",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/smoke_linkedin_verification_compat_fail_safe.js",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/smoke_linkedin_verified_badges_trust_surfaces.js",
+      "status": "PASS"
+    },
+    {
+      "command": "node scripts/smoke_linkedin_share_profile.js",
+      "status": "PASS"
+    },
+    {
+      "command": "git diff --no-index --check <baseline> <candidate>",
+      "status": "PASS",
+      "evidence": "no whitespace-error output"
+    }
+  ],
+  "resolved_failures": [
+    {
+      "check": "initial STEP063A title-similarity assertion",
+      "status": "FAILED_THEN_RESOLVED",
+      "detail": "The test incorrectly required a thematic paraphrase to be a duplicate. The test was corrected; the conservative production threshold remained 0.82."
+    }
+  ],
+  "blocked": [
+    {
+      "command": "npm ci --ignore-scripts",
+      "status": "BLOCKED_TIMEOUT",
+      "detail": "Dependency installation did not complete in the provided container; Node 22 also emits EBADENGINE because the repository requires Node 20.x."
+    },
+    {
+      "command": "node scripts/smoke_step061_profile_preview_hotfix.js",
+      "status": "BLOCKED_MISSING_DEPENDENCY",
+      "detail": "grammy is unavailable because dependency installation did not complete; no application assertion executed."
+    }
+  ],
+  "not_verified": [
+    "Canonical Node 20 dependency install and full smoke inventory",
+    "Migration 033 on PostgreSQL/Neon",
+    "Vercel deployment and STEP063A production health",
+    "Live provider calls and provider telemetry rows",
+    "Telegram operator acceptance",
+    "Real multi-source evidence to explicit LinkedIn publish loop"
+  ],
+  "secret_scan": {
+    "status": "PASS_WITH_INHERITED_PLACEHOLDERS",
+    "detail": "Changed-file scan found only the pre-existing .env.example DATABASE_URL placeholder and a pre-existing synthetic Telegram token used by a smoke test. No new secret value was introduced."
+  }
+}

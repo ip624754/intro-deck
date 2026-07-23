@@ -159,7 +159,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
   composer.callbackQuery('news:find', async (ctx) => {
     await answer(ctx);
     await clearAllPendingInputs(ctx.from.id);
-    await safeEditOrReply(ctx, '🔎 Searching NewsData.io for fresh evidence…');
+    await safeEditOrReply(ctx, '🔎 Searching trusted source providers for fresh evidence…');
     const result = await findAiNewsSourcesForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null }).catch((error) => ({ found: false, reason: error?.message || String(error), articles: [] }));
     if (!result.found) return showHub(ctx, `⚠️ ${aiNewsReasonText(result.reason)}`);
     await safeEditOrReply(ctx, renderAiNewsSourcesText({ result }), { reply_markup: renderAiNewsSourcesKeyboard({ result }), disable_web_page_preview: true });

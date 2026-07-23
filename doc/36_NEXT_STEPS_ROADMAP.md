@@ -1,5 +1,23 @@
 # 36_NEXT_STEPS_ROADMAP
 
+## Current corridor after STEP063A
+
+STEP063A is source-implemented but not production-accepted. The next move is operational acceptance, not another provider expansion.
+
+Required sequence:
+
+1. Run canonical Node 20 install/check/focused and inherited AI/news regression smokes.
+2. Apply migration 033 and verify all five source-quality columns plus provider constraints.
+3. Deploy with `AI_NEWS_SOURCE_MODE=newsdata_only`; verify STEP063A health.
+4. Switch to operator-only `multi_source` using the bounded ENV profile.
+5. Verify provider mix, duplicate removal, isolated failure telemetry, and NewsData fallback behavior.
+6. Complete one source → draft → edit → explicit approval → exactly-one LinkedIn receipt loop.
+7. Return to `newsdata_only` on any schema, latency, provider-quality, or UX regression.
+
+Do not add arXiv, RSSHub, arbitrary feeds, scraping, or autonomous publication before this acceptance is closed.
+
+---
+
 ## Current corridor after STEP043.2
 
 The project now has:

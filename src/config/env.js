@@ -37,6 +37,16 @@ const DEFAULT_AI_NEWS_SCHEDULE_RETRY_DELAY_SECONDS = 900;
 const DEFAULT_AI_NEWS_SCHEDULE_MAX_ATTEMPTS = 3;
 const DEFAULT_AI_NEWS_ROLLOUT_STAGE = 'operator_acceptance';
 const DEFAULT_NEWSDATA_REQUEST_COST_USD = 0;
+const DEFAULT_AI_NEWS_SOURCE_MODE = 'newsdata_only';
+const DEFAULT_AI_NEWS_ENABLED_PROVIDERS = 'rss,hacker_news,github_releases,newsdata';
+const DEFAULT_AI_NEWS_PROVIDER_MAX_ARTICLES = 4;
+const DEFAULT_AI_NEWS_RSS_TIMEOUT_MS = 7000;
+const DEFAULT_AI_NEWS_RSS_MAX_FEEDS_PER_SEARCH = 2;
+const DEFAULT_AI_NEWS_HN_TIMEOUT_MS = 7000;
+const DEFAULT_AI_NEWS_HN_SCAN_LIMIT = 12;
+const DEFAULT_AI_NEWS_HN_MIN_SCORE = 10;
+const DEFAULT_AI_NEWS_GITHUB_TIMEOUT_MS = 8000;
+const DEFAULT_AI_NEWS_GITHUB_MAX_REPOS_PER_SEARCH = 2;
 const DEFAULT_OPENAI_INPUT_COST_USD_PER_1M = 0;
 const DEFAULT_OPENAI_OUTPUT_COST_USD_PER_1M = 0;
 const DEFAULT_STATE_TTL_SECONDS = 600;
@@ -110,6 +120,18 @@ function parseScopes(value) {
     .split(/\s+/)
     .map((part) => part.trim())
     .filter(Boolean))];
+}
+
+function readCsvEnumListEnv(name, fallback, allowedValues) {
+  const values = [...new Set(String(readEnv(name, fallback) || '')
+    .split(',')
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean))];
+  const invalid = values.filter((value) => !allowedValues.includes(value));
+  if (invalid.length) {
+    throw new Error(`${name} contains unsupported values: ${invalid.join(', ')}`);
+  }
+  return values;
 }
 
 
@@ -357,12 +379,15 @@ export function getLinkedInShareConfig({ strict = false } = {}) {
 }
 
 
-function readHttpsUrlEnv(name, fallback) {
+function readHttpsUrlEnv(name, fallback, { allowedHostnames = null } = {}) {
   const raw = String(readEnv(name, fallback) || '').trim();
   const url = new URL(raw);
   const localhost = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
   if (url.protocol !== 'https:' && !(localhost && url.protocol === 'http:')) {
     throw new Error(`${name} must use HTTPS (HTTP is allowed only for localhost)`);
+  }
+  if (Array.isArray(allowedHostnames) && !allowedHostnames.map((item) => String(item).toLowerCase()).includes(url.hostname.toLowerCase())) {
+    throw new Error(`${name} hostname is not allowlisted`);
   }
   return url.toString();
 }
@@ -419,9 +444,14 @@ function buildAiNewsScheduleFailSafeConfig(error) {
 function parseAiNewsDraftConfigStrict() {
   const mode = readEnumEnv('AI_NEWS_DRAFT_MODE', DEFAULT_AI_NEWS_DRAFT_MODE, ['off', 'operator', 'pro']);
   const enabled = mode !== 'off';
+  const sourceMode = readEnumEnv('AI_NEWS_SOURCE_MODE', DEFAULT_AI_NEWS_SOURCE_MODE, ['newsdata_only', 'multi_source']);
+  const enabledProviders = sourceMode === 'newsdata_only'
+    ? ['newsdata']
+    : readCsvEnumListEnv('AI_NEWS_ENABLED_PROVIDERS', DEFAULT_AI_NEWS_ENABLED_PROVIDERS, ['rss', 'hacker_news', 'github_releases', 'newsdata']);
   const newsdataApiKey = readEnv('NEWSDATA_API_KEY') || null;
   const openaiApiKey = readEnv('OPENAI_API_KEY') || null;
-  if (enabled && !newsdataApiKey) throw new Error('NEWSDATA_API_KEY is required when AI_NEWS_DRAFT_MODE is enabled');
+  if (enabled && !enabledProviders.length) throw new Error('AI_NEWS_ENABLED_PROVIDERS must contain at least one provider');
+  if (enabled && enabledProviders.includes('newsdata') && !newsdataApiKey) throw new Error('NEWSDATA_API_KEY is required when the newsdata provider is enabled');
   if (enabled && !openaiApiKey) throw new Error('OPENAI_API_KEY is required when AI_NEWS_DRAFT_MODE is enabled');
   let schedule;
   try {
@@ -451,10 +481,23 @@ function parseAiNewsDraftConfigStrict() {
     draftTtlSeconds: readBoundedIntegerEnv('AI_NEWS_DRAFT_TTL_SECONDS', DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS, { min: 900, max: 86400 }),
     presetLimit: readBoundedIntegerEnv('AI_NEWS_PRESET_LIMIT', DEFAULT_AI_NEWS_PRESET_LIMIT, { min: 1, max: 10 }),
     schedule,
+    source: {
+      mode: sourceMode,
+      enabledProviders,
+      providerMaxArticles: readBoundedIntegerEnv('AI_NEWS_PROVIDER_MAX_ARTICLES', DEFAULT_AI_NEWS_PROVIDER_MAX_ARTICLES, { min: 1, max: 10 }),
+      rssTimeoutMs: readBoundedIntegerEnv('AI_NEWS_RSS_TIMEOUT_MS', DEFAULT_AI_NEWS_RSS_TIMEOUT_MS, { min: 1000, max: 30000 }),
+      rssMaxFeedsPerSearch: readBoundedIntegerEnv('AI_NEWS_RSS_MAX_FEEDS_PER_SEARCH', DEFAULT_AI_NEWS_RSS_MAX_FEEDS_PER_SEARCH, { min: 1, max: 5 }),
+      hackerNewsTimeoutMs: readBoundedIntegerEnv('AI_NEWS_HN_TIMEOUT_MS', DEFAULT_AI_NEWS_HN_TIMEOUT_MS, { min: 1000, max: 30000 }),
+      hackerNewsScanLimit: readBoundedIntegerEnv('AI_NEWS_HN_SCAN_LIMIT', DEFAULT_AI_NEWS_HN_SCAN_LIMIT, { min: 4, max: 40 }),
+      hackerNewsMinScore: readBoundedIntegerEnv('AI_NEWS_HN_MIN_SCORE', DEFAULT_AI_NEWS_HN_MIN_SCORE, { min: 1, max: 10000 }),
+      githubTimeoutMs: readBoundedIntegerEnv('AI_NEWS_GITHUB_TIMEOUT_MS', DEFAULT_AI_NEWS_GITHUB_TIMEOUT_MS, { min: 1000, max: 30000 }),
+      githubMaxReposPerSearch: readBoundedIntegerEnv('AI_NEWS_GITHUB_MAX_REPOS_PER_SEARCH', DEFAULT_AI_NEWS_GITHUB_MAX_REPOS_PER_SEARCH, { min: 1, max: 5 }),
+      githubToken: readSecretEnv('GITHUB_API_TOKEN')
+    },
     newsdata: {
       configured: Boolean(newsdataApiKey),
       apiKey: newsdataApiKey,
-      baseUrl: readHttpsUrlEnv('NEWSDATA_BASE_URL', DEFAULT_NEWSDATA_BASE_URL),
+      baseUrl: readHttpsUrlEnv('NEWSDATA_BASE_URL', DEFAULT_NEWSDATA_BASE_URL, { allowedHostnames: ['newsdata.io', 'www.newsdata.io'] }),
       timeoutMs: readBoundedIntegerEnv('NEWSDATA_API_TIMEOUT_MS', DEFAULT_NEWSDATA_API_TIMEOUT_MS, { min: 1000, max: 30000 }),
       estimatedRequestCostUsd: readNonNegativeNumberEnv('NEWSDATA_REQUEST_COST_USD', DEFAULT_NEWSDATA_REQUEST_COST_USD)
     },
@@ -493,6 +536,19 @@ function buildAiNewsDraftFailSafeConfig(error) {
     draftTtlSeconds: DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS,
     presetLimit: DEFAULT_AI_NEWS_PRESET_LIMIT,
     schedule: buildAiNewsScheduleFailSafeConfig(error),
+    source: {
+      mode: String(readEnv('AI_NEWS_SOURCE_MODE', DEFAULT_AI_NEWS_SOURCE_MODE) || '').trim().toLowerCase() === 'multi_source' ? 'multi_source' : 'newsdata_only',
+      enabledProviders: [],
+      providerMaxArticles: DEFAULT_AI_NEWS_PROVIDER_MAX_ARTICLES,
+      rssTimeoutMs: DEFAULT_AI_NEWS_RSS_TIMEOUT_MS,
+      rssMaxFeedsPerSearch: DEFAULT_AI_NEWS_RSS_MAX_FEEDS_PER_SEARCH,
+      hackerNewsTimeoutMs: DEFAULT_AI_NEWS_HN_TIMEOUT_MS,
+      hackerNewsScanLimit: DEFAULT_AI_NEWS_HN_SCAN_LIMIT,
+      hackerNewsMinScore: DEFAULT_AI_NEWS_HN_MIN_SCORE,
+      githubTimeoutMs: DEFAULT_AI_NEWS_GITHUB_TIMEOUT_MS,
+      githubMaxReposPerSearch: DEFAULT_AI_NEWS_GITHUB_MAX_REPOS_PER_SEARCH,
+      githubToken: null
+    },
     newsdata: { configured: Boolean(readEnv('NEWSDATA_API_KEY')), apiKey: null, baseUrl: DEFAULT_NEWSDATA_BASE_URL, timeoutMs: DEFAULT_NEWSDATA_API_TIMEOUT_MS, estimatedRequestCostUsd: DEFAULT_NEWSDATA_REQUEST_COST_USD },
     openai: { configured: Boolean(readEnv('OPENAI_API_KEY')), apiKey: null, baseUrl: DEFAULT_OPENAI_BASE_URL, model: String(readEnv('OPENAI_DRAFT_MODEL', DEFAULT_OPENAI_DRAFT_MODEL)), timeoutMs: DEFAULT_OPENAI_API_TIMEOUT_MS, inputCostUsdPerMillion: DEFAULT_OPENAI_INPUT_COST_USD_PER_1M, outputCostUsdPerMillion: DEFAULT_OPENAI_OUTPUT_COST_USD_PER_1M, store: false },
     explicitApprovalRequired: true,

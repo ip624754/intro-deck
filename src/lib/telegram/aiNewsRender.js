@@ -30,6 +30,8 @@ function reasonText(reason) {
     linkedin_share_unavailable: 'LinkedIn publishing is not available right now.',
     migration_031_required: 'Migration 031 has not been applied yet.',
     migration_032_required: 'Migration 032 has not been applied yet.',
+    migration_033_required: 'Migration 033 has not been applied yet. Multi-source discovery remains unavailable.',
+    ai_news_all_providers_failed: 'All enabled source providers failed. Try again later or return to NewsData-only mode.',
     ai_news_preset_limit_reached: 'Your saved-preset limit is used.',
     ai_news_preset_duplicate: 'This preset is already saved.',
     ai_news_preferences_not_found: 'Choose topic, language, and tone before saving a preset.',
@@ -58,6 +60,7 @@ export function renderAiNewsHubText({ state, notice = null }) {
     `Saved presets: ${state?.presetUsage?.used ?? state?.presets?.length ?? 0}/${state?.presetUsage?.limit ?? state?.config?.presetLimit ?? 0}`,
     `Scheduled delivery: ${state?.config?.schedule?.enabled ? 'drafts only · no auto-posting' : 'off'}`,
     `Rollout stage: ${state?.config?.rolloutStage || 'operator_acceptance'}`,
+    `Source mode: ${state?.config?.source?.mode || 'newsdata_only'}`,
     '',
     'Flow: source → evidence → draft → preview/edit → explicit LinkedIn approval.'
   ];
@@ -100,24 +103,61 @@ export function renderAiNewsHubKeyboard({ state }) {
   return { inline_keyboard: rows };
 }
 
+function sourceProviderLabel(provider) {
+  return {
+    rss: 'Official RSS',
+    hacker_news: 'Hacker News signal',
+    github_releases: 'GitHub release',
+    newsdata: 'NewsData'
+  }[provider] || value(provider, 'Source');
+}
+
 export function renderAiNewsSourcesText({ result }) {
   const lines = [
     '📰 Fresh source candidates',
     '',
     `Query: ${value(result?.query)}`,
-    'Choose one source. Intro Deck will save its evidence snapshot before generating a draft.'
+    `Source mode: ${result?.sourceMode || 'newsdata_only'}`,
+    'Choose Draft to use one source as evidence, or Open to inspect the original first.'
   ];
   for (const [index, article] of (result?.articles || []).entries()) {
-    lines.push('', `${index + 1}. ${value(article.source_title)}`, `${value(article.source_name, value(article.source_domain))} · ${new Date(article.published_at).toISOString()}`);
+    const authority = Number.isFinite(Number(article.source_authority_score)) ? Number(article.source_authority_score) : null;
+    const quality = [
+      sourceProviderLabel(article.provider),
+      article.source_is_primary ? 'primary' : null,
+      authority !== null ? `authority ${authority}/100` : null
+    ].filter(Boolean).join(' · ');
+    lines.push(
+      '',
+      `${index + 1}. ${value(article.source_title)}`,
+      `${value(article.source_name, value(article.source_domain))} · ${new Date(article.published_at).toISOString()}`,
+      quality
+    );
   }
+  const failed = (result?.providerSummary || []).filter((item) => item.outcome === 'failed');
+  if (failed.length) {
+    lines.push('', `Provider isolation: ${failed.map((item) => sourceProviderLabel(item.provider)).join(', ')} unavailable; remaining sources still returned.`);
+  }
+  if (result?.newsdataFallbackUsed) lines.push('', 'NewsData fallback was used because primary/free providers did not fill the candidate pool.');
+  const validUntil = result?.articles?.[0]?.expires_at;
+  if (validUntil) lines.push(`Selection valid until: ${new Date(validUntil).toISOString()}`);
   return lines.join('\n');
 }
 
 export function renderAiNewsSourcesKeyboard({ result }) {
-  const rows = (result?.articles || []).map((article, index) => ([{
-    text: `${index + 1}. ${String(article.source_title || '').slice(0, 46)}`,
-    callback_data: `news:generate:${article.public_token}`
-  }]));
+  const rows = [];
+  for (const [index, article] of (result?.articles || []).entries()) {
+    rows.push([
+      {
+        text: `Draft ${index + 1}`,
+        callback_data: `news:generate:${article.public_token}`
+      },
+      {
+        text: 'Open source ↗',
+        url: article.source_url
+      }
+    ]);
+  }
   rows.push([{ text: '↻ Search again', callback_data: 'news:find' }]);
   rows.push([{ text: '← Draft settings', callback_data: 'news:home' }]);
   return { inline_keyboard: rows };

@@ -2622,7 +2622,10 @@ export function renderOperatorDiagnosticsText({
     lines.push(`• mode: ${aiNewsConfig.mode || 'off'}`);
     lines.push(`• rollout stage: ${aiNewsConfig.rolloutStage || 'operator_acceptance'}`);
     lines.push(`• configuration: ${aiNewsConfig.configurationValid === false ? 'invalid / fail-safe disabled' : aiNewsConfig.enabled ? 'enabled' : 'disabled'}`);
-    lines.push(`• NewsData: ${aiNewsConfig.newsdata?.configured ? 'configured' : 'not configured'}`);
+    lines.push(`• source mode: ${aiNewsConfig.source?.mode || 'newsdata_only'}`);
+    lines.push(`• enabled source providers: ${(aiNewsConfig.source?.enabledProviders || ['newsdata']).join(', ') || 'none'}`);
+    lines.push(`• NewsData fallback: ${aiNewsConfig.newsdata?.configured ? 'configured' : 'not configured'}`);
+    lines.push(`• GitHub API: ${aiNewsConfig.source?.githubToken ? 'authenticated' : 'public / bounded'}`);
     lines.push(`• OpenAI model: ${aiNewsConfig.openai?.model || 'not configured'}`);
     lines.push(`• access product: ${aiNewsConfig.mode === 'pro' ? 'Pro members + operators' : aiNewsConfig.mode === 'operator' ? 'operators only' : 'off'}`);
     lines.push(`• preset limit: ${aiNewsConfig.presetLimit || 0}`);
@@ -2635,7 +2638,8 @@ export function renderOperatorDiagnosticsText({
       lines.push(`• delivery retry due: ${aiNewsPresetSummary.retry_due || 0}`);
       if (Object.prototype.hasOwnProperty.call(aiNewsPresetSummary, 'newsdata_calls_24h')) {
         const estimatedUsd = (Number(aiNewsPresetSummary.estimated_cost_microusd_24h || 0) / 1_000_000).toFixed(6);
-        lines.push(`• provider calls/24h: NewsData ${aiNewsPresetSummary.newsdata_calls_24h || 0} • OpenAI ${aiNewsPresetSummary.openai_calls_24h || 0} • failures ${aiNewsPresetSummary.provider_failures_24h || 0}`);
+        lines.push(`• discovery calls/24h: RSS ${aiNewsPresetSummary.rss_calls_24h || 0} • HN ${aiNewsPresetSummary.hacker_news_calls_24h || 0} • GitHub ${aiNewsPresetSummary.github_releases_calls_24h || 0} • NewsData ${aiNewsPresetSummary.newsdata_calls_24h || 0}`);
+        lines.push(`• OpenAI calls/24h: ${aiNewsPresetSummary.openai_calls_24h || 0} • provider failures ${aiNewsPresetSummary.provider_failures_24h || 0}`);
         lines.push(`• OpenAI tokens/24h: in ${aiNewsPresetSummary.openai_input_tokens_24h || 0} • out ${aiNewsPresetSummary.openai_output_tokens_24h || 0}`);
         lines.push(`• estimated provider cost/24h: $${estimatedUsd}`);
         lines.push(`• drafts/24h: attempts ${aiNewsPresetSummary.draft_attempts_24h || 0} • generated ${aiNewsPresetSummary.generated_drafts_24h || 0} • edited ${aiNewsPresetSummary.edited_drafts_24h || 0} • LinkedIn published ${aiNewsPresetSummary.linkedin_posts_24h || 0}`);

@@ -3,10 +3,23 @@
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP061A
-- Phase: AI/news end-to-end live acceptance and rollout hardening on top of STEP061H1
-- Primary mode: HEAVY / SUBSCRIPTION ENTITLEMENTS / SCHEDULING / AI EVIDENCE / IDEMPOTENCY / EXPLICIT PUBLISHING
-- Runtime status: STEP061H1 is operator-confirmed live at artifact `4c2909b59584292b81a730f63b170d8f810316c3`; profile preview/webhook recovery is accepted. STEP061A source is implemented but requires migration 032, deployment, read-only preflight, and manual production evidence before a GO / GO_WITH_RISKS / NO_GO verdict.
+- Current STEP: STEP063A
+- Phase: multi-source news ingestion and source-quality foundation on top of STEP061A
+- Primary mode: HEAVY / PROVIDER EGRESS / URL SAFETY / SOURCE EVIDENCE / MIGRATION / ROLLOUT GOVERNANCE
+- Runtime status: STEP061A is the uploaded source baseline. STEP063A is source-implemented and focused-QA verified only; migration 033, Node 20 QA, Vercel deployment, live provider telemetry, and operator E2E evidence are not verified.
+
+
+## STEP063A delta
+
+- Canonical baseline SHA-256: `658d8fa38fd4340d4fd0bc82c3b7fca796a5a929b80930ffb1c0d9a07250c04e`.
+- Default source mode remains `newsdata_only`; this is the safe deployment and rollback state.
+- `multi_source` adds fixed-registry RSS/Atom, Hacker News trend discovery, GitHub Releases, canonical URL/title deduplication, source authority metadata, and NewsData fallback.
+- Migration 033 is required before multi-source writes; missing schema fails closed.
+- Provider fetches are bounded by exact HTTPS host allowlists, timeout, response-size, registry breadth, and scan limits.
+- Telegram candidates now expose separate `Draft` and `Open source` actions plus provider, primary-source, authority, and TTL context.
+- STEP059 LinkedIn publishing remains unchanged and requires exact preview plus explicit one-post approval.
+- Verified locally: syntax gate and focused mock-provider smoke on Node 22.16.0.
+- Not verified: Node 20, dependency-backed regression suite, live migration/provider calls, production deployment, and operator acceptance.
 
 ## What exists now
 

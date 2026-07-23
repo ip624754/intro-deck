@@ -1,4 +1,5 @@
 import { normalizeSourceUrl } from '../ai/newsDraftContract.js';
+import { fetchTrustedProviderResponse, NewsSourceProviderError, readBoundedJson } from './providerUtils.js';
 
 export class NewsDataApiError extends Error {
   constructor(message, { status = null, code = null, requestId = null, durationMs = null } = {}) {
@@ -78,23 +79,58 @@ export async function fetchNewsDataLatest({
   if (category) endpoint.searchParams.set('category', category);
 
   const startedAt = Date.now();
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response;
+  let requestId = null;
+  let durationMs = null;
+  let maxBytes = 1_500_000;
   try {
-    response = await fetchImpl(endpoint, { method: 'GET', headers: { accept: 'application/json' }, signal: controller.signal });
+    const trusted = await fetchTrustedProviderResponse(endpoint, {
+      provider: 'newsdata',
+      allowedHostnames: ['newsdata.io', 'www.newsdata.io'],
+      timeoutMs,
+      fetchImpl,
+      headers: { accept: 'application/json', 'user-agent': 'IntroDeck-NewsBot/1.0' },
+      maxBytes
+    });
+    response = trusted.response;
+    requestId = trusted.requestId;
+    durationMs = trusted.durationMs;
+    maxBytes = trusted.maxBytes;
   } catch (error) {
-    throw new NewsDataApiError(error?.name === 'AbortError' ? 'newsdata_timeout' : 'newsdata_network_error', { durationMs: Date.now() - startedAt });
-  } finally {
-    clearTimeout(timer);
+    if (error instanceof NewsSourceProviderError) {
+      throw new NewsDataApiError(
+        error.code === 'timeout' ? 'newsdata_timeout' : error.message || 'newsdata_request_failed',
+        { status: error.status, code: error.code, requestId: error.requestId, durationMs: error.durationMs }
+      );
+    }
+    throw new NewsDataApiError('newsdata_internal_error', { durationMs: Date.now() - startedAt });
   }
 
-  let payload = null;
-  try { payload = await response.json(); } catch { payload = null; }
+  let payload;
+  try {
+    const remainingMs = Math.max(1, timeoutMs - (Date.now() - startedAt));
+    payload = await readBoundedJson(response, maxBytes, { timeoutMs: remainingMs, provider: 'newsdata' });
+  } catch (error) {
+    const code = error instanceof NewsSourceProviderError ? error.code : null;
+    const mappedCode = code === 'response_too_large' ? 'response_too_large'
+      : code === 'body_timeout' ? 'body_timeout'
+        : 'invalid_json';
+    throw new NewsDataApiError(
+      mappedCode === 'response_too_large' ? 'newsdata_response_too_large'
+        : mappedCode === 'body_timeout' ? 'newsdata_body_timeout'
+          : 'newsdata_invalid_json',
+      {
+        status: response.status,
+        code: mappedCode,
+        requestId,
+        durationMs: Date.now() - startedAt
+      }
+    );
+  }
   if (!response.ok || payload?.status === 'error') {
     throw new NewsDataApiError(
       safeText(payload?.results?.message || payload?.message || `newsdata_http_${response.status}`, 300) || 'newsdata_request_failed',
-      { status: response.status, code: safeText(payload?.results?.code || payload?.code, 100), requestId: response.headers.get('x-request-id'), durationMs: Date.now() - startedAt }
+      { status: response.status, code: safeText(payload?.results?.code || payload?.code, 100), requestId, durationMs: Date.now() - startedAt }
     );
   }
 
@@ -111,7 +147,7 @@ export async function fetchNewsDataLatest({
   return {
     articles,
     nextPage: safeText(payload?.nextPage, 240),
-    requestId: response.headers.get('x-request-id') || null,
+    requestId,
     durationMs: Date.now() - startedAt,
     rawResultCount: Array.isArray(payload?.results) ? payload.results.length : 0
   };

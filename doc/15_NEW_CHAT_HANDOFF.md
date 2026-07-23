@@ -3,12 +3,22 @@
 ## Executive summary
 
 - Project: LinkedIn Telegram Directory Bot
-- Current baseline: STEP061A — AI/News End-to-End Live Acceptance & Rollout Hardening
-- Current mode: HEAVY / AI PROVIDERS / LINKEDIN PUBLISHING / CRON / ROLLOUT GOVERNANCE
-- Current focus: apply migration 032, deploy STEP061A, run the artifact-bound read-only preflight, complete the operator E2E evidence, and decide GO / GO_WITH_RISKS / NO_GO before Pro rollout.
+- Current baseline: STEP063A — Multi-Source News Ingestion & Source Quality Foundation
+- Current mode: HEAVY / PROVIDER EGRESS / URL SAFETY / SOURCE EVIDENCE / MIGRATION / ROLLOUT GOVERNANCE
+- Current focus: apply migration 033, deploy first in `newsdata_only`, enable bounded operator-only `multi_source`, verify provider telemetry and source diversity, then complete one explicit STEP059 publication loop.
 - Must not break: LinkedIn OIDC truth, webhook secret guard, router contract, listed/active browse truth, intro persistence, communications/outbox truth, operator allowlist gating
 
 ## Source-confirmed
+
+- STEP063A binds to uploaded STEP061A SHA-256 `658d8fa38fd4340d4fd0bc82c3b7fca796a5a929b80930ffb1c0d9a07250c04e`; the stale SHA from the prior plan is rejected.
+- Default `newsdata_only` preserves the existing runtime path and is the rollback state.
+- `multi_source` adds allowlisted RSS/Atom, Hacker News, GitHub Releases, canonical deduplication, source authority metadata, and NewsData fallback.
+- Migration 033 is required before multi-source writes; runtime fails closed with `migration_033_required`.
+- Provider egress is exact-host HTTPS-only, redirect-free, timeout-bounded, response-size-bounded, and fan-out-bounded.
+- STEP059 remains the only LinkedIn publisher; no adapter or source-ranking decision grants publishing authority.
+- Verified: syntax, STEP063A focused source smoke, inherited STEP060/061/061A AI/news contracts, and focused STEP058/059 LinkedIn compatibility contracts on Node 22.16.0.
+- Not verified: canonical Node 20 dependency install/full inventory, migration 033 in Neon, Vercel deployment, live provider telemetry, and operator E2E acceptance.
+
 
 - STEP061A adds provider usage/cost telemetry, a fail-closed rollout-stage gate, a read-only production preflight, and a manual evidence verifier.
 - Provider pricing is never guessed: cost rates default to zero and are operator-configured estimates only.
@@ -358,6 +368,7 @@ Deploy STEP054, verify live positioning surfaces and BotFather copy, then procee
 ## STEP058B handoff delta
 
 ### Source-confirmed
+
 - one canonical trust resolver controls owner, preview, public directory, admin, and health semantics;
 - Development mode can never display public badges;
 - public eligibility requires Lite mode, explicit enablement, fresh Lite-source snapshot, at least one category, and a sane timestamp;
@@ -382,6 +393,7 @@ Deploy STEP054, verify live positioning surfaces and BotFather copy, then procee
 ## STEP058B1 handoff delta
 
 ### Source-confirmed
+
 - optional Verified on LinkedIn configuration is parsed fail-safe; invalid values disable only the optional integration;
 - health remains available and exposes `configurationValid` plus a safe configuration error;
 - Development/Lite scope canon is `r_profile_basicinfo r_verify`;
@@ -407,6 +419,7 @@ Deploy STEP054, verify live positioning surfaces and BotFather copy, then procee
 ## STEP060 — AI/News Drafts Approval Foundation
 
 ### Source-confirmed
+
 - source step `STEP060`, package `0.58.0`;
 - operator-first source/evidence/draft/preview/edit/approval flow;
 - NewsData.io source adapter and OpenAI strict-schema generator are optional and fail-safe;

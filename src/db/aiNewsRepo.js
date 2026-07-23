@@ -133,6 +133,7 @@ export async function getBlockingAiNewsDraft(client, userId, { forUpdate = false
 export async function upsertAiNewsSource(client, {
   publicToken,
   userId,
+  provider = 'newsdata',
   providerArticleId,
   sourceUrl,
   sourceUrlHash,
@@ -147,21 +148,71 @@ export async function upsertAiNewsSource(client, {
   publishedAt,
   querySnapshot,
   evidenceHash,
-  expiresAt
+  expiresAt,
+  sourceKind = 'news_report',
+  sourceAuthorityScore = 65,
+  sourceIsPrimary = false,
+  trendScore = 0,
+  sourceMetadata = null,
+  multiSourceSchema = false
 }) {
+  if (!multiSourceSchema) {
+    const result = await client.query(
+      `insert into ai_news_sources (
+         public_token, user_id, provider, provider_article_id, source_url, source_url_hash,
+         source_title, source_name, source_domain, source_description, source_content_excerpt,
+         source_language, source_country, source_categories_json, published_at,
+         query_snapshot, evidence_hash, expires_at
+       ) values (
+         $1::uuid, $2, $3, $4, $5, $6,
+         $7, $8, $9, $10, $11,
+         $12, $13, $14::jsonb, $15,
+         $16, $17, $18
+       )
+       on conflict (user_id, source_url_hash) do update set
+         provider = excluded.provider,
+         provider_article_id = excluded.provider_article_id,
+         source_title = excluded.source_title,
+         source_name = excluded.source_name,
+         source_domain = excluded.source_domain,
+         source_description = excluded.source_description,
+         source_content_excerpt = excluded.source_content_excerpt,
+         source_language = excluded.source_language,
+         source_country = excluded.source_country,
+         source_categories_json = excluded.source_categories_json,
+         published_at = excluded.published_at,
+         query_snapshot = excluded.query_snapshot,
+         evidence_hash = excluded.evidence_hash,
+         fetched_at = now(),
+         expires_at = excluded.expires_at,
+         updated_at = now()
+       returning *`,
+      [
+        publicToken, userId, provider, providerArticleId, sourceUrl, sourceUrlHash,
+        sourceTitle, sourceName, sourceDomain, sourceDescription, sourceContentExcerpt,
+        sourceLanguage, sourceCountry, JSON.stringify(sourceCategories || []), publishedAt,
+        querySnapshot, evidenceHash, expiresAt
+      ]
+    );
+    return result.rows[0];
+  }
+
   const result = await client.query(
     `insert into ai_news_sources (
        public_token, user_id, provider, provider_article_id, source_url, source_url_hash,
        source_title, source_name, source_domain, source_description, source_content_excerpt,
        source_language, source_country, source_categories_json, published_at,
-       query_snapshot, evidence_hash, expires_at
+       query_snapshot, evidence_hash, expires_at,
+       source_kind, source_authority_score, source_is_primary, trend_score, source_metadata_json
      ) values (
-       $1::uuid, $2, 'newsdata', $3, $4, $5,
-       $6, $7, $8, $9, $10,
-       $11, $12, $13::jsonb, $14,
-       $15, $16, $17
+       $1::uuid, $2, $3, $4, $5, $6,
+       $7, $8, $9, $10, $11,
+       $12, $13, $14::jsonb, $15,
+       $16, $17, $18,
+       $19, $20, $21, $22, $23::jsonb
      )
      on conflict (user_id, source_url_hash) do update set
+       provider = excluded.provider,
        provider_article_id = excluded.provider_article_id,
        source_title = excluded.source_title,
        source_name = excluded.source_name,
@@ -174,25 +225,36 @@ export async function upsertAiNewsSource(client, {
        published_at = excluded.published_at,
        query_snapshot = excluded.query_snapshot,
        evidence_hash = excluded.evidence_hash,
+       source_kind = excluded.source_kind,
+       source_authority_score = excluded.source_authority_score,
+       source_is_primary = excluded.source_is_primary,
+       trend_score = excluded.trend_score,
+       source_metadata_json = excluded.source_metadata_json,
        fetched_at = now(),
        expires_at = excluded.expires_at,
        updated_at = now()
      returning *`,
     [
-      publicToken, userId, providerArticleId, sourceUrl, sourceUrlHash,
+      publicToken, userId, provider, providerArticleId, sourceUrl, sourceUrlHash,
       sourceTitle, sourceName, sourceDomain, sourceDescription, sourceContentExcerpt,
       sourceLanguage, sourceCountry, JSON.stringify(sourceCategories || []), publishedAt,
-      querySnapshot, evidenceHash, expiresAt
+      querySnapshot, evidenceHash, expiresAt,
+      sourceKind, Math.max(0, Math.min(100, Number(sourceAuthorityScore) || 0)), Boolean(sourceIsPrimary),
+      Math.max(0, Math.min(1_000_000, Number(trendScore) || 0)),
+      sourceMetadata ? JSON.stringify(sourceMetadata) : null
     ]
   );
   return result.rows[0];
 }
 
-export async function listRecentAiNewsSources(client, { userId, limit = 5 }) {
+export async function listRecentAiNewsSources(client, { userId, limit = 5, multiSourceSchema = false }) {
+  const qualityOrder = multiSourceSchema
+    ? 'source_is_primary desc, source_authority_score desc, published_at desc, fetched_at desc'
+    : 'published_at desc, fetched_at desc';
   const result = await client.query(
     `select * from ai_news_sources
      where user_id = $1 and expires_at > now()
-     order by published_at desc, fetched_at desc
+     order by ${qualityOrder}
      limit $2`,
     [userId, limit]
   );
@@ -496,7 +558,10 @@ export async function insertAiNewsProviderUsageEvent(client, {
 export async function getAiNewsRolloutSummary(client) {
   const result = await client.query(`
     select
-      (select count(*)::int from ai_news_provider_usage_events where provider='newsdata' and operation='search_latest' and created_at >= now()-interval '24 hours') as newsdata_calls_24h,
+      (select count(*)::int from ai_news_provider_usage_events where provider='newsdata' and created_at >= now()-interval '24 hours') as newsdata_calls_24h,
+      (select count(*)::int from ai_news_provider_usage_events where provider='rss' and created_at >= now()-interval '24 hours') as rss_calls_24h,
+      (select count(*)::int from ai_news_provider_usage_events where provider='hacker_news' and created_at >= now()-interval '24 hours') as hacker_news_calls_24h,
+      (select count(*)::int from ai_news_provider_usage_events where provider='github_releases' and created_at >= now()-interval '24 hours') as github_releases_calls_24h,
       (select count(*)::int from ai_news_provider_usage_events where provider='openai' and operation='generate_draft' and created_at >= now()-interval '24 hours') as openai_calls_24h,
       (select count(*)::int from ai_news_provider_usage_events where outcome='failed' and created_at >= now()-interval '24 hours') as provider_failures_24h,
       (select coalesce(sum(input_tokens),0)::bigint from ai_news_provider_usage_events where provider='openai' and created_at >= now()-interval '24 hours') as openai_input_tokens_24h,

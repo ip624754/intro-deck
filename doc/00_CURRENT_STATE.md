@@ -4,7 +4,17 @@
 Intro Deck
 
 ## Current source baseline
-STEP061A — AI/News End-to-End Live Acceptance & Rollout Hardening
+STEP063A — Multi-Source News Ingestion & Source Quality Foundation
+
+## STEP063A source delta
+
+- The accepted input artifact is STEP061A FULL with SHA-256 `658d8fa38fd4340d4fd0bc82c3b7fca796a5a929b80930ffb1c0d9a07250c04e`.
+- Multi-source discovery is implemented behind `AI_NEWS_SOURCE_MODE=multi_source`; default remains `newsdata_only`.
+- Migration 033 adds provider and source-quality fields and is mandatory before multi-source mode.
+- RSS/Atom, Hacker News, and GitHub Releases are bounded provider adapters; NewsData is broad fallback.
+- Provider egress uses exact HTTPS allowlists and rejects redirects.
+- STEP059 publishing is unchanged. No source adapter can publish.
+- Source QA passed on Node 22; canonical Node 20 and production runtime are not verified.
 
 ## Layer
 HEAVY / production acceptance / AI evidence / provider telemetry / rollout governance

@@ -1,4 +1,5 @@
 import { CURRENT_SOURCE_STEP, getRuntimeArtifactSha } from '../src/config/release.js';
+import { publicSourceRegistrySummary } from '../src/lib/news/sourceRegistry.js';
 import {
   getAiNewsDraftConfig,
   getLinkedInShareConfig,
@@ -66,8 +67,24 @@ export default async function handler(req, res) {
       rolloutStage: aiNewsDraft.rolloutStage,
       configurationValid: aiNewsDraft.configurationValid !== false,
       configurationError: aiNewsDraft.configurationError || null,
-      newsProvider: 'newsdata',
-      newsProviderConfigured: aiNewsDraft.newsdata.configured,
+      newsProvider: aiNewsDraft.source?.mode === 'multi_source' ? 'multi_source' : 'newsdata',
+      newsProviderConfigured: aiNewsDraft.source?.mode === 'multi_source'
+        ? Boolean(aiNewsDraft.source?.enabledProviders?.length)
+        : aiNewsDraft.newsdata.configured,
+      sourceMode: aiNewsDraft.source?.mode || 'newsdata_only',
+      enabledSourceProviders: aiNewsDraft.source?.enabledProviders || ['newsdata'],
+      sourceProviderStatus: {
+        rss: aiNewsDraft.source?.enabledProviders?.includes('rss') || false,
+        hackerNews: aiNewsDraft.source?.enabledProviders?.includes('hacker_news') || false,
+        githubReleases: aiNewsDraft.source?.enabledProviders?.includes('github_releases') || false,
+        githubAuthenticated: Boolean(aiNewsDraft.source?.githubToken),
+        newsdata: aiNewsDraft.newsdata.configured && (aiNewsDraft.source?.enabledProviders?.includes('newsdata') ?? true)
+      },
+      sourceRegistry: {
+        rssCount: publicSourceRegistrySummary().rss.length,
+        githubRepositoryCount: publicSourceRegistrySummary().githubReleases.length
+      },
+      newsdataFallbackPolicy: aiNewsDraft.source?.mode === 'multi_source' ? 'only_when_primary_pool_is_below_limit' : 'primary_provider',
       aiProvider: 'openai',
       aiProviderConfigured: aiNewsDraft.openai.configured,
       model: aiNewsDraft.openai.model,

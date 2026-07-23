@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP061A baseline for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP063A source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
@@ -41,6 +41,7 @@ A Telegram-first professional directory:
 - STEP061 — personalized AI/news presets, Pro access/allowances, and scheduled reviewable Telegram drafts
 - STEP061H1 — profile preview runtime and webhook token-log hotfix
 - STEP061A — AI/news E2E live acceptance, provider telemetry, and rollout hardening
+- STEP063A — multi-source news ingestion, source quality, deduplication, and NewsData fallback
 - STEP060 — evidence-bound AI/news drafts with preview/edit and explicit one-post approval
 
 ## Core docs
@@ -77,6 +78,7 @@ A Telegram-first professional directory:
 - `npm run smoke:ai-news-drafts`
 - `npm run step057:preflight`
 - `npm run smoke:ai-news-live-acceptance`
+- `npm run smoke:ai-news-multi-source`
 - `npm run step061a:preflight`
 - `npm run step061a:evidence:init`
 - `npm run step061a:evidence:verify`
@@ -154,3 +156,17 @@ STEP specification: `doc/spec/STEP060_AI_NEWS_DRAFTS_APPROVAL_FOUNDATION.md`.
 
 Operator runbook: `doc/89_STEP061A_OPERATOR_ROLLOUT.md`.
 STEP specification: `doc/spec/STEP061A_AI_NEWS_E2E_LIVE_ACCEPTANCE_AND_ROLLOUT_HARDENING.md`.
+
+
+## STEP063A multi-source news ingestion rollout
+
+1. Deploy the overlay in `AI_NEWS_SOURCE_MODE=newsdata_only` first.
+2. Apply `migrations/033_ai_news_multi_source_quality_foundation.sql` after migrations 030 and 032.
+3. Enable `AI_NEWS_SOURCE_MODE=multi_source` only for `AI_NEWS_ROLLOUT_STAGE=operator_acceptance`.
+4. Use allowlisted RSS/Atom, Hacker News, and GitHub Releases as bounded direct/trend sources; NewsData fills only a short candidate pool.
+5. Confirm candidate diversity, canonical duplicate removal, provider isolation, source URLs, and provider telemetry.
+6. Complete one source → evidence → draft → edit → explicit STEP059 approval loop.
+7. Runtime rollback is ENV-only: restore `AI_NEWS_SOURCE_MODE=newsdata_only`; do not remove additive migration 033 during an incident.
+
+Operator runbook: `doc/90_STEP063A_OPERATOR_ROLLOUT.md`.
+STEP specification: `doc/spec/STEP063A_MULTI_SOURCE_NEWS_INGESTION_AND_SOURCE_QUALITY_FOUNDATION.md`.
