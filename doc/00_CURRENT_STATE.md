@@ -1,3 +1,15 @@
+# STEP063B-H1R1 current source delta
+
+- Current source step: `STEP063B-H1R1`; package `0.63.5`.
+- Canonical baseline: STEP063B-H1 FULL SHA-256 `095fb3eae99db723e4a1852a83795627500ffd26bfd23d55214bddceb4ab4a87`.
+- Migration 035 ordering is corrected and atomic.
+- Migration 036 provides idempotent repair for partially-applied 035 schemas.
+- Schema compatibility validates required columns and constraints, not columns alone.
+- Any unexpected post-claim search failure attempts exact allowance recovery and emits a phase-tagged diagnostic code.
+- LinkedIn publishing and generator boundaries are unchanged.
+
+---
+
 # STEP063B-H1 current source delta
 
 - Current source step: `STEP063B-H1`; package `0.63.4`.

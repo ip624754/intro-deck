@@ -154,7 +154,17 @@ export default async function handler(req, res) {
       subscriptionControlsAccessNotPublishing: true,
       sourceEvidenceRequired: true,
       tokenPersistence: 'none',
-      liveAcceptancePolicy: 'artifact_bound_preflight_plus_manual_core_loop_evidence'
+      liveAcceptancePolicy: 'artifact_bound_preflight_plus_manual_core_loop_evidence',
+      migrationSafetyPolicy: {
+        migration035Ordering: 'drop_legacy_constraints_before_value_rewrite',
+        partialSchemaRepairMigration: '036',
+        audienceContractReadiness: 'columns_plus_constraints_fail_closed'
+      },
+      searchRecoveryPolicy: {
+        exactClaimMatchRequired: true,
+        unexpectedPostClaimFailureReleasesAllowance: true,
+        diagnosticCodesArePhaseTagged: true
+      }
     },
     linkedInShare: {
       enabled: linkedInShare.enabled,

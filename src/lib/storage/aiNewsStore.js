@@ -115,6 +115,54 @@ function generatorContract(config) {
   return { provider: 'openai', model: config.openai.model };
 }
 
+const AI_NEWS_SEARCH_FAILURE_PHASES = new Set([
+  'source_discovery',
+  'empty_result_telemetry',
+  'source_persistence',
+  'result_telemetry',
+  'result_finalize'
+]);
+
+function normalizeSearchFailurePhase(phase) {
+  const value = String(phase || '').trim().toLowerCase();
+  return AI_NEWS_SEARCH_FAILURE_PHASES.has(value) ? value : 'result_finalize';
+}
+
+function searchInternalErrorCode(phase) {
+  return `search_${normalizeSearchFailurePhase(phase)}_internal_error`;
+}
+
+async function releasePreparedSearchClaimBestEffort({ prepared, config, phase }) {
+  if (!prepared?.user?.id || !prepared?.searchClaimStartedAt) {
+    return { released: false, reason: 'missing_committed_search_claim' };
+  }
+  try {
+    return await withDbTransaction((client) => releaseAiNewsSourceSearchClaim(client, {
+      userId: prepared.user.id,
+      claimStartedAt: prepared.searchClaimStartedAt,
+      dailyLimit: config.searchDailyLimit
+    }));
+  } catch (error) {
+    console.warn('[ai news] exact search claim recovery failed', {
+      phase: normalizeSearchFailurePhase(phase),
+      error: String(error?.message || error).slice(0, 200)
+    });
+    return { released: false, reason: 'claim_release_failed' };
+  }
+}
+
+function failedSearchUsage({ prepared, released }) {
+  if (released?.released) {
+    return {
+      used: released.used,
+      limit: released.limit,
+      remaining: released.remaining,
+      resetsAt: released.resetsAt
+    };
+  }
+  return prepared?.searchUsage || null;
+}
+
 function persistenceUnavailable() {
   return {
     persistenceEnabled: false,
@@ -194,8 +242,8 @@ export async function loadAiNewsHubState({ telegramUserId, telegramUsername = nu
       && (!compat.aiNewsDraftsHasGeneratorProviders || !compat.aiNewsTelemetryHasGeneratorProviders)) {
       return { persistenceEnabled: true, enabled: config.enabled, eligible: false, reason: 'migration_034_required', config, preferences: defaultPreferences(), recentSources: [], latestDraft: null };
     }
-    if (!compat.aiNewsPreferencesHasAudienceContract || !compat.aiNewsPresetsHasAudienceContract) {
-      return { persistenceEnabled: true, enabled: config.enabled, eligible: false, reason: 'migration_035_required', config, preferences: defaultPreferences(), recentSources: [], latestDraft: null };
+    if (!compat.aiNewsAudienceContractReady) {
+      return { persistenceEnabled: true, enabled: config.enabled, eligible: false, reason: 'migration_036_required', config, preferences: defaultPreferences(), recentSources: [], latestDraft: null };
     }
     const context = await loadUserContext(client, { telegramUserId, telegramUsername, multiSourceSchema: compat.aiNewsSourcesHasQualityMetadata });
     const eligibility = checkEligibility({ config, telegramUserId, entitlements: context.entitlements, profile: context.profile });
@@ -229,7 +277,7 @@ export async function updateAiNewsPresetForTelegramUser({ telegramUserId, telegr
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPreferencesTable) return { persistenceEnabled: true, changed: false, reason: 'migration_030_required' };
-    if (!compat.aiNewsPreferencesHasAudienceContract) return { persistenceEnabled: true, changed: false, reason: 'migration_035_required' };
+    if (!compat.aiNewsAudienceContractReady) return { persistenceEnabled: true, changed: false, reason: 'migration_036_required' };
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
     const preferences = await patchAiNewsPreferences(client, {
       userId: user.id,
@@ -244,7 +292,7 @@ export async function updateAiNewsAudienceForTelegramUser({ telegramUserId, tele
   const normalized = normalizeAudienceKey(audienceKey);
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
-    if (!compat.aiNewsPreferencesHasAudienceContract) return { persistenceEnabled: true, changed: false, reason: 'migration_035_required' };
+    if (!compat.aiNewsAudienceContractReady) return { persistenceEnabled: true, changed: false, reason: 'migration_036_required' };
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
     const preferences = await patchAiNewsPreferences(client, {
       userId: user.id,
@@ -259,7 +307,7 @@ export async function updateAiNewsAngleForTelegramUser({ telegramUserId, telegra
   const normalized = normalizeAngleKey(angleKey);
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
-    if (!compat.aiNewsPreferencesHasAudienceContract) return { persistenceEnabled: true, changed: false, reason: 'migration_035_required' };
+    if (!compat.aiNewsAudienceContractReady) return { persistenceEnabled: true, changed: false, reason: 'migration_036_required' };
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
     const preferences = await patchAiNewsPreferences(client, { userId: user.id, patch: { angleKey: normalized } });
     return { persistenceEnabled: true, changed: true, preferences };
@@ -309,8 +357,8 @@ export async function beginAiNewsAudienceInputForTelegramUser({ telegramUserId, 
   if (!isDatabaseConfigured()) return persistenceUnavailable();
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
-    if (!compat.hasAiNewsInputSessionsTable || !compat.aiNewsPreferencesHasAudienceContract) {
-      return { persistenceEnabled: true, started: false, reason: compat.hasAiNewsInputSessionsTable ? 'migration_035_required' : 'migration_030_required' };
+    if (!compat.hasAiNewsInputSessionsTable || !compat.aiNewsAudienceContractReady) {
+      return { persistenceEnabled: true, started: false, reason: compat.hasAiNewsInputSessionsTable ? 'migration_036_required' : 'migration_030_required' };
     }
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
     await beginAiNewsInputSession(client, {
@@ -434,7 +482,7 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
     if (config.source?.mode === 'multi_source' && !compat.aiNewsSourcesHasQualityMetadata) {
       return { ok: false, reason: 'migration_033_required' };
     }
-    if (!compat.aiNewsPreferencesHasAudienceContract) return { ok: false, reason: 'migration_035_required' };
+    if (!compat.aiNewsAudienceContractReady) return { ok: false, reason: 'migration_036_required' };
     const context = await loadUserContext(client, { telegramUserId, telegramUsername, multiSourceSchema: compat.aiNewsSourcesHasQualityMetadata });
     const preferences = normalizePreferences({ ...context.preferences, ...(preferenceOverride || {}) });
     const eligibility = checkEligibility({ config, telegramUserId, entitlements: context.entitlements, profile: context.profile });
@@ -471,189 +519,188 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
   });
   if (!prepared.ok) return { persistenceEnabled: true, found: false, articles: [], config, ...prepared };
 
-  let discovery;
+  let phase = 'source_discovery';
   try {
-    discovery = await discoverNewsSources({
+    const discovery = await discoverNewsSources({
       config,
       query: prepared.query,
       preferences: prepared.preferences,
       profileContext: prepared.profileContext,
       fetchImpl
     });
-  } catch (error) {
-    const released = await withDbTransaction((client) => releaseAiNewsSourceSearchClaim(client, {
-      userId: prepared.user.id,
-      claimStartedAt: prepared.searchClaimStartedAt,
-      dailyLimit: config.searchDailyLimit
-    })).catch(() => ({ released: false }));
-    return {
-      persistenceEnabled: true,
-      found: false,
-      articles: [],
-      reason: 'ai_news_all_providers_failed',
-      providerSummary: [],
-      searchClaimReleased: Boolean(released.released),
-      searchUsage: released.released ? {
-        used: released.used,
-        limit: released.limit,
-        remaining: released.remaining,
-        resetsAt: released.resetsAt
-      } : prepared.searchUsage,
-      errorCode: 'source_discovery_unhandled_failure'
-    };
-  }
-  const providerResults = discovery.providerResults || [];
-  const operation = config.source?.mode === 'multi_source' ? 'discover_sources' : 'search_latest';
+    const providerResults = discovery.providerResults || [];
+    const operation = config.source?.mode === 'multi_source' ? 'discover_sources' : 'search_latest';
 
-  if (!discovery.articles.length) {
+    if (!discovery.articles.length) {
+      phase = 'empty_result_telemetry';
+      for (const result of providerResults) {
+        await recordProviderUsageBestEffort({
+          userId: prepared.user.id,
+          presetRunId,
+          provider: result.provider,
+          operation,
+          outcome: result.outcome || 'no_result',
+          requestId: result.requestId,
+          resultCount: 0,
+          durationMs: result.durationMs,
+          estimatedCostMicrousd: result.provider === 'newsdata'
+            ? estimateFixedRequestCostMicrousd(config.newsdata.estimatedRequestCostUsd)
+            : 0,
+          errorCode: result.error?.code || null,
+          detail: { rawResultCount: result.rawResultCount || 0, ...(result.detail || {}) }
+        });
+      }
+      const allFailed = providerResults.length > 0 && providerResults.every((result) => result.outcome === 'failed');
+      const newsdataOnlyFailure = config.source?.mode === 'newsdata_only' && providerResults[0]?.outcome === 'failed';
+      const providerFailure = allFailed || newsdataOnlyFailure;
+      const released = providerFailure
+        ? await releasePreparedSearchClaimBestEffort({ prepared, config, phase: 'source_discovery' })
+        : { released: false };
+      return {
+        persistenceEnabled: true,
+        found: false,
+        articles: [],
+        reason: newsdataOnlyFailure ? 'newsdata_request_failed' : allFailed ? 'ai_news_all_providers_failed' : 'ai_news_no_fresh_sources',
+        providerSummary: providerResults.map(({ provider, outcome, error, detail }) => ({
+          provider,
+          outcome,
+          errorCode: error?.code || null,
+          noResultReason: detail?.noResultReason || null
+        })),
+        searchClaimReleased: Boolean(released.released),
+        searchClaimConsumed: !released.released,
+        searchUsage: failedSearchUsage({ prepared, released })
+      };
+    }
+
+    phase = 'source_persistence';
+    const expiresAt = new Date(Date.now() + config.sourceSelectionTtlSeconds * 1000);
+    const stored = await withDbTransaction(async (client) => {
+      const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
+      const rows = [];
+      for (const article of discovery.articles) {
+        const evidence = buildSourceEvidence(article);
+        rows.push(await upsertAiNewsSource(client, {
+          publicToken: crypto.randomUUID(),
+          userId: user.id,
+          provider: article.provider,
+          providerArticleId: article.providerArticleId,
+          sourceUrl: article.url,
+          sourceUrlHash: sha256(article.dedupeKey || article.url),
+          sourceTitle: article.title,
+          sourceName: article.sourceName,
+          sourceDomain: article.sourceDomain,
+          sourceDescription: article.description,
+          sourceContentExcerpt: article.contentExcerpt,
+          sourceLanguage: article.language,
+          sourceCountry: article.country,
+          sourceCategories: article.categories,
+          publishedAt: article.publishedAt,
+          querySnapshot: prepared.query,
+          evidenceHash: sha256(evidence),
+          expiresAt,
+          sourceKind: article.sourceKind,
+          sourceAuthorityScore: article.authorityScore,
+          sourceIsPrimary: article.isPrimary,
+          trendScore: article.trendScore,
+          sourceMetadata: article.metadata,
+          multiSourceSchema: prepared.multiSourceSchema
+        }));
+      }
+      return rows;
+    });
+
+    phase = 'result_telemetry';
+    const firstSourceByProvider = new Map();
+    for (const row of stored) {
+      if (!firstSourceByProvider.has(row.provider)) firstSourceByProvider.set(row.provider, row.id);
+    }
     for (const result of providerResults) {
+      const storedResultCount = stored.filter((row) => row.provider === result.provider).length;
       await recordProviderUsageBestEffort({
         userId: prepared.user.id,
+        sourceId: firstSourceByProvider.get(result.provider) || null,
         presetRunId,
         provider: result.provider,
         operation,
-        outcome: result.outcome || 'no_result',
+        outcome: result.outcome || (result.articles?.length ? 'success' : 'no_result'),
         requestId: result.requestId,
-        resultCount: 0,
+        resultCount: storedResultCount,
         durationMs: result.durationMs,
         estimatedCostMicrousd: result.provider === 'newsdata'
           ? estimateFixedRequestCostMicrousd(config.newsdata.estimatedRequestCostUsd)
           : 0,
         errorCode: result.error?.code || null,
-        detail: { rawResultCount: result.rawResultCount || 0, ...(result.detail || {}) }
+        detail: {
+          rawResultCount: result.rawResultCount || 0,
+          providerResultCount: result.articles?.length || 0,
+          storedResultCount,
+          newsdataFallbackUsed: discovery.newsdataFallbackUsed,
+          ...(result.detail || {})
+        }
       });
     }
-    const allFailed = providerResults.length > 0 && providerResults.every((result) => result.outcome === 'failed');
-    const newsdataOnlyFailure = config.source?.mode === 'newsdata_only' && providerResults[0]?.outcome === 'failed';
-    const providerFailure = allFailed || newsdataOnlyFailure;
-    const released = providerFailure
-      ? await withDbTransaction((client) => releaseAiNewsSourceSearchClaim(client, {
-        userId: prepared.user.id,
-        claimStartedAt: prepared.searchClaimStartedAt,
-        dailyLimit: config.searchDailyLimit
-      })).catch(() => ({ released: false }))
-      : { released: false };
+
+    phase = 'result_finalize';
+    return {
+      persistenceEnabled: true,
+      found: true,
+      articles: stored,
+      query: prepared.query,
+      preferences: prepared.preferences,
+      personalization: prepared.profileContext,
+      audienceKey: prepared.preferences.audience_key,
+      angleKey: prepared.preferences.angle_key,
+      sourceMode: config.source?.mode || 'newsdata_only',
+      providerSummary: providerResults.map(({ provider, outcome, error, articles, detail }) => ({
+        provider,
+        outcome,
+        resultCount: articles?.length || 0,
+        errorCode: error?.code || null,
+        noResultReason: detail?.noResultReason || null,
+        relevanceRejectedCount: Number(detail?.relevance?.rejectedCount || 0)
+      })),
+      newsdataFallbackUsed: discovery.newsdataFallbackUsed,
+      generatorMode: config.generator?.mode || 'openai',
+      draftGenerationAvailable: prepared.draftGenerationAvailable,
+      dailyUsage: {
+        used: prepared.used,
+        limit: config.dailyLimit,
+        remaining: Math.max(0, config.dailyLimit - prepared.used)
+      },
+      searchClaimConsumed: true,
+      searchUsage: prepared.searchUsage,
+      searchCooldown: {
+        active: config.searchCooldownSeconds > 0,
+        retryAfterSeconds: Math.max(0, Number(config.searchCooldownSeconds) || 0),
+        readyAt: config.searchCooldownSeconds > 0
+          ? new Date(new Date(prepared.searchClaimStartedAt || Date.now()).getTime() + config.searchCooldownSeconds * 1000)
+          : null
+      }
+    };
+  } catch (error) {
+    const normalizedPhase = normalizeSearchFailurePhase(phase);
+    const released = await releasePreparedSearchClaimBestEffort({ prepared, config, phase: normalizedPhase });
+    console.warn('[ai news] source search phase failed', {
+      phase: normalizedPhase,
+      searchClaimReleased: Boolean(released.released),
+      error: String(error?.message || error).slice(0, 200)
+    });
     return {
       persistenceEnabled: true,
       found: false,
       articles: [],
-      reason: newsdataOnlyFailure ? 'newsdata_request_failed' : allFailed ? 'ai_news_all_providers_failed' : 'ai_news_no_fresh_sources',
-      providerSummary: providerResults.map(({ provider, outcome, error, detail }) => ({
-        provider,
-        outcome,
-        errorCode: error?.code || null,
-        noResultReason: detail?.noResultReason || null
-      })),
+      reason: normalizedPhase === 'source_discovery'
+        ? 'ai_news_all_providers_failed'
+        : 'ai_news_search_internal_error',
+      providerSummary: [],
       searchClaimReleased: Boolean(released.released),
-      searchUsage: released.released ? {
-        used: released.used,
-        limit: released.limit,
-        remaining: released.remaining,
-        resetsAt: released.resetsAt
-      } : prepared.searchUsage
+      searchClaimConsumed: !released.released,
+      searchUsage: failedSearchUsage({ prepared, released }),
+      errorCode: searchInternalErrorCode(normalizedPhase),
+      internalPhase: normalizedPhase
     };
   }
-
-  const expiresAt = new Date(Date.now() + config.sourceSelectionTtlSeconds * 1000);
-  const stored = await withDbTransaction(async (client) => {
-    const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
-    const rows = [];
-    for (const article of discovery.articles) {
-      const evidence = buildSourceEvidence(article);
-      rows.push(await upsertAiNewsSource(client, {
-        publicToken: crypto.randomUUID(),
-        userId: user.id,
-        provider: article.provider,
-        providerArticleId: article.providerArticleId,
-        sourceUrl: article.url,
-        sourceUrlHash: sha256(article.dedupeKey || article.url),
-        sourceTitle: article.title,
-        sourceName: article.sourceName,
-        sourceDomain: article.sourceDomain,
-        sourceDescription: article.description,
-        sourceContentExcerpt: article.contentExcerpt,
-        sourceLanguage: article.language,
-        sourceCountry: article.country,
-        sourceCategories: article.categories,
-        publishedAt: article.publishedAt,
-        querySnapshot: prepared.query,
-        evidenceHash: sha256(evidence),
-        expiresAt,
-        sourceKind: article.sourceKind,
-        sourceAuthorityScore: article.authorityScore,
-        sourceIsPrimary: article.isPrimary,
-        trendScore: article.trendScore,
-        sourceMetadata: article.metadata,
-        multiSourceSchema: prepared.multiSourceSchema
-      }));
-    }
-    return rows;
-  });
-
-  const firstSourceByProvider = new Map();
-  for (const row of stored) {
-    if (!firstSourceByProvider.has(row.provider)) firstSourceByProvider.set(row.provider, row.id);
-  }
-  for (const result of providerResults) {
-    const storedResultCount = stored.filter((row) => row.provider === result.provider).length;
-    await recordProviderUsageBestEffort({
-      userId: prepared.user.id,
-      sourceId: firstSourceByProvider.get(result.provider) || null,
-      presetRunId,
-      provider: result.provider,
-      operation,
-      outcome: result.outcome || (result.articles?.length ? 'success' : 'no_result'),
-      requestId: result.requestId,
-      resultCount: storedResultCount,
-      durationMs: result.durationMs,
-      estimatedCostMicrousd: result.provider === 'newsdata'
-        ? estimateFixedRequestCostMicrousd(config.newsdata.estimatedRequestCostUsd)
-        : 0,
-      errorCode: result.error?.code || null,
-      detail: {
-        rawResultCount: result.rawResultCount || 0,
-        providerResultCount: result.articles?.length || 0,
-        storedResultCount,
-        newsdataFallbackUsed: discovery.newsdataFallbackUsed,
-        ...(result.detail || {})
-      }
-    });
-  }
-  return {
-    persistenceEnabled: true,
-    found: true,
-    articles: stored,
-    query: prepared.query,
-    preferences: prepared.preferences,
-    personalization: prepared.profileContext,
-    audienceKey: prepared.preferences.audience_key,
-    angleKey: prepared.preferences.angle_key,
-    sourceMode: config.source?.mode || 'newsdata_only',
-    providerSummary: providerResults.map(({ provider, outcome, error, articles, detail }) => ({
-      provider,
-      outcome,
-      resultCount: articles?.length || 0,
-      errorCode: error?.code || null,
-      noResultReason: detail?.noResultReason || null,
-      relevanceRejectedCount: Number(detail?.relevance?.rejectedCount || 0)
-    })),
-    newsdataFallbackUsed: discovery.newsdataFallbackUsed,
-    generatorMode: config.generator?.mode || 'openai',
-    draftGenerationAvailable: prepared.draftGenerationAvailable,
-    dailyUsage: {
-      used: prepared.used,
-      limit: config.dailyLimit,
-      remaining: Math.max(0, config.dailyLimit - prepared.used)
-    },
-    searchUsage: prepared.searchUsage,
-    searchCooldown: {
-      active: config.searchCooldownSeconds > 0,
-      retryAfterSeconds: Math.max(0, Number(config.searchCooldownSeconds) || 0),
-      readyAt: config.searchCooldownSeconds > 0
-        ? new Date(new Date(prepared.searchClaimStartedAt || Date.now()).getTime() + config.searchCooldownSeconds * 1000)
-        : null
-    }
-  };
 }
 
 export async function generateAiNewsDraftForTelegramUser({ telegramUserId, telegramUsername = null, sourceToken, preferenceOverride = null, presetId = null, presetRunId = null, deliveryKind = 'manual', fetchImpl = fetch }) {
@@ -670,7 +717,7 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
       && (!compat.aiNewsDraftsHasGeneratorProviders || !compat.aiNewsTelemetryHasGeneratorProviders)) {
       return { ok: false, reason: 'migration_034_required' };
     }
-    if (!compat.aiNewsPreferencesHasAudienceContract) return { ok: false, reason: 'migration_035_required' };
+    if (!compat.aiNewsAudienceContractReady) return { ok: false, reason: 'migration_036_required' };
     const context = await loadUserContext(client, { telegramUserId, telegramUsername, multiSourceSchema: compat.aiNewsSourcesHasQualityMetadata });
     const preferences = normalizePreferences({ ...context.preferences, ...(preferenceOverride || {}) });
     const eligibility = checkEligibility({ config, telegramUserId, entitlements: context.entitlements, profile: context.profile });

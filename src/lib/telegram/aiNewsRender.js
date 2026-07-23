@@ -67,6 +67,7 @@ function reasonText(reason) {
     migration_033_required: 'Migration 033 has not been applied yet. Multi-source discovery remains unavailable.',
     migration_034_required: 'Migration 034 has not been applied yet. Groq/template draft generation remains fail-closed.',
     migration_035_required: 'Migration 035 has not been applied yet. Audience-aware discovery and personalized presets remain fail-closed.',
+    migration_036_required: 'Migration 036 has not repaired and verified the audience-aware schema contract yet. Discovery remains fail-closed.',
     ai_news_all_providers_failed: 'All enabled source providers failed. Your allowance is restored when the claim can be safely released.',
     ai_news_search_internal_error: 'The source search ended unexpectedly. Try again later.',
     ai_news_preset_limit_reached: 'Your saved-preset limit is used.',
@@ -215,12 +216,13 @@ export function renderAiNewsSearchFailureText({ result = {} }) {
     'migration_032_required',
     'migration_033_required',
     'migration_035_required',
+    'migration_036_required',
     'ai_news_search_daily_limit_reached',
     'ai_news_search_cooldown'
   ]);
   const allowanceLine = result?.searchClaimReleased
-    ? 'Search allowance: restored because the configured providers failed.'
-    : noClaimReasons.has(result?.reason)
+    ? 'Search allowance: restored because the search did not complete.'
+    : result?.searchClaimConsumed === false || noClaimReasons.has(result?.reason)
       ? 'Search allowance: no new search claim was consumed.'
       : 'Search allowance: this completed search attempt counts toward the rolling limit.';
   const lines = [

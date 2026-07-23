@@ -18,7 +18,7 @@ import { releaseAiNewsSourceSearchClaim } from '../src/db/aiNewsRepo.js';
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-assert.equal(CURRENT_SOURCE_STEP, 'STEP063B-H1');
+assert.equal(CURRENT_SOURCE_STEP, 'STEP063B-H1R1');
 
 const state = {
   preferences: {
@@ -137,6 +137,7 @@ assert.doesNotMatch(composerSource, /Finding professionally relevant stories fro
 const storeSource = read('src/lib/storage/aiNewsStore.js');
 assert.match(storeSource, /releaseAiNewsSourceSearchClaim/);
 assert.match(storeSource, /searchClaimReleased/);
-assert.match(storeSource, /source_discovery_unhandled_failure/);
+assert.match(storeSource, /searchInternalErrorCode/);
+assert.match(storeSource, /releasePreparedSearchClaimBestEffort/);
 
-console.log('STEP063B-H1 persistent search progress and callback recovery smoke: PASS');
+console.log('STEP063B-H1R1 persistent search progress and callback recovery smoke: PASS');

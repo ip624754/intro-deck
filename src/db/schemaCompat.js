@@ -102,8 +102,27 @@ export async function getSchemaCompat(client) {
       exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_provider_usage_events') as has_ai_news_provider_usage_events_table,
       exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_drafts' and column_name='openai_total_tokens') as ai_news_drafts_has_openai_usage,
       exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_sources' and column_name='source_authority_score') as ai_news_sources_has_quality_metadata,
-      (select count(*)=4 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_preferences' and column_name in ('audience_key','custom_audience','angle_key','profile_affinity_enabled')) as ai_news_preferences_has_audience_contract,
-      (select count(*)=4 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_presets' and column_name in ('audience_key','custom_audience','angle_key','profile_affinity_enabled')) as ai_news_presets_has_audience_contract,
+      (
+        (select count(*)=4 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_preferences' and column_name in ('audience_key','custom_audience','angle_key','profile_affinity_enabled'))
+        and exists (select 1 from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=current_schema() and t.relname='ai_news_preferences' and c.conname='ai_news_preferences_preset_key_check' and pg_get_constraintdef(c.oid) ilike '%for_you%' and pg_get_constraintdef(c.oid) ilike '%business_markets%')
+        and exists (select 1 from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=current_schema() and t.relname='ai_news_preferences' and c.conname='ai_news_preferences_audience_key_check' and pg_get_constraintdef(c.oid) ilike '%product_engineering%')
+        and exists (select 1 from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=current_schema() and t.relname='ai_news_preferences' and c.conname='ai_news_preferences_angle_key_check' and pg_get_constraintdef(c.oid) ilike '%explain_simply%')
+      ) as ai_news_preferences_has_audience_contract,
+      (
+        (select count(*)=4 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_presets' and column_name in ('audience_key','custom_audience','angle_key','profile_affinity_enabled'))
+        and exists (select 1 from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=current_schema() and t.relname='ai_news_presets' and c.conname='ai_news_presets_preset_key_check' and pg_get_constraintdef(c.oid) ilike '%for_you%' and pg_get_constraintdef(c.oid) ilike '%business_markets%')
+        and exists (select 1 from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=current_schema() and t.relname='ai_news_presets' and c.conname='ai_news_presets_audience_key_check' and pg_get_constraintdef(c.oid) ilike '%product_engineering%')
+        and exists (select 1 from pg_constraint c join pg_class t on t.oid=c.conrelid join pg_namespace n on n.oid=t.relnamespace where n.nspname=current_schema() and t.relname='ai_news_presets' and c.conname='ai_news_presets_angle_key_check' and pg_get_constraintdef(c.oid) ilike '%explain_simply%')
+      ) as ai_news_presets_has_audience_contract,
+      exists (
+        select 1 from pg_constraint c
+        join pg_class t on t.oid=c.conrelid
+        join pg_namespace n on n.oid=t.relnamespace
+        where n.nspname=current_schema()
+          and t.relname='ai_news_input_sessions'
+          and c.conname='ai_news_input_sessions_input_kind_check'
+          and pg_get_constraintdef(c.oid) ilike '%audience_query%'
+      ) as ai_news_input_sessions_has_audience_contract,
       exists (
         select 1
         from pg_constraint c
@@ -158,6 +177,12 @@ export async function getSchemaCompat(client) {
     aiNewsSourcesHasQualityMetadata: Boolean(result.rows[0]?.ai_news_sources_has_quality_metadata),
     aiNewsPreferencesHasAudienceContract: Boolean(result.rows[0]?.ai_news_preferences_has_audience_contract),
     aiNewsPresetsHasAudienceContract: Boolean(result.rows[0]?.ai_news_presets_has_audience_contract),
+    aiNewsInputSessionsHasAudienceContract: Boolean(result.rows[0]?.ai_news_input_sessions_has_audience_contract),
+    aiNewsAudienceContractReady: Boolean(
+      result.rows[0]?.ai_news_preferences_has_audience_contract
+      && result.rows[0]?.ai_news_presets_has_audience_contract
+      && result.rows[0]?.ai_news_input_sessions_has_audience_contract
+    ),
     aiNewsDraftsHasGeneratorProviders: Boolean(result.rows[0]?.ai_news_drafts_has_generator_providers),
     aiNewsTelemetryHasGeneratorProviders: Boolean(result.rows[0]?.ai_news_telemetry_has_generator_providers),
     linkedInShareHasSourceKind: Boolean(result.rows[0]?.linkedin_share_has_source_kind)

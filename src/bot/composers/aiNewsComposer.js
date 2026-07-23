@@ -282,7 +282,8 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
         return {
           found: false,
           reason: 'ai_news_search_internal_error',
-          errorCode: 'search_internal_error',
+          errorCode: 'search_preparation_internal_error',
+          searchClaimConsumed: false,
           articles: []
         };
       });

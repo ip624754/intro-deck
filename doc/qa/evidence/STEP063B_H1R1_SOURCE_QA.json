@@ -1,0 +1,22 @@
+{
+  "step": "STEP063B-H1R1",
+  "status": "SOURCE_QA_PASS",
+  "baselineSha256": "095fb3eae99db723e4a1852a83795627500ffd26bfd23d55214bddceb4ab4a87",
+  "runtime": {
+    "node": "22.16.0",
+    "package": "0.63.5",
+    "sourceStep": "STEP063B-H1R1"
+  },
+  "checks": {
+    "syntax": "pass",
+    "focused": "pass",
+    "fullInventory": {
+      "baselinePass": 95,
+      "baselineNonPass": 19,
+      "candidatePass": 96,
+      "candidateNonPass": 19,
+      "regressions": 0
+    },
+    "production": "not_verified"
+  }
+}

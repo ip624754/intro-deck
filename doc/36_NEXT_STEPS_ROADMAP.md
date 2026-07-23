@@ -1,3 +1,12 @@
+# STEP063B-H1R1 remediation corridor
+
+1. Apply migration 036 and deploy the exact H1R1 artifact.
+2. Verify normal browse-only search and `new_drafts=0`.
+3. Verify a controlled post-claim failure restores the exact allowance before declaring recovery production-accepted.
+4. Only after H1R1 acceptance proceed to STEP063B-H2 personalized query precision and final-fit gating.
+
+---
+
 # 36_NEXT_STEPS_ROADMAP
 
 ## Current corridor after STEP063B-H1

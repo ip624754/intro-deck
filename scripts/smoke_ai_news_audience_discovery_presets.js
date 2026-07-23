@@ -38,7 +38,7 @@ import {
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-assert.equal(CURRENT_SOURCE_STEP, 'STEP063B-H1');
+assert.equal(CURRENT_SOURCE_STEP, 'STEP063B-H1R1');
 assert.equal(normalizePresetKey('business_growth'), 'business_markets');
 assert.equal(normalizePresetKey('unknown'), 'for_you');
 for (const key of ['for_you', 'ai_technology', 'startups_product', 'business_markets', 'career_leadership', 'crypto_web3', 'custom']) {
@@ -101,7 +101,7 @@ const presetRepo = read('src/db/aiNewsPresetRepo.js');
 assert.match(presetRepo, /audience_key, custom_audience, angle_key, profile_affinity_enabled/);
 assert.match(presetRepo, /p\.audience_key, p\.custom_audience, p\.angle_key, p\.profile_affinity_enabled/);
 const presetStore = read('src/lib/storage/aiNewsPresetStore.js');
-assert.match(presetStore, /migration_035_required/);
+assert.match(presetStore, /migration_036_required/);
 assert.match(presetStore, /audienceKey: preferences\.audience_key/);
 assert.match(presetStore, /angleKey: preferences\.angle_key/);
 assert.match(presetStore, /profileAffinityEnabled: preferences\.profile_affinity_enabled !== false/);
@@ -289,7 +289,7 @@ try {
   const response = { statusCode: null, body: null, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } };
   await healthHandler({}, response);
   assert.equal(response.statusCode, 200);
-  assert.equal(response.body.step, 'STEP063B-H1');
+  assert.equal(response.body.step, 'STEP063B-H1R1');
   assert.equal(response.body.aiNewsDraft.audienceDiscoveryPolicy.personalizedTopic, 'for_you');
   assert.equal(response.body.aiNewsDraft.automaticPublishing, false);
 } finally {
