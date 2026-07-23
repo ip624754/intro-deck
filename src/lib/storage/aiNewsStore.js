@@ -12,6 +12,7 @@ import {
   cancelAiNewsDraft,
   calculateAiNewsSearchUsage,
   claimAiNewsSourceSearch,
+  releaseAiNewsSourceSearchClaim,
   clearAiNewsInputSession,
   countAiNewsDraftsSince,
   createGeneratingAiNewsDraft,
@@ -60,6 +61,17 @@ import { discoverNewsSources } from '../news/multiSource.js';
 import { createLinkedInTextShareIntentWithClient } from './linkedinShareStore.js';
 
 
+
+function calculateSearchCooldownState(preferences, cooldownSeconds, nowMs = Date.now()) {
+  const lastSearchAt = preferences?.last_search_started_at ? new Date(preferences.last_search_started_at).getTime() : 0;
+  const readyAtMs = lastSearchAt ? lastSearchAt + (Math.max(0, Number(cooldownSeconds) || 0) * 1000) : 0;
+  const active = Boolean(readyAtMs && readyAtMs > nowMs);
+  return {
+    active,
+    retryAfterSeconds: active ? Math.max(1, Math.ceil((readyAtMs - nowMs) / 1000)) : 0,
+    readyAt: active ? new Date(readyAtMs) : null
+  };
+}
 
 async function recordProviderUsageBestEffort(event) {
   if (!isDatabaseConfigured()) return null;
@@ -205,7 +217,8 @@ export async function loadAiNewsHubState({ telegramUserId, telegramUsername = nu
       presetPersistenceReady: Boolean(compat.hasAiNewsPresetsTable && compat.hasAiNewsPresetRunsTable && compat.aiNewsDraftsHasPresetRunId),
       presetUsage: { used: presets.length, limit: config.presetLimit, remaining: Math.max(0, config.presetLimit - presets.length) },
       dailyUsage: { used, limit: config.dailyLimit, remaining: Math.max(0, config.dailyLimit - used) },
-      searchUsage: calculateAiNewsSearchUsage(context.preferences, config.searchDailyLimit)
+      searchUsage: calculateAiNewsSearchUsage(context.preferences, config.searchDailyLimit),
+      searchCooldown: calculateSearchCooldownState(context.preferences, config.searchCooldownSeconds)
     };
   });
 }
@@ -452,18 +465,43 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
         remaining: searchClaim.remaining,
         resetsAt: searchClaim.resetsAt
       },
+      searchClaimStartedAt: searchClaim.preferences?.last_search_started_at || null,
       multiSourceSchema: compat.aiNewsSourcesHasQualityMetadata
     };
   });
   if (!prepared.ok) return { persistenceEnabled: true, found: false, articles: [], config, ...prepared };
 
-  const discovery = await discoverNewsSources({
-    config,
-    query: prepared.query,
-    preferences: prepared.preferences,
-    profileContext: prepared.profileContext,
-    fetchImpl
-  });
+  let discovery;
+  try {
+    discovery = await discoverNewsSources({
+      config,
+      query: prepared.query,
+      preferences: prepared.preferences,
+      profileContext: prepared.profileContext,
+      fetchImpl
+    });
+  } catch (error) {
+    const released = await withDbTransaction((client) => releaseAiNewsSourceSearchClaim(client, {
+      userId: prepared.user.id,
+      claimStartedAt: prepared.searchClaimStartedAt,
+      dailyLimit: config.searchDailyLimit
+    })).catch(() => ({ released: false }));
+    return {
+      persistenceEnabled: true,
+      found: false,
+      articles: [],
+      reason: 'ai_news_all_providers_failed',
+      providerSummary: [],
+      searchClaimReleased: Boolean(released.released),
+      searchUsage: released.released ? {
+        used: released.used,
+        limit: released.limit,
+        remaining: released.remaining,
+        resetsAt: released.resetsAt
+      } : prepared.searchUsage,
+      errorCode: 'source_discovery_unhandled_failure'
+    };
+  }
   const providerResults = discovery.providerResults || [];
   const operation = config.source?.mode === 'multi_source' ? 'discover_sources' : 'search_latest';
 
@@ -487,6 +525,14 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
     }
     const allFailed = providerResults.length > 0 && providerResults.every((result) => result.outcome === 'failed');
     const newsdataOnlyFailure = config.source?.mode === 'newsdata_only' && providerResults[0]?.outcome === 'failed';
+    const providerFailure = allFailed || newsdataOnlyFailure;
+    const released = providerFailure
+      ? await withDbTransaction((client) => releaseAiNewsSourceSearchClaim(client, {
+        userId: prepared.user.id,
+        claimStartedAt: prepared.searchClaimStartedAt,
+        dailyLimit: config.searchDailyLimit
+      })).catch(() => ({ released: false }))
+      : { released: false };
     return {
       persistenceEnabled: true,
       found: false,
@@ -497,7 +543,14 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
         outcome,
         errorCode: error?.code || null,
         noResultReason: detail?.noResultReason || null
-      }))
+      })),
+      searchClaimReleased: Boolean(released.released),
+      searchUsage: released.released ? {
+        used: released.used,
+        limit: released.limit,
+        remaining: released.remaining,
+        resetsAt: released.resetsAt
+      } : prepared.searchUsage
     };
   }
 
@@ -592,7 +645,14 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
       limit: config.dailyLimit,
       remaining: Math.max(0, config.dailyLimit - prepared.used)
     },
-    searchUsage: prepared.searchUsage
+    searchUsage: prepared.searchUsage,
+    searchCooldown: {
+      active: config.searchCooldownSeconds > 0,
+      retryAfterSeconds: Math.max(0, Number(config.searchCooldownSeconds) || 0),
+      readyAt: config.searchCooldownSeconds > 0
+        ? new Date(new Date(prepared.searchClaimStartedAt || Date.now()).getTime() + config.searchCooldownSeconds * 1000)
+        : null
+    }
   };
 }
 

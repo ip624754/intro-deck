@@ -1,0 +1,23 @@
+{
+  "step": "STEP063B-H1",
+  "status": "SOURCE_IMPLEMENTED_FOCUSED_QA_PASSED",
+  "baseline": {
+    "artifact": "IntroDeck_STEP063B_FULL_2026-07-24.zip",
+    "sha256": "c2005f93fc885b68f0ffbd703f3a0a3a7fb4a2846df67790c195c08384aa7f7e"
+  },
+  "candidate": {
+    "package": "0.63.4",
+    "sourceStep": "STEP063B-H1"
+  },
+  "qa": {
+    "syntax": "PASS",
+    "focusedSmoke": "PASS",
+    "baselinePassToCandidateNonPass": 0,
+    "candidateSmokeSummary": {
+      "pass": 95,
+      "nonPass": 19,
+      "total": 114
+    }
+  },
+  "productionVerified": false
+}

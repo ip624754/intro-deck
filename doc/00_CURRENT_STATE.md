@@ -1,3 +1,17 @@
+# STEP063B-H1 current source delta
+
+- Current source step: `STEP063B-H1`; package `0.63.4`.
+- Exact baseline: `IntroDeck_STEP063B_FULL_2026-07-24.zip`, SHA-256 `c2005f93fc885b68f0ffbd703f3a0a3a7fb4a2846df67790c195c08384aa7f7e`.
+- Search progress is persistent and terminates visibly as results or failure.
+- Fallback replies are tracked by exact chat/message reference for final edits.
+- Duplicate callbacks are guarded locally; PostgreSQL claim semantics remain the cross-runtime boundary.
+- Total provider failure can conditionally restore only the exact current search claim.
+- Migration: none. New ENV: none.
+- Production deployment and live Telegram callback acceptance are not verified.
+- STEP059 publishing remains explicit and unchanged.
+
+---
+
 # STEP063B current source delta
 
 - Current source step: `STEP063B`; package `0.63.3`.

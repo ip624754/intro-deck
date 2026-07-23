@@ -101,6 +101,13 @@ export default async function handler(req, res) {
       },
       sourceQualityPolicy: publicSourceRelevanceSummary(),
       audienceDiscoveryPolicy: publicAudienceDiscoverySummary(),
+      searchUxPolicy: {
+        persistentProgressMessage: true,
+        terminalStates: ['results', 'failed'],
+        duplicateCallbackGuard: true,
+        providerFailureAllowanceRelease: true,
+        progressClaim: 'configured_source_providers_only'
+      },
       newsdataFallbackPolicy: aiNewsDraft.source?.mode === 'multi_source' ? 'only_when_primary_pool_is_below_limit' : 'primary_provider',
       generatorMode,
       generatorEnabled: Boolean(aiNewsDraft.generator?.enabled),

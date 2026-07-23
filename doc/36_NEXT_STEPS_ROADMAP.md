@@ -1,5 +1,23 @@
 # 36_NEXT_STEPS_ROADMAP
 
+## Current corridor after STEP063B-H1
+
+STEP063B-H1 is source-implemented and QA passed. The next action is bounded Telegram runtime acceptance.
+
+Required sequence:
+
+1. Deploy the exact STEP063B-H1 artifact with the existing browse-only ENV.
+2. Verify `/api/health` exposes the persistent search UX policy and `automaticPublishing=false`.
+3. Run one successful search and confirm the same visible progress message becomes the result list.
+4. Repeatedly press the progress callback and confirm no duplicate provider execution starts.
+5. Safely reproduce one provider-total failure when possible and confirm a persistent failure card plus exact allowance restoration.
+6. Confirm browse-only creates zero draft rows.
+7. Roll back to exact STEP063B FULL on message-targeting, allowance, duplicate-callback, latency, or UX regression.
+
+Do not expand provider scope or publishing behavior before this runtime acceptance is closed.
+
+---
+
 ## Current corridor after STEP063B
 
 STEP063B is source-implemented and focused-QA passed. The next action is bounded migration/deployment acceptance, not expansion of providers or autonomous publishing.

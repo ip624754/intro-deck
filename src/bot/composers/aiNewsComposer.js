@@ -25,10 +25,18 @@ import {
   renderAiNewsPresetsText,
   renderAiNewsSourcesKeyboard,
   renderAiNewsSourcesText,
+  renderAiNewsSearchFailureKeyboard,
+  renderAiNewsSearchFailureText,
+  renderAiNewsSearchProgressKeyboard,
+  renderAiNewsSearchProgressText,
   renderAiNewsTopicPromptText
 } from '../../lib/telegram/aiNewsRender.js';
 import { buildLinkedInStartUrl } from '../../lib/telegram/render.js';
-import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
+import {
+  resolveTelegramMessageReference,
+  safeEditMessageByReference,
+  safeEditOrReply
+} from '../../lib/telegram/safeEditOrReply.js';
 import {
   approveAiNewsDraftForLinkedIn,
   beginAiNewsAudienceInputForTelegramUser,
@@ -55,8 +63,10 @@ import {
   updateAiNewsPresetScheduleForTelegramUser
 } from '../../lib/storage/aiNewsPresetStore.js';
 
-async function answer(ctx) {
-  if (ctx.callbackQuery) await ctx.answerCallbackQuery().catch(() => null);
+const activeAiNewsSearches = new Set();
+
+async function answer(ctx, options = undefined) {
+  if (ctx.callbackQuery) await ctx.answerCallbackQuery(options).catch(() => null);
 }
 
 export async function buildAiNewsHubSurface(ctx, notice = null) {
@@ -231,13 +241,68 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
     await safeEditOrReply(ctx, renderAiNewsTopicPromptText(), { reply_markup: { inline_keyboard: [[{ text: 'Cancel', callback_data: 'news:home' }]] } });
   });
 
+  composer.callbackQuery('news:searching', async (ctx) => {
+    await answer(ctx, { text: 'Search is already in progress.' });
+  });
+
   composer.callbackQuery('news:find', async (ctx) => {
-    await answer(ctx);
-    await clearAllPendingInputs(ctx.from.id);
-    await safeEditOrReply(ctx, '🔎 Finding professionally relevant stories from trusted source providers…');
-    const result = await findAiNewsSourcesForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null }).catch((error) => ({ found: false, reason: error?.message || String(error), articles: [] }));
-    if (!result.found) return showHub(ctx, `⚠️ ${aiNewsReasonText(result.reason)}`);
-    await safeEditOrReply(ctx, renderAiNewsSourcesText({ result }), { reply_markup: renderAiNewsSourcesKeyboard({ result }), disable_web_page_preview: true });
+    const searchKey = String(ctx.from.id);
+    if (activeAiNewsSearches.has(searchKey)) {
+      await answer(ctx, { text: 'Search is already in progress.' });
+      return;
+    }
+
+    const state = await loadAiNewsHubState({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null
+    }).catch(() => ({ preferences: {}, config: {}, searchCooldown: { active: false } }));
+
+    if (state?.searchCooldown?.active) {
+      await answer(ctx, { text: `Search will be ready in ${state.searchCooldown.retryAfterSeconds}s.` });
+      await showHub(ctx, `⏳ Search cooldown: try again in ${state.searchCooldown.retryAfterSeconds}s.`);
+      return;
+    }
+
+    activeAiNewsSearches.add(searchKey);
+    await answer(ctx, { text: 'Search started.' });
+    try {
+      await clearAllPendingInputs(ctx.from.id);
+      const progressMessage = await safeEditOrReply(ctx, renderAiNewsSearchProgressText({ state }), {
+        reply_markup: renderAiNewsSearchProgressKeyboard(),
+        disable_web_page_preview: true
+      });
+      const progressReference = resolveTelegramMessageReference(ctx, progressMessage);
+      const result = await findAiNewsSourcesForTelegramUser({
+        telegramUserId: ctx.from.id,
+        telegramUsername: ctx.from.username || null
+      }).catch((error) => {
+        console.warn('[ai news] source search failed unexpectedly', {
+          error: String(error?.message || error).slice(0, 200)
+        });
+        return {
+          found: false,
+          reason: 'ai_news_search_internal_error',
+          errorCode: 'search_internal_error',
+          articles: []
+        };
+      });
+
+      if (!result.found) {
+        if (result.reason === 'ai_news_search_cooldown') return;
+        await safeEditMessageByReference(ctx, progressReference, renderAiNewsSearchFailureText({ result }), {
+          reply_markup: renderAiNewsSearchFailureKeyboard({ result }),
+          disable_web_page_preview: true
+        });
+        return;
+      }
+
+      await safeEditMessageByReference(ctx, progressReference, renderAiNewsSourcesText({ result }), {
+        reply_markup: renderAiNewsSourcesKeyboard({ result }),
+        disable_web_page_preview: true
+      });
+    } finally {
+      activeAiNewsSearches.delete(searchKey);
+    }
   });
 
   composer.callbackQuery(/^news:generate:([0-9a-f-]{36})$/i, async (ctx) => {

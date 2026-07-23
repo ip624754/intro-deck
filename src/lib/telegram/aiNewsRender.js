@@ -48,12 +48,12 @@ function reasonText(reason) {
     migration_030_required: 'Migration 030 has not been applied yet.',
     ai_news_daily_limit_reached: 'Your rolling 24-hour draft allowance is used.',
     ai_news_search_daily_limit_reached: 'Your rolling 24-hour news-search allowance is used.',
-    ai_news_search_cooldown: 'Please wait before searching the news provider again.',
+    ai_news_search_cooldown: 'A search is already running or the short search cooldown is still active.',
     ai_news_source_already_used: 'A draft already exists for this source. Choose another article.',
     ai_news_no_fresh_sources: 'No fresh matching sources were found.',
     ai_news_source_expired: 'This source selection expired. Search again.',
     ai_news_source_not_found: 'This source is no longer available.',
-    ai_news_generator_disabled: 'Draft generation is off. You can still browse and open trusted sources.',
+    ai_news_generator_disabled: 'Draft generation is off. You can still browse and open configured sources.',
     openai_generation_failed: 'OpenAI could not produce a valid evidence-bound draft. Try another source later.',
     openai_internal_error: 'OpenAI draft generation is temporarily unavailable.',
     groq_generation_failed: 'Groq could not produce a valid evidence-bound draft. Try another source later.',
@@ -67,7 +67,8 @@ function reasonText(reason) {
     migration_033_required: 'Migration 033 has not been applied yet. Multi-source discovery remains unavailable.',
     migration_034_required: 'Migration 034 has not been applied yet. Groq/template draft generation remains fail-closed.',
     migration_035_required: 'Migration 035 has not been applied yet. Audience-aware discovery and personalized presets remain fail-closed.',
-    ai_news_all_providers_failed: 'All enabled source providers failed. Try again later or return to NewsData-only mode.',
+    ai_news_all_providers_failed: 'All enabled source providers failed. Your allowance is restored when the claim can be safely released.',
+    ai_news_search_internal_error: 'The source search ended unexpectedly. Try again later.',
     ai_news_preset_limit_reached: 'Your saved-preset limit is used.',
     ai_news_preset_duplicate: 'This preset is already saved.',
     ai_news_preferences_not_found: 'Choose topic, audience, angle, language, and tone before saving a preset.',
@@ -170,6 +171,80 @@ export function renderAiNewsHubKeyboard({ state }) {
     rows.push([{ text: '⭐ Get Pro', callback_data: 'plans:root' }]);
   }
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  return { inline_keyboard: rows };
+}
+
+export function renderAiNewsSearchProgressText({ state = {} }) {
+  const preferences = state?.preferences || {};
+  const preset = AI_NEWS_PRESETS[preferences.preset_key] || AI_NEWS_PRESETS.for_you;
+  const providers = Array.isArray(state?.config?.source?.enabledProviders)
+    ? state.config.source.enabledProviders
+    : ['configured providers'];
+  return [
+    '🔎 Finding relevant stories…',
+    '',
+    `Topic: ${preset.label}${preferences.preset_key === 'custom' ? ` · ${value(preferences.custom_query)}` : ''}`,
+    `Audience: ${audienceLabel(preferences)}`,
+    `Angle: ${angleLabel(preferences)}`,
+    '',
+    'Checking configured source providers:',
+    ...providers.map((provider) => `• ${sourceProviderLabel(provider)}`),
+    '',
+    'Search status: searching',
+    'This message will stay visible and update with results or a clear failure state.'
+  ].join('\n');
+}
+
+export function renderAiNewsSearchProgressKeyboard() {
+  return {
+    inline_keyboard: [[{ text: '⏳ Search in progress', callback_data: 'news:searching' }]]
+  };
+}
+
+export function renderAiNewsSearchFailureText({ result = {} }) {
+  const usage = result?.searchUsage || {};
+  const noClaimReasons = new Set([
+    'ai_news_disabled',
+    'ai_news_draft_config_invalid',
+    'operator_only',
+    'pro_required',
+    'ai_news_operator_acceptance_in_progress',
+    'linkedin_not_connected',
+    'profile_not_listed',
+    'migration_030_required',
+    'migration_032_required',
+    'migration_033_required',
+    'migration_035_required',
+    'ai_news_search_daily_limit_reached',
+    'ai_news_search_cooldown'
+  ]);
+  const allowanceLine = result?.searchClaimReleased
+    ? 'Search allowance: restored because the configured providers failed.'
+    : noClaimReasons.has(result?.reason)
+      ? 'Search allowance: no new search claim was consumed.'
+      : 'Search allowance: this completed search attempt counts toward the rolling limit.';
+  const lines = [
+    '⚠️ Search could not be completed',
+    '',
+    aiNewsReasonText(result?.reason),
+    '',
+    allowanceLine,
+    Number.isFinite(Number(usage.remaining)) && Number.isFinite(Number(usage.limit))
+      ? `Remaining searches: ${Number(usage.remaining)}/${Number(usage.limit)}`
+      : null,
+    result?.errorCode ? `Diagnostic code: ${value(result.errorCode)}` : null,
+    '',
+    'The failure remains visible. No draft or LinkedIn publication was created.'
+  ];
+  return lines.filter((line) => line !== null).join('\n');
+}
+
+export function renderAiNewsSearchFailureKeyboard({ result = {} }) {
+  const rows = [];
+  if (result?.searchClaimReleased && searchAvailable(result?.searchUsage)) {
+    rows.push([{ text: '🔄 Try again', callback_data: 'news:find' }]);
+  }
+  rows.push([{ text: '← News settings', callback_data: 'news:home' }]);
   return { inline_keyboard: rows };
 }
 
@@ -307,7 +382,7 @@ export function renderAiNewsSourcesKeyboard({ result }) {
     });
     rows.push(row);
   }
-  if (searchAvailable(result?.searchUsage)) {
+  if (searchAvailable(result?.searchUsage) && !result?.searchCooldown?.active) {
     rows.push([{ text: '↻ Search again', callback_data: 'news:find' }]);
   }
   rows.push([{ text: '← News settings', callback_data: 'news:home' }]);

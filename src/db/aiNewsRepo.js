@@ -118,6 +118,28 @@ export async function claimAiNewsSourceSearch(client, { userId, cooldownSeconds,
   return { claimed: true, preferences: updated.rows[0], ...calculateAiNewsSearchUsage(updated.rows[0], dailyLimit, now) };
 }
 
+export async function releaseAiNewsSourceSearchClaim(client, { userId, claimStartedAt, dailyLimit }) {
+  if (!claimStartedAt) return { released: false, reason: 'missing_claim_started_at' };
+  const result = await client.query(
+    `update ai_news_preferences
+     set search_count_in_window=greatest(search_count_in_window - 1, 0),
+         search_window_started_at=case when search_count_in_window <= 1 then null else search_window_started_at end,
+         last_search_started_at=null,
+         updated_at=now()
+     where user_id=$1
+       and last_search_started_at=$2::timestamptz
+     returning *`,
+    [userId, claimStartedAt]
+  );
+  const row = result.rows[0] || null;
+  if (!row) return { released: false, reason: 'claim_no_longer_current' };
+  return {
+    released: true,
+    preferences: row,
+    ...calculateAiNewsSearchUsage(row, dailyLimit)
+  };
+}
+
 export async function getAiNewsDraftByUserAndSource(client, { userId, sourceId }) {
   const result = await client.query(
     `select * from ai_news_drafts

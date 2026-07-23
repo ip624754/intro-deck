@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP063B source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP063B-H1 source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
@@ -16,6 +16,14 @@ A Telegram-first professional directory:
 - operator shell with communications, delivery, audit, quality, and search
 - analytics drilldowns and guarded operator bulk-prep
 - runbook/freeze launch discipline
+
+## STEP063B-H1 persistent search progress and recovery
+
+- Search now uses one persistent Telegram message lifecycle: `searching -> results | failed`.
+- A fallback reply becomes the canonical target when the original message cannot be edited.
+- Duplicate callbacks are suppressed in-process and remain protected by the PostgreSQL claim boundary across runtimes.
+- Total provider failure can safely restore only the exact current search claim.
+- No migration or new ENV is required; STEP059 publishing is unchanged.
 
 ## STEP063B LinkedIn audience-aware discovery
 
@@ -74,6 +82,7 @@ A Telegram-first professional directory:
 - STEP063A-H1 — browse-only, deterministic template, and Groq/OpenAI generator selection
 - STEP063A-H1A — source relevance, provider diagnostics, and browse-only allowance UX
 - STEP063B — LinkedIn audience-aware topic discovery, For you, Audience, Angle, and personalized presets
+- STEP063B-H1 — persistent search progress, callback recovery, and exact search-claim retry safety
 
 ## Core docs
 
@@ -112,6 +121,7 @@ A Telegram-first professional directory:
 - `npm run smoke:ai-news-multi-source`
 - `npm run smoke:ai-news-source-relevance`
 - `npm run smoke:ai-news-audience-discovery`
+- `npm run smoke:ai-news-search-progress`
 - `npm run step061a:preflight`
 - `npm run step061a:evidence:init`
 - `npm run step061a:evidence:verify`

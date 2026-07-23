@@ -38,7 +38,7 @@ import {
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-assert.equal(CURRENT_SOURCE_STEP, 'STEP063B');
+assert.equal(CURRENT_SOURCE_STEP, 'STEP063B-H1');
 assert.equal(normalizePresetKey('business_growth'), 'business_markets');
 assert.equal(normalizePresetKey('unknown'), 'for_you');
 for (const key of ['for_you', 'ai_technology', 'startups_product', 'business_markets', 'career_leadership', 'crypto_web3', 'custom']) {
@@ -289,7 +289,7 @@ try {
   const response = { statusCode: null, body: null, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } };
   await healthHandler({}, response);
   assert.equal(response.statusCode, 200);
-  assert.equal(response.body.step, 'STEP063B');
+  assert.equal(response.body.step, 'STEP063B-H1');
   assert.equal(response.body.aiNewsDraft.audienceDiscoveryPolicy.personalizedTopic, 'for_you');
   assert.equal(response.body.aiNewsDraft.automaticPublishing, false);
 } finally {
@@ -301,7 +301,7 @@ const composer = read('src/bot/composers/aiNewsComposer.js');
 assert.match(composer, /news:audience/);
 assert.match(composer, /news:angle/);
 assert.match(composer, /professional_network\|founders_executives[\s\S]*recruiters_talent\|custom/);
-assert.match(composer, /Find.*professionally relevant stories/i);
+assert.match(composer, /renderAiNewsSearchProgressText/);
 const publisher = read('src/lib/storage/linkedinShareStore.js');
 assert.doesNotMatch(publisher, /newsDiscoveryContract|audience_key|angle_key/);
 
