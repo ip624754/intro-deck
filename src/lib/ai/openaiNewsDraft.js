@@ -37,11 +37,14 @@ export async function generateOpenAiNewsDraft({
   profile,
   postLanguage,
   tone,
+  audienceKey = 'professional_network',
+  customAudience = null,
+  angleKey = 'expert_take',
   fetchImpl = fetch
 }) {
   const sourceUrl = source?.source_url || source?.url;
-  const instructions = buildNewsDraftInstructions({ sourceUrl, postLanguage, tone });
-  const input = buildNewsDraftInput({ source, sourceEvidence, profile });
+  const instructions = buildNewsDraftInstructions({ sourceUrl, postLanguage, tone, audienceKey, customAudience, angleKey });
+  const input = buildNewsDraftInput({ source, sourceEvidence, profile, audienceKey, customAudience, angleKey });
 
   const startedAt = Date.now();
   const controller = new AbortController();

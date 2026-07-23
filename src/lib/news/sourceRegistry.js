@@ -5,7 +5,7 @@ const RSS_REGISTRY = Object.freeze([
     feedUrl: 'https://blog.google/feed/',
     allowedHostnames: ['blog.google'],
     allowedArticleHostnames: ['blog.google'],
-    presetKeys: ['ai_technology', 'business_growth'],
+    presetKeys: ['for_you', 'ai_technology', 'startups_product', 'business_markets', 'career_leadership'],
     matchTerms: ['ai', 'gemini', 'deepmind', 'cloud', 'startup', 'business', 'developer'],
     authorityScore: 96,
     sourceKind: 'official_blog'
@@ -16,7 +16,7 @@ const RSS_REGISTRY = Object.freeze([
     feedUrl: 'https://github.blog/feed/',
     allowedHostnames: ['github.blog'],
     allowedArticleHostnames: ['github.blog'],
-    presetKeys: ['ai_technology', 'business_growth'],
+    presetKeys: ['for_you', 'ai_technology', 'startups_product', 'business_markets', 'career_leadership'],
     matchTerms: ['copilot', 'ai', 'agent', 'developer', 'security', 'enterprise', 'productivity'],
     authorityScore: 95,
     sourceKind: 'official_blog'
@@ -35,10 +35,10 @@ const RSS_REGISTRY = Object.freeze([
 ]);
 
 const GITHUB_RELEASE_REGISTRY = Object.freeze([
-  Object.freeze({ owner: 'openai', repo: 'openai-node', presetKeys: ['ai_technology'], authorityScore: 98 }),
-  Object.freeze({ owner: 'huggingface', repo: 'transformers', presetKeys: ['ai_technology'], authorityScore: 96 }),
-  Object.freeze({ owner: 'vercel', repo: 'ai', presetKeys: ['ai_technology', 'business_growth'], authorityScore: 94 }),
-  Object.freeze({ owner: 'stripe', repo: 'stripe-node', presetKeys: ['business_growth'], authorityScore: 94 }),
+  Object.freeze({ owner: 'openai', repo: 'openai-node', presetKeys: ['for_you', 'ai_technology', 'startups_product'], authorityScore: 98 }),
+  Object.freeze({ owner: 'huggingface', repo: 'transformers', presetKeys: ['for_you', 'ai_technology', 'startups_product'], authorityScore: 96 }),
+  Object.freeze({ owner: 'vercel', repo: 'ai', presetKeys: ['for_you', 'ai_technology', 'startups_product', 'business_markets', 'career_leadership'], authorityScore: 94 }),
+  Object.freeze({ owner: 'stripe', repo: 'stripe-node', presetKeys: ['business_markets', 'startups_product'], authorityScore: 94 }),
   Object.freeze({ owner: 'ethereum', repo: 'go-ethereum', presetKeys: ['crypto_web3'], authorityScore: 98 }),
   Object.freeze({ owner: 'bitcoin', repo: 'bitcoin', presetKeys: ['crypto_web3'], authorityScore: 98 })
 ]);
@@ -100,13 +100,27 @@ export function classifySourceDomain(hostname) {
   return { isPrimary: false, authorityScore: 60, sourceKind: 'news_report', qualityTier: 'standard' };
 }
 
-export function listRssSourcesForPreset(presetKey, { maxSources = 2 } = {}) {
+function profileSuggestsCrypto(profileContext = {}) {
+  return (profileContext.terms || []).some((term) => ['crypto','blockchain','web3','ethereum','solana','bitcoin','defi'].includes(String(term).toLowerCase()));
+}
+
+export function listRssSourcesForPreset(presetKey, { maxSources = 2, profileContext = null } = {}) {
   if (presetKey === 'custom') return [];
+  if (presetKey === 'for_you' && profileSuggestsCrypto(profileContext)) {
+    const crypto = RSS_REGISTRY.filter((source) => source.presetKeys.includes('crypto_web3'));
+    const general = RSS_REGISTRY.filter((source) => source.presetKeys.includes('for_you'));
+    return [...crypto, ...general].slice(0, maxSources);
+  }
   return RSS_REGISTRY.filter((source) => source.presetKeys.includes(presetKey)).slice(0, maxSources);
 }
 
-export function listGitHubReposForPreset(presetKey, { maxRepos = 2 } = {}) {
+export function listGitHubReposForPreset(presetKey, { maxRepos = 2, profileContext = null } = {}) {
   if (presetKey === 'custom') return [];
+  if (presetKey === 'for_you' && profileSuggestsCrypto(profileContext)) {
+    const crypto = GITHUB_RELEASE_REGISTRY.filter((source) => source.presetKeys.includes('crypto_web3'));
+    const general = GITHUB_RELEASE_REGISTRY.filter((source) => source.presetKeys.includes('for_you'));
+    return [...crypto, ...general].slice(0, maxRepos);
+  }
   return GITHUB_RELEASE_REGISTRY.filter((source) => source.presetKeys.includes(presetKey)).slice(0, maxRepos);
 }
 

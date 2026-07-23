@@ -193,10 +193,11 @@ export async function fetchTrustedRssSources({
   maxArticles = 5,
   maxSources = 2,
   maxBytes = 1_500_000,
-  fetchImpl = fetch
+  fetchImpl = fetch,
+  profileContext = null
 }) {
   const startedAt = Date.now();
-  const sources = listRssSourcesForPreset(presetKey, { maxSources });
+  const sources = listRssSourcesForPreset(presetKey, { maxSources, profileContext });
   if (!sources.length) {
     return { provider: 'rss', articles: [], rawResultCount: 0, durationMs: 0, requestId: null, detail: { configuredSources: 0, sourceDiagnostics: [] } };
   }

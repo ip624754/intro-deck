@@ -48,17 +48,24 @@ export function computeNextPresetRunAt({ scheduleKind, deliveryHourUtc, from = n
   return next;
 }
 
-export function buildPresetName({ presetKey, customQuery, postLanguage, tone }) {
+export function buildPresetName({ presetKey, customQuery, postLanguage, tone, audienceLabel = null, angleLabel = null }) {
   const topicLabels = {
+    for_you: 'For you',
     ai_technology: 'AI & Technology',
-    business_growth: 'Business & Growth',
+    startups_product: 'Startups & Product',
+    business_markets: 'Business & Markets',
+    business_growth: 'Business & Markets',
+    career_leadership: 'Career & Leadership',
     crypto_web3: 'Crypto & Web3',
     custom: String(customQuery || 'Custom topic').trim()
   };
   const topic = topicLabels[presetKey] || 'News';
   const language = String(postLanguage || 'en').toUpperCase();
-  const toneLabel = String(tone || 'professional').replace(/^./, (letter) => letter.toUpperCase());
-  return normalizePresetName(`${topic} · ${language} · ${toneLabel}`.slice(0, 80));
+  const audience = String(audienceLabel || '').trim();
+  const angle = String(angleLabel || '').trim();
+  const identity = [topic, audience, angle].filter(Boolean).join(' · ');
+  const fallback = String(tone || 'professional').replace(/^./, (letter) => letter.toUpperCase());
+  return normalizePresetName(`${identity || topic} · ${language}${audience || angle ? '' : ` · ${fallback}`}`.slice(0, 80));
 }
 
 export function scheduleLabel({ scheduleKind, deliveryHourUtc }) {

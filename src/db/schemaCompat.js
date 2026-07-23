@@ -102,6 +102,8 @@ export async function getSchemaCompat(client) {
       exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_provider_usage_events') as has_ai_news_provider_usage_events_table,
       exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_drafts' and column_name='openai_total_tokens') as ai_news_drafts_has_openai_usage,
       exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_sources' and column_name='source_authority_score') as ai_news_sources_has_quality_metadata,
+      (select count(*)=4 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_preferences' and column_name in ('audience_key','custom_audience','angle_key','profile_affinity_enabled')) as ai_news_preferences_has_audience_contract,
+      (select count(*)=4 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_presets' and column_name in ('audience_key','custom_audience','angle_key','profile_affinity_enabled')) as ai_news_presets_has_audience_contract,
       exists (
         select 1
         from pg_constraint c
@@ -154,6 +156,8 @@ export async function getSchemaCompat(client) {
     hasAiNewsProviderUsageEventsTable: Boolean(result.rows[0]?.has_ai_news_provider_usage_events_table),
     aiNewsDraftsHasOpenAiUsage: Boolean(result.rows[0]?.ai_news_drafts_has_openai_usage),
     aiNewsSourcesHasQualityMetadata: Boolean(result.rows[0]?.ai_news_sources_has_quality_metadata),
+    aiNewsPreferencesHasAudienceContract: Boolean(result.rows[0]?.ai_news_preferences_has_audience_contract),
+    aiNewsPresetsHasAudienceContract: Boolean(result.rows[0]?.ai_news_presets_has_audience_contract),
     aiNewsDraftsHasGeneratorProviders: Boolean(result.rows[0]?.ai_news_drafts_has_generator_providers),
     aiNewsTelemetryHasGeneratorProviders: Boolean(result.rows[0]?.ai_news_telemetry_has_generator_providers),
     linkedInShareHasSourceKind: Boolean(result.rows[0]?.linkedin_share_has_source_kind)

@@ -285,7 +285,9 @@ STEP058B  Gated badges, trust surfaces, and Lite application evidence
 OPERATOR  Request Development → Lite upgrade
 STEP058B-R1  Enable Lite cohort after approval
 STEP059   Explicit Share profile on LinkedIn
-LATER     AI/news drafts with per-post user approval
+STEP060-063A  Evidence-bound drafts, presets, and multi-source discovery
+STEP063B  Audience-aware topic discovery and personalized presets
+LATER     Generator/media expansion only after production evidence
 OPTIONAL  EEA Member Data Portability enrichment
 ```
 
@@ -303,3 +305,15 @@ OPTIONAL  EEA Member Data Portability enrichment
 ## STEP058B — Verified badges and trust surfaces
 
 Implemented as a fail-closed presentation layer. Public badges remain blocked until Lite approval, explicit enablement, and a fresh Lite snapshot. Development snapshots are private testing evidence only.
+
+## STEP063B — LinkedIn audience-aware discovery
+
+Implemented as an additive editorial-discovery layer above STEP063A-H1A:
+
+- `For you` uses bounded public headline, industry, and skill terms.
+- Audience and Editorial Angle are explicit member controls, not inferred publishing consent.
+- Saved presets preserve the complete topic/audience/angle/language/tone contract.
+- Discovery ranking does not claim access to LinkedIn feed-ranking or private activity data.
+- STEP059 remains the only publisher and still requires per-post preview and explicit authorization.
+
+Production migration/deployment acceptance remains required.

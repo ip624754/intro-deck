@@ -37,6 +37,10 @@ export async function createAiNewsPreset(client, {
   sourceCategory,
   postLanguage,
   tone,
+  audienceKey,
+  customAudience,
+  angleKey,
+  profileAffinityEnabled,
   scheduleKind,
   deliveryHourUtc,
   nextRunAt
@@ -45,12 +49,14 @@ export async function createAiNewsPreset(client, {
     `insert into ai_news_presets (
        public_token, user_id, name, preset_key, custom_query,
        source_language, source_country, source_category, post_language, tone,
+       audience_key, custom_audience, angle_key, profile_affinity_enabled,
        schedule_kind, delivery_hour_utc, status, next_run_at
-     ) values ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'active',$13)
+     ) values ($1::uuid,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,'active',$17)
      returning *`,
     [
       publicToken, userId, name, presetKey, customQuery,
       sourceLanguage, sourceCountry, sourceCategory, postLanguage, tone,
+      audienceKey, customAudience, angleKey, Boolean(profileAffinityEnabled),
       scheduleKind, deliveryHourUtc, nextRunAt
     ]
   );
@@ -157,6 +163,8 @@ export async function createScheduledAiNewsPresetRun(client, {
       JSON.stringify({
         presetName: preset.name,
         presetKey: preset.preset_key,
+        audienceKey: preset.audience_key,
+        angleKey: preset.angle_key,
         scheduleKind: preset.schedule_kind,
         deliveryHourUtc: preset.delivery_hour_utc
       })
@@ -197,7 +205,8 @@ export async function getAiNewsPresetRunEnvelope(client, { runId, forUpdate = fa
        p.public_token as preset_public_token,
        p.name as preset_name,
        p.preset_key, p.custom_query, p.source_language, p.source_country, p.source_category,
-       p.post_language, p.tone, p.schedule_kind, p.delivery_hour_utc, p.status as preset_status,
+       p.post_language, p.tone, p.audience_key, p.custom_audience, p.angle_key, p.profile_affinity_enabled,
+       p.schedule_kind, p.delivery_hour_utc, p.status as preset_status,
        u.telegram_user_id, u.telegram_username,
        d.id as draft_id, d.public_token as draft_public_token, d.status as draft_status,
        d.post_text, d.source_id as draft_source_id,

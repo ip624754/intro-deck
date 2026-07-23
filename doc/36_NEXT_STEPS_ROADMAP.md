@@ -1,5 +1,24 @@
 # 36_NEXT_STEPS_ROADMAP
 
+## Current corridor after STEP063B
+
+STEP063B is source-implemented and focused-QA passed. The next action is bounded migration/deployment acceptance, not expansion of providers or autonomous publishing.
+
+Required sequence:
+
+1. Apply migration 035 and verify the expanded preference/preset constraints.
+2. Deploy the exact STEP063B artifact in browse-only mode.
+3. Verify `/api/health` reports the audience discovery policy and `automaticPublishing=false`.
+4. Exercise `For you`, one explicit topic, Audience, and Angle.
+5. Save/reload one personalized preset and inspect the PostgreSQL row.
+6. Run one source search and inspect topic/profile/audience/angle score metadata.
+7. Confirm the browse-only test window creates zero draft rows.
+8. Roll back to the exact H1A FULL artifact on migration, privacy, relevance, persistence, latency, or UX regression.
+
+Do not add private LinkedIn activity ingestion, feed scraping, autonomous publication, or another source provider before STEP063B production evidence is closed.
+
+---
+
 ## Current corridor after STEP063A-H1A
 
 STEP063A-H1A is source-implemented and focused-QA passed. The next action is bounded production acceptance, not another provider or generator expansion.

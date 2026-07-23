@@ -15,19 +15,24 @@ export async function getAiNewsPreferences(client, userId) {
 
 export async function upsertAiNewsPreferences(client, {
   userId,
-  presetKey = 'ai_technology',
+  presetKey = 'for_you',
   customQuery = null,
   sourceLanguage = 'en',
   sourceCountry = null,
   sourceCategory = null,
   postLanguage = 'en',
-  tone = 'professional'
+  tone = 'professional',
+  audienceKey = 'professional_network',
+  customAudience = null,
+  angleKey = 'expert_take',
+  profileAffinityEnabled = true
 }) {
   const result = await client.query(
     `insert into ai_news_preferences (
        user_id, preset_key, custom_query, source_language, source_country,
-       source_category, post_language, tone
-     ) values ($1, $2, $3, $4, $5, $6, $7, $8)
+       source_category, post_language, tone, audience_key, custom_audience,
+       angle_key, profile_affinity_enabled
+     ) values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
      on conflict (user_id) do update set
        preset_key = excluded.preset_key,
        custom_query = excluded.custom_query,
@@ -36,9 +41,14 @@ export async function upsertAiNewsPreferences(client, {
        source_category = excluded.source_category,
        post_language = excluded.post_language,
        tone = excluded.tone,
+       audience_key = excluded.audience_key,
+       custom_audience = excluded.custom_audience,
+       angle_key = excluded.angle_key,
+       profile_affinity_enabled = excluded.profile_affinity_enabled,
        updated_at = now()
      returning *`,
-    [userId, presetKey, customQuery, sourceLanguage, sourceCountry, sourceCategory, postLanguage, tone]
+    [userId, presetKey, customQuery, sourceLanguage, sourceCountry, sourceCategory, postLanguage, tone,
+      audienceKey, customAudience, angleKey, Boolean(profileAffinityEnabled)]
   );
   return result.rows[0];
 }
@@ -46,13 +56,17 @@ export async function upsertAiNewsPreferences(client, {
 export async function patchAiNewsPreferences(client, { userId, patch }) {
   const current = await getAiNewsPreferences(client, userId);
   const next = {
-    presetKey: patch.presetKey ?? current?.preset_key ?? 'ai_technology',
+    presetKey: patch.presetKey ?? current?.preset_key ?? 'for_you',
     customQuery: patch.customQuery !== undefined ? patch.customQuery : (current?.custom_query ?? null),
     sourceLanguage: patch.sourceLanguage ?? current?.source_language ?? 'en',
     sourceCountry: patch.sourceCountry !== undefined ? patch.sourceCountry : (current?.source_country ?? null),
     sourceCategory: patch.sourceCategory !== undefined ? patch.sourceCategory : (current?.source_category ?? null),
     postLanguage: patch.postLanguage ?? current?.post_language ?? 'en',
-    tone: patch.tone ?? current?.tone ?? 'professional'
+    tone: patch.tone ?? current?.tone ?? 'professional',
+    audienceKey: patch.audienceKey ?? current?.audience_key ?? 'professional_network',
+    customAudience: patch.customAudience !== undefined ? patch.customAudience : (current?.custom_audience ?? null),
+    angleKey: patch.angleKey ?? current?.angle_key ?? 'expert_take',
+    profileAffinityEnabled: patch.profileAffinityEnabled ?? current?.profile_affinity_enabled ?? true
   };
   return upsertAiNewsPreferences(client, { userId, ...next });
 }

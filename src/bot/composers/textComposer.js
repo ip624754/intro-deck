@@ -187,7 +187,7 @@ export function createTextComposer({ buildDirectoryFiltersSurface, buildAdminUse
     if (aiNewsResult.consumed) {
       const surface = aiNewsResult.inputKind === 'edit_draft' && aiNewsResult.draft
         ? await buildAiNewsDraftSurface(ctx, aiNewsResult.draft.public_token, aiNewsResult.changed ? '✅ Draft updated. Review the complete text before approval.' : `⚠️ ${aiNewsResult.reason}`)
-        : await buildAiNewsHubSurface(ctx, '✅ Custom news topic saved.');
+        : await buildAiNewsHubSurface(ctx, aiNewsResult.inputKind === 'audience_query' ? '✅ Custom LinkedIn audience saved.' : '✅ Custom news topic saved.');
       await ctx.reply(surface.text, { reply_markup: surface.reply_markup, disable_web_page_preview: true });
       return;
     }

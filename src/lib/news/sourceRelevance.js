@@ -1,4 +1,11 @@
 import { safeSourceText } from './sourceContract.js';
+import {
+  angleTerms,
+  audienceTerms,
+  buildPersonalizedDiscoveryQuery,
+  normalizeAngleKey,
+  normalizeAudienceKey
+} from '../ai/newsDiscoveryContract.js';
 
 const PROMOTIONAL_REJECT_PATTERNS = Object.freeze([
   /\bpresale\b/i,
@@ -42,22 +49,53 @@ const PRESET_PROFILES = Object.freeze({
     ]),
     categoryTerms: Object.freeze(['ai', 'artificial intelligence', 'machine learning', 'technology'])
   }),
-  business_growth: Object.freeze({
+  startups_product: Object.freeze({
     queries: Object.freeze({
-      rss: 'startup OR founder OR funding OR SaaS OR business growth',
-      hacker_news: 'startup OR founder OR funding OR SaaS OR revenue',
-      newsdata: 'startup OR founder OR funding OR SaaS OR business growth'
+      rss: 'startup OR founder OR product OR SaaS',
+      hacker_news: 'startup OR founder OR product launch OR SaaS',
+      newsdata: 'startup OR founder OR product OR SaaS OR funding'
     }),
     strongTerms: Object.freeze([
-      'startup', 'startups', 'founder', 'founders', 'entrepreneur', 'entrepreneurship',
-      'venture capital', 'funding', 'fundraise', 'series a', 'series b', 'seed round',
-      'saas', 'revenue', 'acquisition', 'ipo', 'business growth'
+      'startup', 'startups', 'founder', 'founders', 'product launch', 'product management',
+      'saas', 'funding', 'seed round', 'series a', 'venture capital', 'developer tool'
     ]),
     supportTerms: Object.freeze([
-      'company', 'enterprise', 'market', 'sales', 'productivity', 'commerce', 'fintech',
-      'customer', 'profit', 'cash flow', 'partnership', 'small business'
+      'product', 'customer', 'growth', 'market fit', 'platform', 'workflow', 'software',
+      'acquisition', 'partnership', 'entrepreneurship'
     ]),
-    categoryTerms: Object.freeze(['business', 'startup', 'entrepreneurship', 'technology'])
+    categoryTerms: Object.freeze(['startup', 'product', 'saas', 'entrepreneurship', 'technology'])
+  }),
+  business_markets: Object.freeze({
+    queries: Object.freeze({
+      rss: 'business OR markets OR enterprise OR finance',
+      hacker_news: 'business OR enterprise OR markets OR revenue',
+      newsdata: 'business OR markets OR enterprise OR finance OR revenue'
+    }),
+    strongTerms: Object.freeze([
+      'business', 'enterprise', 'market', 'markets', 'finance', 'revenue', 'profit', 'cash flow',
+      'acquisition', 'ipo', 'regulation', 'partnership', 'commerce', 'fintech'
+    ]),
+    supportTerms: Object.freeze([
+      'company', 'sales', 'customer', 'growth', 'investment', 'stock', 'economy', 'productivity',
+      'small business', 'valuation'
+    ]),
+    categoryTerms: Object.freeze(['business', 'finance', 'markets', 'enterprise', 'economy'])
+  }),
+  career_leadership: Object.freeze({
+    queries: Object.freeze({
+      rss: 'career OR leadership OR hiring OR workplace',
+      hacker_news: 'career OR hiring OR leadership OR workplace',
+      newsdata: 'career OR leadership OR hiring OR workforce OR workplace'
+    }),
+    strongTerms: Object.freeze([
+      'career', 'leadership', 'leader', 'hiring', 'workforce', 'workplace', 'skills', 'talent',
+      'management', 'jobs', 'employment', 'education'
+    ]),
+    supportTerms: Object.freeze([
+      'team', 'culture', 'training', 'mentorship', 'productivity', 'remote work', 'organization',
+      'executive', 'professional development'
+    ]),
+    categoryTerms: Object.freeze(['career', 'leadership', 'workplace', 'jobs', 'education'])
   }),
   crypto_web3: Object.freeze({
     queries: Object.freeze({
@@ -77,6 +115,10 @@ const PRESET_PROFILES = Object.freeze({
     categoryTerms: Object.freeze(['crypto', 'cryptocurrency', 'blockchain', 'web3'])
   })
 });
+
+function canonicalPresetKey(value) {
+  return value === 'business_growth' ? 'business_markets' : value;
+}
 
 function normalizeText(value) {
   return String(value || '')
@@ -112,14 +154,35 @@ function customTerms(query) {
     .filter((term) => term.length >= 2 && !['and', 'or', 'the', 'for', 'with'].includes(term)))].slice(0, 12);
 }
 
-export function resolveProviderDiscoveryQuery({ presetKey, customQuery = null, provider, fallbackQuery }) {
-  if (presetKey === 'custom') return safeSourceText(customQuery || fallbackQuery, 100) || '';
-  const profile = PRESET_PROFILES[presetKey] || PRESET_PROFILES.ai_technology;
+export function resolveProviderDiscoveryQuery({
+  presetKey,
+  customQuery = null,
+  provider,
+  fallbackQuery,
+  profileContext = null,
+  audienceKey = 'professional_network',
+  customAudience = null,
+  angleKey = 'expert_take'
+}) {
+  const key = canonicalPresetKey(presetKey);
+  if (key === 'custom') return safeSourceText(customQuery || fallbackQuery, 100) || '';
+  if (key === 'for_you') {
+    return safeSourceText(buildPersonalizedDiscoveryQuery({
+      profileContext,
+      audienceKey,
+      customAudience,
+      angleKey,
+      maxLength: 100
+    }), 100) || 'technology OR business';
+  }
+  const profile = PRESET_PROFILES[key] || PRESET_PROFILES.ai_technology;
   return profile.queries[provider] || safeSourceText(fallbackQuery, 100) || '';
 }
 
 export function minimumRelevanceScore(provider, presetKey) {
-  if (presetKey === 'custom') return provider === 'newsdata' ? 24 : 18;
+  const key = canonicalPresetKey(presetKey);
+  if (key === 'custom') return provider === 'newsdata' ? 24 : 18;
+  if (key === 'for_you') return provider === 'newsdata' ? 30 : provider === 'hacker_news' ? 28 : 22;
   if (provider === 'newsdata') return 35;
   if (provider === 'hacker_news') return 32;
   return 24;
@@ -139,47 +202,83 @@ function promotionalAssessment(article) {
 }
 
 function presetAffinity(article, presetKey) {
+  const key = canonicalPresetKey(presetKey);
   const categories = (article?.categories || []).map((value) => normalizeText(value));
   const metadataPreset = normalizeText(article?.metadata?.presetKey || article?.metadata?.preset_key);
   const registryKey = normalizeText(article?.metadata?.registryKey);
-  if (metadataPreset === normalizeText(presetKey)) return 22;
-  if (categories.includes(normalizeText(presetKey))) return 22;
-  if (presetKey === 'crypto_web3' && registryKey.includes('ethereum')) return 22;
-  if (presetKey === 'ai_technology' && ['google_blog', 'github_blog'].includes(registryKey)) return 8;
-  if (article?.provider === 'github_releases' && categories.includes(normalizeText(presetKey))) return 22;
+  if (metadataPreset === normalizeText(key)) return 22;
+  if (categories.includes(normalizeText(key))) return 22;
+  if (key === 'crypto_web3' && registryKey.includes('ethereum')) return 22;
+  if (key === 'ai_technology' && ['google_blog', 'github_blog'].includes(registryKey)) return 8;
+  if (article?.provider === 'github_releases' && categories.includes(normalizeText(key))) return 22;
   return 0;
 }
 
+function profileAffinity(articleText, profileContext = {}) {
+  const terms = [...new Set(profileContext?.terms || [])].slice(0, 16);
+  const matches = matchingTerms(articleText, terms);
+  return {
+    matches,
+    score: Math.min(28, matches.length * 7)
+  };
+}
+
+function audienceFit(articleText, options = {}) {
+  const terms = audienceTerms({ audienceKey: options.audienceKey, customAudience: options.customAudience });
+  const matches = matchingTerms(articleText, terms);
+  return { matches, score: Math.min(18, matches.length * 6) };
+}
+
+function angleFit(articleText, angleKey) {
+  const terms = angleTerms(angleKey);
+  const matches = matchingTerms(articleText, terms);
+  return { matches, score: Math.min(12, matches.length * 4) };
+}
+
 export function assessSourceRelevance(article, {
-  presetKey = 'ai_technology',
+  presetKey = 'for_you',
   customQuery = null,
-  provider = article?.provider
+  provider = article?.provider,
+  profileContext = null,
+  audienceKey = 'professional_network',
+  customAudience = null,
+  angleKey = 'expert_take',
+  profileAffinityEnabled = true
 } = {}) {
+  const key = canonicalPresetKey(presetKey);
   const title = String(article?.title || '');
   const body = `${article?.description || ''} ${article?.contentExcerpt || ''}`;
   const categories = (article?.categories || []).join(' ');
   const source = `${article?.sourceName || ''} ${article?.sourceDomain || ''}`;
+  const combined = `${title} ${body} ${categories} ${source}`;
   const promotion = promotionalAssessment(article);
   if (promotion.rejected && !article?.isPrimary) {
     return {
       accepted: false,
       score: 0,
-      threshold: minimumRelevanceScore(provider, presetKey),
+      threshold: minimumRelevanceScore(provider, key),
       reason: promotion.rejectCode,
       matchedTerms: [],
-      qualityFlags: ['promotional_content']
+      qualityFlags: ['promotional_content'],
+      profileAffinityScore: 0,
+      audienceFitScore: 0,
+      angleFitScore: 0
     };
   }
 
   let strongTerms;
   let supportTerms;
   let categoryTerms;
-  if (presetKey === 'custom') {
+  if (key === 'custom') {
     strongTerms = customTerms(customQuery);
     supportTerms = [];
     categoryTerms = [];
+  } else if (key === 'for_you') {
+    strongTerms = [...new Set([...(profileContext?.terms || []), ...audienceTerms({ audienceKey, customAudience })])].slice(0, 20);
+    supportTerms = angleTerms(angleKey);
+    categoryTerms = [];
   } else {
-    const profile = PRESET_PROFILES[presetKey] || PRESET_PROFILES.ai_technology;
+    const profile = PRESET_PROFILES[key] || PRESET_PROFILES.ai_technology;
     strongTerms = profile.strongTerms;
     supportTerms = profile.supportTerms;
     categoryTerms = profile.categoryTerms;
@@ -192,30 +291,63 @@ export function assessSourceRelevance(article, {
   const categoryMatches = matchingTerms(categories, [...strongTerms, ...categoryTerms]);
   const exactCategoryMatches = matchingTerms(categories, categoryTerms);
   const sourceMatches = matchingTerms(source, strongTerms);
+  const profile = profileAffinityEnabled ? profileAffinity(combined, profileContext) : { matches: [], score: 0 };
+  const audience = audienceFit(combined, { audienceKey: normalizeAudienceKey(audienceKey), customAudience });
+  const angle = angleFit(combined, normalizeAngleKey(angleKey));
 
-  let score = 0;
-  score += Math.min(52, titleStrong.length * 26);
-  score += Math.min(30, bodyStrong.length * 15);
-  score += Math.min(18, titleSupport.length * 9);
-  score += Math.min(12, bodySupport.length * 6);
-  score += Math.min(18, categoryMatches.length * 9);
-  score += exactCategoryMatches.length ? 18 : 0;
-  score += Math.min(12, sourceMatches.length * 6);
-  score += presetAffinity(article, presetKey);
+  const presetScore = presetAffinity(article, key);
+  const topicSignalScore = Math.min(52, titleStrong.length * 26)
+    + Math.min(30, bodyStrong.length * 15)
+    + Math.min(18, titleSupport.length * 9)
+    + Math.min(12, bodySupport.length * 6)
+    + Math.min(18, categoryMatches.length * 9)
+    + (exactCategoryMatches.length ? 18 : 0)
+    + Math.min(12, sourceMatches.length * 6)
+    + presetScore;
+  const topicSignalRequired = key !== 'for_you';
+  if (topicSignalRequired && topicSignalScore <= 0) {
+    return {
+      accepted: false,
+      score: 0,
+      threshold: minimumRelevanceScore(provider, key),
+      reason: 'below_relevance_threshold',
+      matchedTerms: [],
+      qualityFlags: [...promotion.flags, 'topic_mismatch'],
+      profileAffinityScore: profile.score,
+      profileMatchedTerms: profile.matches.slice(0, 8),
+      audienceFitScore: audience.score,
+      audienceMatchedTerms: audience.matches.slice(0, 8),
+      angleFitScore: angle.score,
+      angleMatchedTerms: angle.matches.slice(0, 8)
+    };
+  }
+
+  let score = topicSignalScore;
+  score += profile.score;
+  score += audience.score;
+  score += angle.score;
   score -= promotion.penalty;
   score = Math.max(0, Math.min(100, Math.round(score)));
 
-  const threshold = minimumRelevanceScore(provider, presetKey);
+  const threshold = minimumRelevanceScore(provider, key);
   const matchedTerms = [...new Set([
-    ...titleStrong, ...bodyStrong, ...titleSupport, ...bodySupport, ...categoryMatches, ...exactCategoryMatches, ...sourceMatches
-  ])].slice(0, 12);
+    ...titleStrong, ...bodyStrong, ...titleSupport, ...bodySupport, ...categoryMatches,
+    ...exactCategoryMatches, ...sourceMatches, ...profile.matches, ...audience.matches, ...angle.matches
+  ])].slice(0, 16);
   return {
     accepted: score >= threshold,
     score,
     threshold,
     reason: score >= threshold ? null : 'below_relevance_threshold',
     matchedTerms,
-    qualityFlags: promotion.flags
+    qualityFlags: promotion.flags,
+    profileAffinityScore: profile.score,
+    profileMatchedTerms: profile.matches.slice(0, 8),
+    audienceFitScore: audience.score,
+    audienceMatchedTerms: audience.matches.slice(0, 8),
+    angleFitScore: angle.score,
+    angleMatchedTerms: angle.matches.slice(0, 8),
+    topicSignalScore
   };
 }
 
@@ -238,6 +370,15 @@ export function filterRelevantSources(articles, options = {}) {
         relevanceScore: assessment.score,
         relevanceThreshold: assessment.threshold,
         relevanceMatchedTerms: assessment.matchedTerms,
+        profileAffinityScore: assessment.profileAffinityScore,
+        profileMatchedTerms: assessment.profileMatchedTerms,
+        audienceFitScore: assessment.audienceFitScore,
+        audienceMatchedTerms: assessment.audienceMatchedTerms,
+        angleFitScore: assessment.angleFitScore,
+        angleMatchedTerms: assessment.angleMatchedTerms,
+        topicSignalScore: assessment.topicSignalScore,
+        audienceKey: normalizeAudienceKey(options.audienceKey),
+        angleKey: normalizeAngleKey(options.angleKey),
         qualityTier,
         qualityFlags: assessment.qualityFlags
       }
@@ -251,7 +392,10 @@ export function filterRelevantSources(articles, options = {}) {
       rejectedCount: (Array.isArray(articles) ? articles.length : 0) - accepted.length,
       rejectionCounts,
       minimumScore: minimumRelevanceScore(options.provider, options.presetKey),
-      maximumObservedScore: scores.length ? Math.max(...scores) : null
+      maximumObservedScore: scores.length ? Math.max(...scores) : null,
+      profileSignalCount: Number(options.profileContext?.signalCount || 0),
+      audienceKey: normalizeAudienceKey(options.audienceKey),
+      angleKey: normalizeAngleKey(options.angleKey)
     }
   };
 }
@@ -259,6 +403,8 @@ export function filterRelevantSources(articles, options = {}) {
 export function publicSourceRelevanceSummary() {
   return {
     presetQueryMapping: true,
+    audienceAwareScoring: true,
+    profileAffinityScoring: true,
     providerMinimumScores: {
       rss: minimumRelevanceScore('rss', 'ai_technology'),
       hackerNews: minimumRelevanceScore('hacker_news', 'ai_technology'),
@@ -267,6 +413,6 @@ export function publicSourceRelevanceSummary() {
     },
     promotionalContentPolicy: 'reject_high_confidence_non_primary',
     authorityPolicy: 'domain_tiers_plus_primary_source_preference',
-    rankingPolicy: 'authority_relevance_primary_freshness_trend'
+    rankingPolicy: 'authority_relevance_profile_audience_angle_primary_freshness_trend'
   };
 }

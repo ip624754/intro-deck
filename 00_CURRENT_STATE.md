@@ -1,3 +1,15 @@
+# STEP063B current source delta
+
+- Current source step: `STEP063B`; package `0.63.3`.
+- Exact baseline: `IntroDeck_STEP063A_H1A_FULL_2026-07-24.zip`, SHA-256 `b7f20e26d94872097ad8165a7d2f4f43aa7a9c3a446766b1d5260573f6baff39`.
+- `For you`, professional topic taxonomy, Audience, Editorial Angle, public-profile affinity scoring, and expanded saved presets are implemented.
+- Only public headline, industry, and skill labels enter the bounded personalization context; private/contact/OAuth data are excluded.
+- Migration 035 is required. New ENV: none.
+- Source/focused QA passed; production migration, Vercel deployment, live personalization quality, and production preset evidence are not verified.
+- STEP059 LinkedIn publishing remains explicit and unchanged; automatic publishing remains disabled.
+
+---
+
 # STEP063A-H1A current source delta
 
 - Current source step: `STEP063A-H1A`; package `0.63.2`.

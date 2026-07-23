@@ -67,13 +67,23 @@ function applyRelevance(result, {
   provider,
   presetKey,
   customQuery,
-  providerQuery
+  providerQuery,
+  profileContext,
+  audienceKey,
+  customAudience,
+  angleKey,
+  profileAffinityEnabled
 }) {
   if (result?.error) return result;
   const relevant = filterRelevantSources(result?.articles || [], {
     provider,
     presetKey,
-    customQuery
+    customQuery,
+    profileContext,
+    audienceKey,
+    customAudience,
+    angleKey,
+    profileAffinityEnabled
   });
   return {
     ...result,
@@ -86,12 +96,16 @@ function applyRelevance(result, {
   };
 }
 
-async function runNewsData({ config, query, preferences, fetchImpl }) {
+async function runNewsData({ config, query, preferences, profileContext, fetchImpl }) {
   const providerQuery = resolveProviderDiscoveryQuery({
     presetKey: preferences.preset_key,
     customQuery: preferences.custom_query,
     provider: 'newsdata',
-    fallbackQuery: query
+    fallbackQuery: query,
+    profileContext,
+    audienceKey: preferences.audience_key,
+    customAudience: preferences.custom_audience,
+    angleKey: preferences.angle_key
   });
   return runProvider('newsdata', async () => {
     try {
@@ -111,7 +125,12 @@ async function runNewsData({ config, query, preferences, fetchImpl }) {
         provider: 'newsdata',
         presetKey: preferences.preset_key,
         customQuery: preferences.custom_query,
-        providerQuery
+        providerQuery,
+        profileContext,
+        audienceKey: preferences.audience_key,
+        customAudience: preferences.custom_audience,
+        angleKey: preferences.angle_key,
+        profileAffinityEnabled: preferences.profile_affinity_enabled
       });
     } catch (error) {
       if (error instanceof NewsDataApiError) {
@@ -127,11 +146,12 @@ export async function discoverNewsSources({
   config,
   query,
   preferences,
+  profileContext = null,
   fetchImpl = fetch
 }) {
   const source = config.source || { mode: 'newsdata_only', enabledProviders: ['newsdata'] };
   if (source.mode === 'newsdata_only') {
-    const newsdata = await runNewsData({ config, query, preferences, fetchImpl });
+    const newsdata = await runNewsData({ config, query, preferences, profileContext, fetchImpl });
     return {
       articles: deduplicateAndRankSources(newsdata.articles, { maxArticles: config.maxArticles }),
       providerResults: [newsdata],
@@ -143,7 +163,10 @@ export async function discoverNewsSources({
   const customQuery = preferences.custom_query;
   const freeTasks = [];
   if (source.enabledProviders.includes('rss')) {
-    const providerQuery = resolveProviderDiscoveryQuery({ presetKey, customQuery, provider: 'rss', fallbackQuery: query });
+    const providerQuery = resolveProviderDiscoveryQuery({
+      presetKey, customQuery, provider: 'rss', fallbackQuery: query, profileContext,
+      audienceKey: preferences.audience_key, customAudience: preferences.custom_audience, angleKey: preferences.angle_key
+    });
     freeTasks.push(runProvider('rss', async () => applyRelevance(await fetchTrustedRssSources({
       presetKey,
       query: providerQuery,
@@ -151,11 +174,19 @@ export async function discoverNewsSources({
       maxSourceAgeHours: config.maxSourceAgeHours,
       maxArticles: source.providerMaxArticles,
       maxSources: source.rssMaxFeedsPerSearch,
-      fetchImpl
-    }), { provider: 'rss', presetKey, customQuery, providerQuery })));
+      fetchImpl,
+      profileContext
+    }), {
+      provider: 'rss', presetKey, customQuery, providerQuery, profileContext,
+      audienceKey: preferences.audience_key, customAudience: preferences.custom_audience,
+      angleKey: preferences.angle_key, profileAffinityEnabled: preferences.profile_affinity_enabled
+    })));
   }
   if (source.enabledProviders.includes('hacker_news')) {
-    const providerQuery = resolveProviderDiscoveryQuery({ presetKey, customQuery, provider: 'hacker_news', fallbackQuery: query });
+    const providerQuery = resolveProviderDiscoveryQuery({
+      presetKey, customQuery, provider: 'hacker_news', fallbackQuery: query, profileContext,
+      audienceKey: preferences.audience_key, customAudience: preferences.custom_audience, angleKey: preferences.angle_key
+    });
     freeTasks.push(runProvider('hacker_news', async () => applyRelevance(await fetchHackerNewsStories({
       query: providerQuery,
       timeoutMs: source.hackerNewsTimeoutMs,
@@ -164,7 +195,11 @@ export async function discoverNewsSources({
       scanLimit: source.hackerNewsScanLimit,
       minScore: source.hackerNewsMinScore,
       fetchImpl
-    }), { provider: 'hacker_news', presetKey, customQuery, providerQuery })));
+    }), {
+      provider: 'hacker_news', presetKey, customQuery, providerQuery, profileContext,
+      audienceKey: preferences.audience_key, customAudience: preferences.custom_audience,
+      angleKey: preferences.angle_key, profileAffinityEnabled: preferences.profile_affinity_enabled
+    })));
   }
   if (source.enabledProviders.includes('github_releases')) {
     freeTasks.push(runProvider('github_releases', async () => applyRelevance(await fetchGitHubReleases({
@@ -174,8 +209,13 @@ export async function discoverNewsSources({
       maxSourceAgeHours: config.maxSourceAgeHours,
       maxArticles: source.providerMaxArticles,
       maxRepos: source.githubMaxReposPerSearch,
-      fetchImpl
-    }), { provider: 'github_releases', presetKey, customQuery, providerQuery: `registry:${presetKey}` })));
+      fetchImpl,
+      profileContext
+    }), {
+      provider: 'github_releases', presetKey, customQuery, providerQuery: `registry:${presetKey}`, profileContext,
+      audienceKey: preferences.audience_key, customAudience: preferences.custom_audience,
+      angleKey: preferences.angle_key, profileAffinityEnabled: preferences.profile_affinity_enabled
+    })));
   }
 
   const providerResults = await Promise.all(freeTasks);
@@ -185,7 +225,7 @@ export async function discoverNewsSources({
   let newsdataFallbackUsed = false;
 
   if (source.enabledProviders.includes('newsdata') && config.newsdata.configured && articles.length < config.maxArticles) {
-    const newsdata = await runNewsData({ config, query, preferences, fetchImpl });
+    const newsdata = await runNewsData({ config, query, preferences, profileContext, fetchImpl });
     providerResults.push(newsdata);
     newsdataFallbackUsed = true;
     articles = deduplicateAndRankSources(providerResults.flatMap((result) => result.articles || []), {

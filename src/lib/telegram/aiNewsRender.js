@@ -1,4 +1,12 @@
 import { AI_NEWS_PRESETS, AI_NEWS_TONES } from '../ai/newsDraftContract.js';
+import {
+  AI_NEWS_AUDIENCES,
+  AI_NEWS_ANGLES,
+  audienceLabel,
+  angleLabel,
+  normalizeAudienceKey,
+  normalizeAngleKey
+} from '../ai/newsDiscoveryContract.js';
 import { AI_NEWS_DELIVERY_HOURS_UTC, scheduleLabel } from '../ai/newsPresetSchedule.js';
 
 function value(value, fallback = '—') {
@@ -58,10 +66,11 @@ function reasonText(reason) {
     migration_032_required: 'Migration 032 has not been applied yet.',
     migration_033_required: 'Migration 033 has not been applied yet. Multi-source discovery remains unavailable.',
     migration_034_required: 'Migration 034 has not been applied yet. Groq/template draft generation remains fail-closed.',
+    migration_035_required: 'Migration 035 has not been applied yet. Audience-aware discovery and personalized presets remain fail-closed.',
     ai_news_all_providers_failed: 'All enabled source providers failed. Try again later or return to NewsData-only mode.',
     ai_news_preset_limit_reached: 'Your saved-preset limit is used.',
     ai_news_preset_duplicate: 'This preset is already saved.',
-    ai_news_preferences_not_found: 'Choose topic, language, and tone before saving a preset.',
+    ai_news_preferences_not_found: 'Choose topic, audience, angle, language, and tone before saving a preset.',
     ai_news_preset_not_found: 'This saved preset is no longer available.',
     ai_news_schedule_disabled: 'Scheduled delivery is disabled in this environment.',
     ai_news_preset_paused: 'This preset is paused.',
@@ -73,18 +82,22 @@ function reasonText(reason) {
 
 export function renderAiNewsHubText({ state, notice = null }) {
   const preferences = state?.preferences || {};
-  const preset = AI_NEWS_PRESETS[preferences.preset_key] || AI_NEWS_PRESETS.ai_technology;
+  const preset = AI_NEWS_PRESETS[preferences.preset_key] || AI_NEWS_PRESETS.for_you;
   const tone = AI_NEWS_TONES[preferences.tone] || AI_NEWS_TONES.professional;
   const generatorMode = state?.config?.generator?.mode || 'openai';
   const browseOnly = generatorMode === 'off';
+  const personalization = state?.personalization || {};
   const lines = [
-    browseOnly ? '📰 AI/news source browser' : '🧠 AI/news drafts',
+    browseOnly ? '🗞 LinkedIn source browser' : '🧠 LinkedIn news drafts',
     '',
     browseOnly
-      ? 'Browse current evidence sources without an AI provider. Nothing is generated or published automatically.'
-      : 'Create an evidence-bound LinkedIn draft from a current news source. Nothing is published automatically.',
+      ? 'Find professionally relevant stories for your network. Nothing is generated or published automatically.'
+      : 'Create an evidence-bound LinkedIn draft for a selected professional audience. Nothing is published automatically.',
     '',
     `Topic: ${preset.label}${preferences.preset_key === 'custom' ? ` · ${value(preferences.custom_query)}` : ''}`,
+    `Audience: ${audienceLabel(preferences)}`,
+    `Angle: ${angleLabel(preferences)}`,
+    `Profile match: ${preferences.profile_affinity_enabled === false ? 'off' : personalization.available ? `${personalization.signalCount || 0} public profile signals` : 'on · no public signals yet'}`,
     `Post language: ${String(preferences.post_language || 'en').toUpperCase()}`,
     `Tone: ${tone}`,
     browseOnly
@@ -101,8 +114,8 @@ export function renderAiNewsHubText({ state, notice = null }) {
     `Source mode: ${state?.config?.source?.mode || 'newsdata_only'}`,
     '',
     browseOnly
-      ? 'Flow: source → evidence → open original.'
-      : 'Flow: source → evidence → draft → preview/edit → explicit LinkedIn approval.'
+      ? 'Flow: professional context → source → evidence → open original.'
+      : 'Flow: professional context → source → evidence → draft → preview/edit → explicit LinkedIn approval.'
   ];
   const cleanedLines = lines.filter((line) => line !== null);
   if (!state?.eligible) cleanedLines.push('', `⚠️ ${reasonText(state?.reason)}`);
@@ -119,13 +132,22 @@ export function renderAiNewsHubText({ state, notice = null }) {
 export function renderAiNewsHubKeyboard({ state }) {
   const p = state?.preferences || {};
   const rows = [
+    [{ text: `${p.preset_key === 'for_you' ? '✓ ' : ''}✨ For you`, callback_data: 'news:preset:for_you' }],
     [
-      { text: `${p.preset_key === 'ai_technology' ? '✓ ' : ''}AI & Tech`, callback_data: 'news:preset:ai_technology' },
-      { text: `${p.preset_key === 'business_growth' ? '✓ ' : ''}Business`, callback_data: 'news:preset:business_growth' }
+      { text: `${p.preset_key === 'ai_technology' ? '✓ ' : ''}🤖 AI & Tech`, callback_data: 'news:preset:ai_technology' },
+      { text: `${p.preset_key === 'startups_product' ? '✓ ' : ''}🚀 Startups`, callback_data: 'news:preset:startups_product' }
     ],
     [
-      { text: `${p.preset_key === 'crypto_web3' ? '✓ ' : ''}Crypto`, callback_data: 'news:preset:crypto_web3' },
-      { text: `${p.preset_key === 'custom' ? '✓ ' : ''}Custom topic`, callback_data: 'news:topic' }
+      { text: `${p.preset_key === 'business_markets' ? '✓ ' : ''}📈 Business`, callback_data: 'news:preset:business_markets' },
+      { text: `${p.preset_key === 'career_leadership' ? '✓ ' : ''}🧭 Career`, callback_data: 'news:preset:career_leadership' }
+    ],
+    [
+      { text: `${p.preset_key === 'crypto_web3' ? '✓ ' : ''}⛓ Crypto`, callback_data: 'news:preset:crypto_web3' },
+      { text: `${p.preset_key === 'custom' ? '✓ ' : ''}✍️ Custom`, callback_data: 'news:topic' }
+    ],
+    [
+      { text: `👥 ${audienceLabel(p).slice(0, 28)}`, callback_data: 'news:audience' },
+      { text: `🎯 ${angleLabel(p).slice(0, 28)}`, callback_data: 'news:angle' }
     ],
     [
       { text: `Language: ${String(p.post_language || 'en').toUpperCase()}`, callback_data: `news:lang:${p.post_language === 'ru' ? 'en' : 'ru'}` },
@@ -133,7 +155,7 @@ export function renderAiNewsHubKeyboard({ state }) {
     ]
   ];
   if (state?.eligible && searchAvailable(state?.searchUsage)) {
-    rows.push([{ text: '🔎 Find fresh news', callback_data: 'news:find' }]);
+    rows.push([{ text: '🔎 Find relevant stories', callback_data: 'news:find' }]);
   }
   if (state?.latestDraft && ['draft', 'editing', 'share_ready', 'unknown'].includes(state.latestDraft.status)) {
     rows.push([{ text: '📝 Open current draft', callback_data: `news:draft:${state.latestDraft.public_token}` }]);
@@ -149,6 +171,64 @@ export function renderAiNewsHubKeyboard({ state }) {
   }
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return { inline_keyboard: rows };
+}
+
+export function renderAiNewsAudienceText({ preferences = {} }) {
+  return [
+    '👥 LinkedIn audience',
+    '',
+    'Choose who should find the story professionally relevant. This guides discovery and draft framing; it does not target or message anyone.',
+    '',
+    `Selected: ${audienceLabel(preferences)}`,
+    'Custom audience text is bounded to 120 characters and saved only in your preset settings.'
+  ].join('\n');
+}
+
+export function renderAiNewsAudienceKeyboard({ preferences = {} }) {
+  const selected = normalizeAudienceKey(preferences.audience_key);
+  const row = (key) => [{
+    text: `${selected === key ? '✓ ' : ''}${AI_NEWS_AUDIENCES[key].label}`,
+    callback_data: `news:aud:${key}`
+  }];
+  return {
+    inline_keyboard: [
+      row('professional_network'),
+      row('founders_executives'),
+      row('product_engineering'),
+      row('sales_marketing'),
+      row('investors_finance'),
+      row('recruiters_talent'),
+      [{ text: `${selected === 'custom' ? '✓ ' : ''}Custom audience`, callback_data: 'news:aud:custom' }],
+      [{ text: '← News settings', callback_data: 'news:home' }]
+    ]
+  };
+}
+
+export function renderAiNewsAngleText({ preferences = {} }) {
+  return [
+    '🎯 Editorial angle',
+    '',
+    'Choose the professional lens for source ranking and draft framing. Facts remain bounded to the original evidence.',
+    '',
+    `Selected: ${angleLabel(preferences)}`
+  ].join('\n');
+}
+
+export function renderAiNewsAngleKeyboard({ preferences = {} }) {
+  const selected = normalizeAngleKey(preferences.angle_key);
+  return {
+    inline_keyboard: [
+      ...Object.values(AI_NEWS_ANGLES).map((angle) => ([{
+        text: `${selected === angle.key ? '✓ ' : ''}${angle.label}`,
+        callback_data: `news:ang:${angle.key}`
+      }])),
+      [{ text: '← News settings', callback_data: 'news:home' }]
+    ]
+  };
+}
+
+export function renderAiNewsAudiencePromptText() {
+  return '👥 Send a focused professional audience (2–120 characters). Example: SaaS founders building developer tools';
 }
 
 function sourceProviderLabel(provider) {
@@ -167,6 +247,9 @@ export function renderAiNewsSourcesText({ result }) {
     '📰 Fresh source candidates',
     '',
     `Query: ${value(result?.query)}`,
+    `Audience: ${audienceLabel(result?.preferences || { audience_key: result?.audienceKey })}`,
+    `Angle: ${angleLabel(result?.preferences || { angle_key: result?.angleKey })}`,
+    result?.personalization?.available ? `Profile affinity: ${result.personalization.signalCount || 0} public signals` : 'Profile affinity: no public signals',
     `Source mode: ${result?.sourceMode || 'newsdata_only'}`,
     `Generator: ${generatorMode}`,
     canDraft
@@ -184,7 +267,10 @@ export function renderAiNewsSourcesText({ result }) {
       sourceProviderLabel(article.provider),
       article.source_is_primary ? 'primary' : qualityTier ? `quality ${qualityTier}` : null,
       authority !== null ? `authority ${authority}/100` : null,
-      relevance !== null ? `relevance ${relevance}/100` : null
+      relevance !== null ? `relevance ${relevance}/100` : null,
+      Number.isFinite(Number(metadata.profileAffinityScore)) ? `profile ${Number(metadata.profileAffinityScore)}/100` : null,
+      Number.isFinite(Number(metadata.audienceFitScore)) ? `audience ${Number(metadata.audienceFitScore)}/100` : null,
+      Number.isFinite(Number(metadata.angleFitScore)) ? `angle ${Number(metadata.angleFitScore)}/100` : null
     ].filter(Boolean).join(' · ');
     lines.push(
       '',
@@ -317,7 +403,7 @@ export function renderAiNewsPresetsText({ state, notice = null }) {
     '⚙️ Personalized news presets',
     '',
     generatorEnabled
-      ? 'Saved presets reuse your topic, language, and tone. Scheduled delivery creates a Telegram draft only; every LinkedIn post still needs preview and explicit approval.'
+      ? 'Saved presets reuse your topic, audience, angle, language, and tone. Scheduled delivery creates a Telegram draft only; every LinkedIn post still needs preview and explicit approval.'
       : 'Saved presets reuse your source settings. Draft generation and scheduled delivery are disabled in browse-only mode.',
     '',
     `Access: ${state?.eligible ? (state?.reason === 'operator_access' ? 'operator' : 'Pro') : 'locked'}`,
@@ -330,7 +416,7 @@ export function renderAiNewsPresetsText({ state, notice = null }) {
   }
   if (!state?.eligible) lines.push('', `⚠️ ${reasonText(state?.reason)}`);
   if (!presets.length) {
-    lines.push('', 'No saved presets yet.', 'Configure the topic, language, and tone on the main news screen, then tap “Save current”.');
+    lines.push('', 'No saved presets yet.', 'Configure the topic, audience, angle, language, and tone on the main news screen, then tap “Save current”.');
   } else {
     lines.push('', 'Saved presets:');
     presets.forEach((preset, index) => {
@@ -363,6 +449,9 @@ export function renderAiNewsPresetText({ state, notice = null }) {
     '',
     `Name: ${value(preset.name)}`,
     `Topic: ${presetTopicLabel(preset)}`,
+    `Audience: ${audienceLabel(preset)}`,
+    `Angle: ${angleLabel(preset)}`,
+    `Profile match: ${preset.profile_affinity_enabled === false ? 'off' : 'on'}`,
     `Post language: ${String(preset.post_language || 'en').toUpperCase()}`,
     `Tone: ${AI_NEWS_TONES[preset.tone] || value(preset.tone)}`,
     `Status: ${value(preset.status)}`,

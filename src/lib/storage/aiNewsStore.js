@@ -50,6 +50,12 @@ import {
   sha256,
   validateDraftText
 } from '../ai/newsDraftContract.js';
+import {
+  buildProfileAffinityContext,
+  normalizeAngleKey,
+  normalizeAudienceKey,
+  normalizeCustomAudience
+} from '../ai/newsDiscoveryContract.js';
 import { discoverNewsSources } from '../news/multiSource.js';
 import { createLinkedInTextShareIntentWithClient } from './linkedinShareStore.js';
 
@@ -108,8 +114,12 @@ function persistenceUnavailable() {
 
 function defaultPreferences() {
   return {
-    preset_key: 'ai_technology',
+    preset_key: 'for_you',
     custom_query: null,
+    audience_key: 'professional_network',
+    custom_audience: null,
+    angle_key: 'expert_take',
+    profile_affinity_enabled: true,
     source_language: 'en',
     source_country: null,
     source_category: null,
@@ -172,6 +182,9 @@ export async function loadAiNewsHubState({ telegramUserId, telegramUsername = nu
       && (!compat.aiNewsDraftsHasGeneratorProviders || !compat.aiNewsTelemetryHasGeneratorProviders)) {
       return { persistenceEnabled: true, enabled: config.enabled, eligible: false, reason: 'migration_034_required', config, preferences: defaultPreferences(), recentSources: [], latestDraft: null };
     }
+    if (!compat.aiNewsPreferencesHasAudienceContract || !compat.aiNewsPresetsHasAudienceContract) {
+      return { persistenceEnabled: true, enabled: config.enabled, eligible: false, reason: 'migration_035_required', config, preferences: defaultPreferences(), recentSources: [], latestDraft: null };
+    }
     const context = await loadUserContext(client, { telegramUserId, telegramUsername, multiSourceSchema: compat.aiNewsSourcesHasQualityMetadata });
     const eligibility = checkEligibility({ config, telegramUserId, entitlements: context.entitlements, profile: context.profile });
     const used = await countAiNewsDraftsSince(client, {
@@ -187,6 +200,7 @@ export async function loadAiNewsHubState({ telegramUserId, telegramUsername = nu
       ...eligibility,
       config,
       ...context,
+      personalization: buildProfileAffinityContext(context.profile),
       presets,
       presetPersistenceReady: Boolean(compat.hasAiNewsPresetsTable && compat.hasAiNewsPresetRunsTable && compat.aiNewsDraftsHasPresetRunId),
       presetUsage: { used: presets.length, limit: config.presetLimit, remaining: Math.max(0, config.presetLimit - presets.length) },
@@ -202,11 +216,39 @@ export async function updateAiNewsPresetForTelegramUser({ telegramUserId, telegr
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPreferencesTable) return { persistenceEnabled: true, changed: false, reason: 'migration_030_required' };
+    if (!compat.aiNewsPreferencesHasAudienceContract) return { persistenceEnabled: true, changed: false, reason: 'migration_035_required' };
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
     const preferences = await patchAiNewsPreferences(client, {
       userId: user.id,
       patch: { presetKey: normalized, customQuery: normalized === 'custom' ? null : undefined }
     });
+    return { persistenceEnabled: true, changed: true, preferences };
+  });
+}
+
+export async function updateAiNewsAudienceForTelegramUser({ telegramUserId, telegramUsername = null, audienceKey }) {
+  if (!isDatabaseConfigured()) return persistenceUnavailable();
+  const normalized = normalizeAudienceKey(audienceKey);
+  return withDbTransaction(async (client) => {
+    const compat = await getSchemaCompat(client);
+    if (!compat.aiNewsPreferencesHasAudienceContract) return { persistenceEnabled: true, changed: false, reason: 'migration_035_required' };
+    const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
+    const preferences = await patchAiNewsPreferences(client, {
+      userId: user.id,
+      patch: { audienceKey: normalized, customAudience: normalized === 'custom' ? null : undefined }
+    });
+    return { persistenceEnabled: true, changed: true, preferences };
+  });
+}
+
+export async function updateAiNewsAngleForTelegramUser({ telegramUserId, telegramUsername = null, angleKey }) {
+  if (!isDatabaseConfigured()) return persistenceUnavailable();
+  const normalized = normalizeAngleKey(angleKey);
+  return withDbTransaction(async (client) => {
+    const compat = await getSchemaCompat(client);
+    if (!compat.aiNewsPreferencesHasAudienceContract) return { persistenceEnabled: true, changed: false, reason: 'migration_035_required' };
+    const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
+    const preferences = await patchAiNewsPreferences(client, { userId: user.id, patch: { angleKey: normalized } });
     return { persistenceEnabled: true, changed: true, preferences };
   });
 }
@@ -247,6 +289,23 @@ export async function beginAiNewsTopicInputForTelegramUser({ telegramUserId, tel
       expiresAt: new Date(Date.now() + 10 * 60 * 1000)
     });
     return { persistenceEnabled: true, started: true, reason: 'topic_input_started' };
+  });
+}
+
+export async function beginAiNewsAudienceInputForTelegramUser({ telegramUserId, telegramUsername = null }) {
+  if (!isDatabaseConfigured()) return persistenceUnavailable();
+  return withDbTransaction(async (client) => {
+    const compat = await getSchemaCompat(client);
+    if (!compat.hasAiNewsInputSessionsTable || !compat.aiNewsPreferencesHasAudienceContract) {
+      return { persistenceEnabled: true, started: false, reason: compat.hasAiNewsInputSessionsTable ? 'migration_035_required' : 'migration_030_required' };
+    }
+    const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
+    await beginAiNewsInputSession(client, {
+      userId: user.id,
+      inputKind: 'audience_query',
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000)
+    });
+    return { persistenceEnabled: true, started: true, reason: 'audience_input_started' };
   });
 }
 
@@ -303,6 +362,16 @@ export async function applyAiNewsTextInput({ telegramUserId, telegramUsername = 
       return { persistenceEnabled: true, consumed: true, inputKind: 'topic_query', preferences };
     }
 
+    if (session.input_kind === 'audience_query') {
+      const audience = normalizeCustomAudience(text);
+      const preferences = await patchAiNewsPreferences(client, {
+        userId: user.id,
+        patch: { audienceKey: 'custom', customAudience: audience }
+      });
+      await clearAiNewsInputSession(client, { userId: user.id });
+      return { persistenceEnabled: true, consumed: true, inputKind: 'audience_query', preferences };
+    }
+
     if (session.input_kind === 'edit_draft' && session.draft_id) {
       const draftResult = await client.query(
         `select d.*, s.source_url, s.source_title, s.source_name, s.source_description, s.source_content_excerpt, s.published_at
@@ -352,6 +421,7 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
     if (config.source?.mode === 'multi_source' && !compat.aiNewsSourcesHasQualityMetadata) {
       return { ok: false, reason: 'migration_033_required' };
     }
+    if (!compat.aiNewsPreferencesHasAudienceContract) return { ok: false, reason: 'migration_035_required' };
     const context = await loadUserContext(client, { telegramUserId, telegramUsername, multiSourceSchema: compat.aiNewsSourcesHasQualityMetadata });
     const preferences = normalizePreferences({ ...context.preferences, ...(preferenceOverride || {}) });
     const eligibility = checkEligibility({ config, telegramUserId, entitlements: context.entitlements, profile: context.profile });
@@ -365,11 +435,15 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
     });
     if (!searchClaim.claimed) return { ok: false, reason: searchClaim.reason, searchClaim, ...context };
     const used = await countAiNewsDraftsSince(client, { userId: context.user.id, since: new Date(Date.now() - 24 * 60 * 60 * 1000) });
+    const profileContext = preferences.profile_affinity_enabled === false
+      ? { terms: [], headline: null, industry: null, skillLabels: [], signalCount: 0, available: false }
+      : buildProfileAffinityContext(context.profile);
     return {
       ok: true,
       ...context,
       preferences,
-      query: resolvePreferenceQuery(preferences),
+      profileContext,
+      query: resolvePreferenceQuery(preferences, profileContext),
       used,
       draftGenerationAvailable: Boolean(config.generator?.enabled) && used < config.dailyLimit,
       searchUsage: {
@@ -387,6 +461,7 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
     config,
     query: prepared.query,
     preferences: prepared.preferences,
+    profileContext: prepared.profileContext,
     fetchImpl
   });
   const providerResults = discovery.providerResults || [];
@@ -497,6 +572,9 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
     articles: stored,
     query: prepared.query,
     preferences: prepared.preferences,
+    personalization: prepared.profileContext,
+    audienceKey: prepared.preferences.audience_key,
+    angleKey: prepared.preferences.angle_key,
     sourceMode: config.source?.mode || 'newsdata_only',
     providerSummary: providerResults.map(({ provider, outcome, error, articles, detail }) => ({
       provider,
@@ -532,6 +610,7 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
       && (!compat.aiNewsDraftsHasGeneratorProviders || !compat.aiNewsTelemetryHasGeneratorProviders)) {
       return { ok: false, reason: 'migration_034_required' };
     }
+    if (!compat.aiNewsPreferencesHasAudienceContract) return { ok: false, reason: 'migration_035_required' };
     const context = await loadUserContext(client, { telegramUserId, telegramUsername, multiSourceSchema: compat.aiNewsSourcesHasQualityMetadata });
     const preferences = normalizePreferences({ ...context.preferences, ...(preferenceOverride || {}) });
     const eligibility = checkEligibility({ config, telegramUserId, entitlements: context.entitlements, profile: context.profile });
@@ -559,6 +638,10 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
       },
       postLanguage: preferences.post_language,
       tone: preferences.tone,
+      audienceKey: preferences.audience_key,
+      customAudience: preferences.custom_audience,
+      angleKey: preferences.angle_key,
+      profileAffinityEnabled: preferences.profile_affinity_enabled !== false,
       generator: generatorContract(config)
     }));
     const draft = await createGeneratingAiNewsDraft(client, {
@@ -589,6 +672,9 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
       profile: prepared.profile,
       postLanguage: prepared.preferences.post_language,
       tone: prepared.preferences.tone,
+      audienceKey: prepared.preferences.audience_key,
+      customAudience: prepared.preferences.custom_audience,
+      angleKey: prepared.preferences.angle_key,
       fetchImpl
     });
   } catch (error) {
@@ -666,6 +752,9 @@ export async function generateAiNewsDraftForTelegramUser({ telegramUserId, teleg
         providerRequestId: generated.providerRequestId,
         postLanguage: prepared.preferences.post_language,
         tone: prepared.preferences.tone,
+        audienceKey: prepared.preferences.audience_key,
+        angleKey: prepared.preferences.angle_key,
+        profileAffinityEnabled: prepared.preferences.profile_affinity_enabled !== false,
         inputTokens: generated.usage?.inputTokens ?? null,
         outputTokens: generated.usage?.outputTokens ?? null,
         estimatedCostMicrousd

@@ -48,7 +48,7 @@ try {
   const healthResponse = { statusCode: null, body: null, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } };
   await healthHandler({}, healthResponse);
   assert.equal(healthResponse.statusCode, 200);
-  assert.equal(healthResponse.body.step, 'STEP063A-H1A');
+  assert.equal(healthResponse.body.step, 'STEP063B');
   assert.equal(healthResponse.body.aiNewsDraft.generatorMode, 'off');
   assert.equal(healthResponse.body.aiNewsDraft.browseOnly, true);
   assert.equal(healthResponse.body.aiNewsDraft.schedule.mode, 'off');

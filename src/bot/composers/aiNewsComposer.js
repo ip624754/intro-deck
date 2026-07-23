@@ -7,6 +7,11 @@ import {
 import { buildSignedLinkedInLaunchTicket } from '../../lib/linkedin/oidc.js';
 import {
   aiNewsReasonText,
+  renderAiNewsAudienceKeyboard,
+  renderAiNewsAudiencePromptText,
+  renderAiNewsAudienceText,
+  renderAiNewsAngleKeyboard,
+  renderAiNewsAngleText,
   renderAiNewsDraftKeyboard,
   renderAiNewsDraftText,
   renderAiNewsEditPromptText,
@@ -26,6 +31,7 @@ import { buildLinkedInStartUrl } from '../../lib/telegram/render.js';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
 import {
   approveAiNewsDraftForLinkedIn,
+  beginAiNewsAudienceInputForTelegramUser,
   beginAiNewsDraftEditForTelegramUser,
   beginAiNewsTopicInputForTelegramUser,
   cancelAiNewsDraftForTelegramUser,
@@ -33,6 +39,8 @@ import {
   generateAiNewsDraftForTelegramUser,
   loadAiNewsDraftForTelegramUser,
   loadAiNewsHubState,
+  updateAiNewsAngleForTelegramUser,
+  updateAiNewsAudienceForTelegramUser,
   updateAiNewsLanguageForTelegramUser,
   updateAiNewsPresetForTelegramUser,
   updateAiNewsToneForTelegramUser
@@ -57,6 +65,28 @@ export async function buildAiNewsHubSurface(ctx, notice = null) {
     telegramUsername: ctx.from.username || null
   }).catch((error) => ({ eligible: false, reason: error?.message || String(error), preferences: {}, config: {}, dailyUsage: { remaining: 0, limit: 0 } }));
   return { text: renderAiNewsHubText({ state, notice }), reply_markup: renderAiNewsHubKeyboard({ state }) };
+}
+
+export async function buildAiNewsAudienceSurface(ctx) {
+  const state = await loadAiNewsHubState({
+    telegramUserId: ctx.from.id,
+    telegramUsername: ctx.from.username || null
+  }).catch(() => ({ preferences: {} }));
+  return {
+    text: renderAiNewsAudienceText({ preferences: state.preferences }),
+    reply_markup: renderAiNewsAudienceKeyboard({ preferences: state.preferences })
+  };
+}
+
+export async function buildAiNewsAngleSurface(ctx) {
+  const state = await loadAiNewsHubState({
+    telegramUserId: ctx.from.id,
+    telegramUsername: ctx.from.username || null
+  }).catch(() => ({ preferences: {} }));
+  return {
+    text: renderAiNewsAngleText({ preferences: state.preferences }),
+    reply_markup: renderAiNewsAngleKeyboard({ preferences: state.preferences })
+  };
 }
 
 export async function buildAiNewsDraftSurface(ctx, publicToken = null, notice = null) {
@@ -97,6 +127,16 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
     await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup, disable_web_page_preview: true });
   }
 
+  async function showAudience(ctx) {
+    const surface = await buildAiNewsAudienceSurface(ctx);
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup, disable_web_page_preview: true });
+  }
+
+  async function showAngle(ctx) {
+    const surface = await buildAiNewsAngleSurface(ctx);
+    await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup, disable_web_page_preview: true });
+  }
+
   async function showDraft(ctx, token, notice = null) {
     const surface = await buildAiNewsDraftSurface(ctx, token, notice);
     await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup, disable_web_page_preview: true });
@@ -123,7 +163,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
     await showHub(ctx);
   });
 
-  composer.callbackQuery(/^news:preset:(ai_technology|business_growth|crypto_web3|custom)$/i, async (ctx) => {
+  composer.callbackQuery(/^news:preset:(for_you|ai_technology|startups_product|business_markets|career_leadership|crypto_web3|custom)$/i, async (ctx) => {
     await answer(ctx);
     await clearAllPendingInputs(ctx.from.id);
     const presetKey = ctx.match?.[1];
@@ -134,6 +174,41 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
     }
     await updateAiNewsPresetForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, presetKey });
     await showHub(ctx, '✅ Topic preset updated.');
+  });
+
+  composer.callbackQuery('news:audience', async (ctx) => {
+    await answer(ctx);
+    await clearAllPendingInputs(ctx.from.id);
+    await showAudience(ctx);
+  });
+
+  composer.callbackQuery(/^news:aud:(professional_network|founders_executives|product_engineering|sales_marketing|investors_finance|recruiters_talent|custom)$/i, async (ctx) => {
+    await answer(ctx);
+    await clearAllPendingInputs(ctx.from.id);
+    const audienceKey = ctx.match?.[1];
+    if (audienceKey === 'custom') {
+      const result = await beginAiNewsAudienceInputForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null });
+      if (!result.started) return showHub(ctx, `⚠️ ${aiNewsReasonText(result.reason)}`);
+      await safeEditOrReply(ctx, renderAiNewsAudiencePromptText(), { reply_markup: { inline_keyboard: [[{ text: 'Cancel', callback_data: 'news:home' }]] } });
+      return;
+    }
+    const result = await updateAiNewsAudienceForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, audienceKey });
+    if (!result.changed) return showHub(ctx, `⚠️ ${aiNewsReasonText(result.reason)}`);
+    await showHub(ctx, '✅ LinkedIn audience updated.');
+  });
+
+  composer.callbackQuery('news:angle', async (ctx) => {
+    await answer(ctx);
+    await clearAllPendingInputs(ctx.from.id);
+    await showAngle(ctx);
+  });
+
+  composer.callbackQuery(/^news:ang:(expert_take|practical_lessons|founder_perspective|explain_simply|contrarian_opinion|industry_impact|career_implications)$/i, async (ctx) => {
+    await answer(ctx);
+    await clearAllPendingInputs(ctx.from.id);
+    const result = await updateAiNewsAngleForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, angleKey: ctx.match?.[1] });
+    if (!result.changed) return showHub(ctx, `⚠️ ${aiNewsReasonText(result.reason)}`);
+    await showHub(ctx, '✅ Editorial angle updated.');
   });
 
   composer.callbackQuery(/^news:lang:(en|ru)$/i, async (ctx) => {
@@ -159,7 +234,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
   composer.callbackQuery('news:find', async (ctx) => {
     await answer(ctx);
     await clearAllPendingInputs(ctx.from.id);
-    await safeEditOrReply(ctx, '🔎 Searching trusted source providers for fresh evidence…');
+    await safeEditOrReply(ctx, '🔎 Finding professionally relevant stories from trusted source providers…');
     const result = await findAiNewsSourcesForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null }).catch((error) => ({ found: false, reason: error?.message || String(error), articles: [] }));
     if (!result.found) return showHub(ctx, `⚠️ ${aiNewsReasonText(result.reason)}`);
     await safeEditOrReply(ctx, renderAiNewsSourcesText({ result }), { reply_markup: renderAiNewsSourcesKeyboard({ result }), disable_web_page_preview: true });
@@ -241,7 +316,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
       telegramUserId: ctx.from.id,
       telegramUsername: ctx.from.username || null
     }).catch((error) => ({ created: false, reason: error?.message || String(error) }));
-    await showPresets(ctx, result.created ? '✅ Current topic, language, and tone saved as a preset.' : `⚠️ ${aiNewsReasonText(result.reason)}`);
+    await showPresets(ctx, result.created ? '✅ Current topic, audience, angle, language, and tone saved as a preset.' : `⚠️ ${aiNewsReasonText(result.reason)}`);
   });
 
   composer.callbackQuery(/^news:ps:([0-9a-f-]{36})$/i, async (ctx) => {

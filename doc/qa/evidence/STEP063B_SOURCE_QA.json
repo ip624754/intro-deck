@@ -1,0 +1,35 @@
+{
+  "step": "STEP063B",
+  "status": "source_implemented_focused_qa_passed_production_not_verified",
+  "baseline": {
+    "artifact": "IntroDeck_STEP063A_H1A_FULL_2026-07-24.zip",
+    "sha256": "b7f20e26d94872097ad8165a7d2f4f43aa7a9c3a446766b1d5260573f6baff39"
+  },
+  "candidate": {
+    "package": "0.63.3",
+    "sourceStep": "STEP063B"
+  },
+  "verified": {
+    "focusedQa": "pass",
+    "baselineSmoke": {
+      "pass": 93,
+      "nonPass": 19,
+      "total": 112
+    },
+    "candidateSmoke": {
+      "pass": 94,
+      "nonPass": 19,
+      "total": 113
+    },
+    "baselinePassRegressions": 0,
+    "newSmoke": "pass",
+    "automaticPublishing": false
+  },
+  "notVerified": [
+    "production_migration_035",
+    "vercel_deployment",
+    "live_for_you_relevance",
+    "production_preset_rows",
+    "production_linkedin_publish"
+  ]
+}

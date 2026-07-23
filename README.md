@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP063A-H1A source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP063B source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
@@ -16,6 +16,16 @@ A Telegram-first professional directory:
 - operator shell with communications, delivery, audit, quality, and search
 - analytics drilldowns and guarded operator bulk-prep
 - runbook/freeze launch discipline
+
+## STEP063B LinkedIn audience-aware discovery
+
+- `For you` uses a bounded subset of the member's public Intro Deck profile: headline, industry, and skills.
+- The compact topic taxonomy now includes AI, Startups/Product, Business/Markets, Career/Leadership, Crypto/Web3, and Custom.
+- Audience and Editorial Angle selectors define who the story is for and how it should be framed.
+- Ranking combines topic, profile affinity, audience fit, angle fit, source authority, freshness, and promotional risk.
+- Saved presets persist topic + audience + angle + language + tone + profile-match policy.
+- Migration 035 is required; no new ENV is required.
+- STEP059 remains the sole explicit-approval LinkedIn publisher.
 
 ## STEP063A-H1A source relevance and browse UX
 
@@ -63,6 +73,7 @@ A Telegram-first professional directory:
 - STEP063A — multi-source news ingestion, source quality, deduplication, and NewsData fallback
 - STEP063A-H1 — browse-only, deterministic template, and Groq/OpenAI generator selection
 - STEP063A-H1A — source relevance, provider diagnostics, and browse-only allowance UX
+- STEP063B — LinkedIn audience-aware topic discovery, For you, Audience, Angle, and personalized presets
 
 ## Core docs
 
@@ -100,6 +111,7 @@ A Telegram-first professional directory:
 - `npm run smoke:ai-news-live-acceptance`
 - `npm run smoke:ai-news-multi-source`
 - `npm run smoke:ai-news-source-relevance`
+- `npm run smoke:ai-news-audience-discovery`
 - `npm run step061a:preflight`
 - `npm run step061a:evidence:init`
 - `npm run step061a:evidence:verify`

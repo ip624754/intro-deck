@@ -37,6 +37,7 @@ import {
   normalizeDeliveryHourUtc,
   normalizeScheduleKind
 } from '../ai/newsPresetSchedule.js';
+import { audienceLabel, angleLabel } from '../ai/newsDiscoveryContract.js';
 import { sendTelegramMessage } from '../telegram/botApi.js';
 import {
   findAiNewsSourcesForTelegramUser,
@@ -69,7 +70,11 @@ function preferenceOverrideFromPreset(preset) {
     source_country: preset.source_country,
     source_category: preset.source_category,
     post_language: preset.post_language,
-    tone: preset.tone
+    tone: preset.tone,
+    audience_key: preset.audience_key,
+    custom_audience: preset.custom_audience,
+    angle_key: preset.angle_key,
+    profile_affinity_enabled: preset.profile_affinity_enabled !== false
   };
 }
 
@@ -98,6 +103,9 @@ export async function loadAiNewsPresetsForTelegramUser({ telegramUserId, telegra
     if (!compat.hasAiNewsPresetsTable || !compat.hasAiNewsPresetRunsTable || !compat.aiNewsDraftsHasPresetRunId) {
       return { persistenceEnabled: true, config, eligible: false, reason: 'migration_031_required', presets: [] };
     }
+    if (!compat.aiNewsPresetsHasAudienceContract) {
+      return { persistenceEnabled: true, config, eligible: false, reason: 'migration_035_required', presets: [] };
+    }
     const context = await loadPresetAccessContext(client, { telegramUserId, telegramUsername });
     const access = hasAccess({ config, telegramUserId, entitlements: context.entitlements });
     const presets = await listAiNewsPresets(client, { userId: context.user.id });
@@ -119,6 +127,7 @@ export async function loadAiNewsPresetForTelegramUser({ telegramUserId, telegram
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPresetsTable) return { persistenceEnabled: true, config, preset: null, reason: 'migration_031_required' };
+    if (!compat.aiNewsPresetsHasAudienceContract) return { persistenceEnabled: true, config, preset: null, reason: 'migration_035_required' };
     const context = await loadPresetAccessContext(client, { telegramUserId, telegramUsername });
     const access = hasAccess({ config, telegramUserId, entitlements: context.entitlements });
     const preset = await getAiNewsPresetByToken(client, { userId: context.user.id, publicToken });
@@ -134,6 +143,9 @@ export async function saveCurrentAiNewsPreferencesAsPreset({ telegramUserId, tel
     if (!compat.hasAiNewsPresetsTable || !compat.hasAiNewsPresetRunsTable || !compat.aiNewsDraftsHasPresetRunId) {
       return { persistenceEnabled: true, created: false, reason: 'migration_031_required' };
     }
+    if (!compat.aiNewsPreferencesHasAudienceContract || !compat.aiNewsPresetsHasAudienceContract) {
+      return { persistenceEnabled: true, created: false, reason: 'migration_035_required' };
+    }
     const context = await loadPresetAccessContext(client, { telegramUserId, telegramUsername });
     const access = hasAccess({ config, telegramUserId, entitlements: context.entitlements });
     if (!access.allowed) return { persistenceEnabled: true, created: false, reason: access.reason };
@@ -147,7 +159,9 @@ export async function saveCurrentAiNewsPreferencesAsPreset({ telegramUserId, tel
       presetKey: preferences.preset_key,
       customQuery: preferences.custom_query,
       postLanguage: preferences.post_language,
-      tone: preferences.tone
+      tone: preferences.tone,
+      audienceLabel: audienceLabel(preferences),
+      angleLabel: angleLabel(preferences)
     });
     try {
       const preset = await createAiNewsPreset(client, {
@@ -161,6 +175,10 @@ export async function saveCurrentAiNewsPreferencesAsPreset({ telegramUserId, tel
         sourceCategory: preferences.source_category,
         postLanguage: preferences.post_language,
         tone: preferences.tone,
+        audienceKey: preferences.audience_key,
+        customAudience: preferences.custom_audience,
+        angleKey: preferences.angle_key,
+        profileAffinityEnabled: preferences.profile_affinity_enabled !== false,
         scheduleKind: 'manual',
         deliveryHourUtc: config.schedule.dailyHourUtc,
         nextRunAt: null
@@ -170,7 +188,14 @@ export async function saveCurrentAiNewsPreferencesAsPreset({ telegramUserId, tel
         actorUserId: context.user.id,
         targetUserId: context.user.id,
         summary: 'Member saved a personalized AI/news preset.',
-        detail: { presetId: preset.id, presetKey: preset.preset_key, scheduleKind: preset.schedule_kind }
+        detail: {
+          presetId: preset.id,
+          presetKey: preset.preset_key,
+          audienceKey: preset.audience_key,
+          angleKey: preset.angle_key,
+          profileAffinityEnabled: preset.profile_affinity_enabled !== false,
+          scheduleKind: preset.schedule_kind
+        }
       });
       return { persistenceEnabled: true, created: true, reason: 'ai_news_preset_created', preset };
     } catch (error) {
@@ -192,6 +217,7 @@ export async function updateAiNewsPresetScheduleForTelegramUser({
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPresetsTable) return { persistenceEnabled: true, changed: false, reason: 'migration_031_required' };
+    if (!compat.aiNewsPresetsHasAudienceContract) return { persistenceEnabled: true, changed: false, reason: 'migration_035_required' };
     const context = await loadPresetAccessContext(client, { telegramUserId, telegramUsername });
     const access = hasAccess({ config, telegramUserId, entitlements: context.entitlements });
     if (!access.allowed) return { persistenceEnabled: true, changed: false, reason: access.reason };
@@ -251,6 +277,7 @@ async function createRunNowClaim({ telegramUserId, telegramUsername, publicToken
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPresetRunsTable || !compat.aiNewsDraftsHasPresetRunId) return { ok: false, reason: 'migration_031_required' };
+    if (!compat.aiNewsPresetsHasAudienceContract) return { ok: false, reason: 'migration_035_required' };
     if (['groq', 'template'].includes(config.generator?.mode)
       && (!compat.aiNewsDraftsHasGeneratorProviders || !compat.aiNewsTelemetryHasGeneratorProviders)) {
       return { ok: false, reason: 'migration_034_required' };
@@ -445,7 +472,10 @@ export async function processDueAiNewsPresetRuns({ batchSize = null, fetchImpl =
   const claimed = await withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPresetsTable || !compat.hasAiNewsPresetRunsTable || !compat.aiNewsDraftsHasPresetRunId) {
-      return { migrationRequired: true, runs: [] };
+      return { migrationRequired: 'migration_031_required', runs: [] };
+    }
+    if (!compat.aiNewsPresetsHasAudienceContract) {
+      return { migrationRequired: 'migration_035_required', runs: [] };
     }
     const due = await listDueAiNewsPresetsForClaim(client, { batchSize: effectiveBatch });
     const runs = [];
@@ -475,7 +505,7 @@ export async function processDueAiNewsPresetRuns({ batchSize = null, fetchImpl =
     return { migrationRequired: false, runs };
   });
 
-  if (claimed.migrationRequired) return { ok: false, reason: 'migration_031_required' };
+  if (claimed.migrationRequired) return { ok: false, reason: claimed.migrationRequired };
   const summary = { ok: true, claimedCount: claimed.runs.length, deliveredCount: 0, failedCount: 0, results: [] };
   for (const run of claimed.runs) {
     const result = await executePresetRun({ runId: run.id, deliver: true, fetchImpl }).catch((error) => ({ ok: false, reason: safeErrorCode(error?.message || error) }));
@@ -491,6 +521,7 @@ export async function loadAiNewsPresetOperatorDiagnostics() {
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPresetsTable || !compat.hasAiNewsPresetRunsTable) return { persistenceEnabled: true, summary: null, reason: 'migration_031_required' };
+    if (!compat.aiNewsPresetsHasAudienceContract) return { persistenceEnabled: true, summary: null, reason: 'migration_035_required' };
     const presetSummary = await getAiNewsPresetOperatorSummary(client);
     const rolloutSummary = compat.hasAiNewsProviderUsageEventsTable
       ? await getAiNewsRolloutSummary(client)

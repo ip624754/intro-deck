@@ -50,10 +50,11 @@ export async function fetchGitHubReleases({
   maxRepos = 2,
   perRepo = 2,
   maxBytes = 1_500_000,
-  fetchImpl = fetch
+  fetchImpl = fetch,
+  profileContext = null
 }) {
   const startedAt = Date.now();
-  const repos = listGitHubReposForPreset(presetKey, { maxRepos });
+  const repos = listGitHubReposForPreset(presetKey, { maxRepos, profileContext });
   if (!repos.length) {
     return { provider: 'github_releases', articles: [], rawResultCount: 0, durationMs: 0, requestId: null, detail: { configuredRepositories: 0 } };
   }

@@ -1,6 +1,7 @@
 import { CURRENT_SOURCE_STEP, getRuntimeArtifactSha } from '../src/config/release.js';
 import { publicSourceRegistrySummary } from '../src/lib/news/sourceRegistry.js';
 import { publicSourceRelevanceSummary } from '../src/lib/news/sourceRelevance.js';
+import { publicAudienceDiscoverySummary } from '../src/lib/ai/newsDiscoveryContract.js';
 import {
   getAiNewsDraftConfig,
   getLinkedInShareConfig,
@@ -99,6 +100,7 @@ export default async function handler(req, res) {
         githubRepositoryCount: publicSourceRegistrySummary().githubReleases.length
       },
       sourceQualityPolicy: publicSourceRelevanceSummary(),
+      audienceDiscoveryPolicy: publicAudienceDiscoverySummary(),
       newsdataFallbackPolicy: aiNewsDraft.source?.mode === 'multi_source' ? 'only_when_primary_pool_is_below_limit' : 'primary_provider',
       generatorMode,
       generatorEnabled: Boolean(aiNewsDraft.generator?.enabled),

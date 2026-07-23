@@ -1,15 +1,31 @@
 import crypto from 'node:crypto';
+import { buildPersonalizedDiscoveryQuery } from './newsDiscoveryContract.js';
 
 export const AI_NEWS_PRESETS = Object.freeze({
+  for_you: {
+    key: 'for_you',
+    label: 'For you',
+    query: null
+  },
   ai_technology: {
     key: 'ai_technology',
     label: 'AI & Technology',
     query: 'artificial intelligence OR AI technology'
   },
-  business_growth: {
-    key: 'business_growth',
-    label: 'Business & Growth',
-    query: 'business growth OR startups OR entrepreneurship'
+  startups_product: {
+    key: 'startups_product',
+    label: 'Startups & Product',
+    query: 'startup OR founder OR product OR SaaS'
+  },
+  business_markets: {
+    key: 'business_markets',
+    label: 'Business & Markets',
+    query: 'business OR markets OR finance OR enterprise'
+  },
+  career_leadership: {
+    key: 'career_leadership',
+    label: 'Career & Leadership',
+    query: 'career OR leadership OR hiring OR workplace'
   },
   crypto_web3: {
     key: 'crypto_web3',
@@ -31,7 +47,8 @@ export const AI_NEWS_TONES = Object.freeze({
 
 export function normalizePresetKey(value) {
   const key = String(value || '').trim().toLowerCase();
-  return AI_NEWS_PRESETS[key] ? key : 'ai_technology';
+  if (key === 'business_growth') return 'business_markets';
+  return AI_NEWS_PRESETS[key] ? key : 'for_you';
 }
 
 export function normalizePostLanguage(value) {
@@ -51,10 +68,18 @@ export function normalizeTopicQuery(value) {
   return normalized;
 }
 
-export function resolvePreferenceQuery(preferences = {}) {
+export function resolvePreferenceQuery(preferences = {}, profileContext = {}) {
   const presetKey = normalizePresetKey(preferences.preset_key || preferences.presetKey);
   if (presetKey === 'custom') {
     return normalizeTopicQuery(preferences.custom_query || preferences.customQuery || '');
+  }
+  if (presetKey === 'for_you') {
+    return buildPersonalizedDiscoveryQuery({
+      profileContext: preferences.profile_affinity_enabled === false || preferences.profileAffinityEnabled === false ? {} : profileContext,
+      audienceKey: preferences.audience_key || preferences.audienceKey,
+      customAudience: preferences.custom_audience || preferences.customAudience,
+      angleKey: preferences.angle_key || preferences.angleKey
+    });
   }
   return AI_NEWS_PRESETS[presetKey].query;
 }

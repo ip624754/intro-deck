@@ -1,0 +1,66 @@
+# STEP063B Changed Files
+
+Baseline: IntroDeck_STEP063A_H1A_FULL_2026-07-24.zip
+Baseline SHA-256: b7f20e26d94872097ad8165a7d2f4f43aa7a9c3a446766b1d5260573f6baff39
+Candidate package: 0.63.3
+Candidate source step: STEP063B
+
+Changed files total: 48
+Added: 14
+Modified: 34
+Deleted: 0
+
+## Added
+A	STEP063B_HANDOFF.md
+A	STEP063B_PATCH_README.md
+A	STEP063B_QA_REPORT.md
+A	STEP063B_QA_checklist.md
+A	STEP063B_changed_files.txt
+A	doc/93_STEP063B_OPERATOR_ROLLOUT.md
+A	doc/env/STEP063B_BROWSE_ONLY_PRODUCTION.env
+A	doc/env/STEP063B_SAFE_OFF_PRODUCTION.env
+A	doc/qa/STEP063B_QA_REPORT.md
+A	doc/qa/evidence/STEP063B_SOURCE_QA.json
+A	doc/spec/STEP063B_LINKEDIN_AUDIENCE_AWARE_TOPIC_DISCOVERY.md
+A	migrations/035_ai_news_audience_aware_discovery.sql
+A	scripts/smoke_ai_news_audience_discovery_presets.js
+A	src/lib/ai/newsDiscoveryContract.js
+
+## Modified
+M	00_CURRENT_STATE.md
+M	README.md
+M	api/health.js
+M	doc/00_CURRENT_STATE.md
+M	doc/36_NEXT_STEPS_ROADMAP.md
+M	doc/81_LINKEDIN_TRUST_AND_DISTRIBUTION_ROADMAP.md
+M	package-lock.json
+M	package.json
+M	scripts/smoke_ai_news_generator_fallback.js
+M	scripts/smoke_ai_news_presets_subscription.js
+M	scripts/smoke_linkedin_verification_compat_fail_safe.js
+M	scripts/smoke_linkedin_verified_badges_trust_surfaces.js
+M	scripts/smoke_linkedin_verified_development_integration.js
+M	scripts/smoke_step061_profile_preview_hotfix.js
+M	src/bot/composers/aiNewsComposer.js
+M	src/bot/composers/textComposer.js
+M	src/config/release.js
+M	src/db/aiNewsPresetRepo.js
+M	src/db/aiNewsRepo.js
+M	src/db/schemaCompat.js
+M	src/lib/ai/groqNewsDraft.js
+M	src/lib/ai/newsDraftContract.js
+M	src/lib/ai/newsDraftGenerationContract.js
+M	src/lib/ai/newsPresetSchedule.js
+M	src/lib/ai/openaiNewsDraft.js
+M	src/lib/ai/templateNewsDraft.js
+M	src/lib/news/githubReleases.js
+M	src/lib/news/multiSource.js
+M	src/lib/news/rss.js
+M	src/lib/news/sourceRegistry.js
+M	src/lib/news/sourceRelevance.js
+M	src/lib/storage/aiNewsPresetStore.js
+M	src/lib/storage/aiNewsStore.js
+M	src/lib/telegram/aiNewsRender.js
+
+## Deleted
+(none)

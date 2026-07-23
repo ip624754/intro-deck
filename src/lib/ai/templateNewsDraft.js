@@ -1,3 +1,4 @@
+import { audienceLabel, angleLabel, normalizeAngleKey } from './newsDiscoveryContract.js';
 import { parseAndValidateGeneratedDraft } from './newsDraftGenerationContract.js';
 
 function clean(value, max = 1200) {
@@ -19,11 +20,35 @@ function exactEvidenceSnippet(sourceEvidence) {
   return String(sourceEvidence || '').trim().slice(0, 300);
 }
 
+function perspectiveLead({ postLanguage, angleKey, audience }) {
+  const angle = normalizeAngleKey(angleKey);
+  const ru = {
+    expert_take: `Мой взгляд для аудитории ${audience}: важнее всего отделить подтверждённый факт от профессиональной интерпретации.`,
+    practical_lessons: `Мой взгляд для аудитории ${audience}: практическая ценность здесь — в выводах, которые можно проверить и применить без лишних обещаний.`,
+    founder_perspective: `Мой взгляд как оператора для аудитории ${audience}: такой сигнал стоит оценивать через продуктовые последствия, ограничения и цену ошибки.`,
+    explain_simply: `Мой взгляд для аудитории ${audience}: смысл новости стоит объяснять простыми словами, не смешивая факт и прогноз.`,
+    contrarian_opinion: `Мой взгляд для аудитории ${audience}: помимо очевидной трактовки, полезно проверить альтернативный сценарий и его ограничения.`,
+    industry_impact: `Мой взгляд для аудитории ${audience}: главный вопрос — как подтверждённое событие может повлиять на отрасль, без выдачи прогноза за факт.`,
+    career_implications: `Мой взгляд для аудитории ${audience}: профессиональная ценность темы — в возможных последствиях для навыков и ролей, а не в громких прогнозах.`
+  };
+  const en = {
+    expert_take: `My take for ${audience}: the priority is to separate the verified fact from professional interpretation.`,
+    practical_lessons: `My take for ${audience}: the practical value is in lessons that can be checked and applied without overclaiming.`,
+    founder_perspective: `My take as an operator for ${audience}: this signal should be assessed through product consequences, constraints, and the cost of error.`,
+    explain_simply: `My take for ${audience}: the significance should be explained plainly without mixing facts and forecasts.`,
+    contrarian_opinion: `My take for ${audience}: beyond the obvious interpretation, it is worth testing an alternative scenario and its limits.`,
+    industry_impact: `My take for ${audience}: the key question is how the verified event may affect the industry without presenting a forecast as fact.`,
+    career_implications: `My take for ${audience}: the professional value lies in possible implications for skills and roles, not in dramatic predictions.`
+  };
+  return postLanguage === 'ru' ? ru[angle] : en[angle];
+}
 
-function buildPost({ source, postLanguage, tone }) {
+function buildPost({ source, postLanguage, tone, audienceKey, customAudience, angleKey }) {
   const sourceUrl = source?.source_url || source?.url;
   const title = clean(source?.source_title || source?.title, 300);
   const fact = sourceFact(source);
+  const audience = audienceLabel({ audienceKey, customAudience });
+  const angle = angleLabel({ angleKey });
 
   if (postLanguage === 'ru') {
     const toneLead = tone === 'analytical'
@@ -37,7 +62,8 @@ function buildPost({ source, postLanguage, tone }) {
       toneLead,
       fact || 'Источник сообщает об этом обновлении; перед выводами стоит проверить детали по исходной публикации.',
       '',
-      'Мой взгляд: это подходящая тема для профессионального обсуждения, но выводы должны опираться только на подтверждённые данные из первоисточника. Поэтому я отделяю факт публикации от собственной интерпретации и оставляю ссылку для проверки.',
+      perspectiveLead({ postLanguage, angleKey, audience }),
+      `Редакционный ракурс: ${angle}. Выводы должны опираться только на подтверждённые данные из первоисточника.`,
       '',
       'Источник:',
       sourceUrl
@@ -55,7 +81,8 @@ function buildPost({ source, postLanguage, tone }) {
     toneLead,
     fact || 'The source reports this update; the original publication should be reviewed before drawing broader conclusions.',
     '',
-    'My take: this is a useful topic for professional discussion, but conclusions should stay anchored to the evidence in the source. I am separating the reported fact from my interpretation and leaving the original link for verification.',
+    perspectiveLead({ postLanguage, angleKey, audience }),
+    `Editorial angle: ${angle}. Conclusions should stay anchored to the evidence in the original source.`,
     '',
     'Source:',
     sourceUrl
@@ -67,13 +94,16 @@ export function generateTemplateNewsDraft({
   sourceEvidence,
   profile,
   postLanguage,
-  tone
+  tone,
+  audienceKey = 'professional_network',
+  customAudience = null,
+  angleKey = 'expert_take'
 }) {
   const startedAt = Date.now();
   const sourceUrl = source?.source_url || source?.url;
   const title = clean(source?.source_title || source?.title, 300);
   const fact = sourceFact(source);
-  const postText = buildPost({ source, postLanguage, tone });
+  const postText = buildPost({ source, postLanguage, tone, audienceKey, customAudience, angleKey });
   const supportingText = exactEvidenceSnippet(sourceEvidence) || title;
   const payload = JSON.stringify({
     post_text: postText,
