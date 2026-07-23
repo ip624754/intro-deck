@@ -125,10 +125,11 @@ export function titleSimilarity(left, right) {
 function articleRank(article, nowMs = Date.now()) {
   const ageHours = Math.max(0, (nowMs - article.publishedAt.getTime()) / 3_600_000);
   const freshness = Math.max(0, 2_000 - Math.round(ageHours * 35));
-  const primary = article.isPrimary ? 5_000 : 0;
+  const primary = article.isPrimary ? 20_000 : 0;
   const trend = Math.min(2_000, Math.round(Math.log10(1 + article.trendScore) * 600));
-  const directDiscovery = ['rss', 'github_releases'].includes(article.provider) ? 1_000 : 0;
-  return article.authorityScore * 10_000 + primary + directDiscovery + freshness + trend;
+  const directDiscovery = ['rss', 'github_releases'].includes(article.provider) ? 5_000 : 0;
+  const relevance = Math.max(0, Math.min(100, Number(article?.metadata?.relevanceScore) || 0));
+  return article.authorityScore * 5_000 + relevance * 2_500 + primary + directDiscovery + freshness + trend;
 }
 
 function preferArticle(current, candidate) {

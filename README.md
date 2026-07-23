@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP063A-H1 source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP063A-H1A source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
@@ -16,6 +16,15 @@ A Telegram-first professional directory:
 - operator shell with communications, delivery, audit, quality, and search
 - analytics drilldowns and guarded operator bulk-prep
 - runbook/freeze launch discipline
+
+## STEP063A-H1A source relevance and browse UX
+
+- Preset-specific provider queries reduce broad fallback noise.
+- A common relevance gate runs before persistence; obvious price-prediction, presale, advertorial, and unrelated fallback candidates are rejected.
+- NewsData authority is domain-tiered instead of universally 65/100.
+- RSS/HN/GitHub telemetry exposes bounded error/no-result diagnostics without secrets or arbitrary URLs.
+- Browse-only Telegram surfaces show rolling search allowance/reset and hide stale failed-draft status.
+- No migration or new ENV is required; STEP059 remains the only LinkedIn publisher.
 
 ## STEP063A-H1 generator fallback
 
@@ -47,12 +56,13 @@ A Telegram-first professional directory:
 - STEP058B — Verified badges and fail-closed trust surfaces
 - STEP058B1 — verification compatibility + optional-config fail-safe
 - STEP059 — explicit user-approved Share Profile on LinkedIn
+- STEP060 — evidence-bound AI/news drafts with preview/edit and explicit one-post approval
 - STEP061 — personalized AI/news presets, Pro access/allowances, and scheduled reviewable Telegram drafts
 - STEP061H1 — profile preview runtime and webhook token-log hotfix
 - STEP061A — AI/news E2E live acceptance, provider telemetry, and rollout hardening
 - STEP063A — multi-source news ingestion, source quality, deduplication, and NewsData fallback
 - STEP063A-H1 — browse-only, deterministic template, and Groq/OpenAI generator selection
-- STEP060 — evidence-bound AI/news drafts with preview/edit and explicit one-post approval
+- STEP063A-H1A — source relevance, provider diagnostics, and browse-only allowance UX
 
 ## Core docs
 
@@ -89,6 +99,7 @@ A Telegram-first professional directory:
 - `npm run step057:preflight`
 - `npm run smoke:ai-news-live-acceptance`
 - `npm run smoke:ai-news-multi-source`
+- `npm run smoke:ai-news-source-relevance`
 - `npm run step061a:preflight`
 - `npm run step061a:evidence:init`
 - `npm run step061a:evidence:verify`

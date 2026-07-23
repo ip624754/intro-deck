@@ -70,6 +70,10 @@ export async function fetchGitHubReleases({
   const requestIds = [];
   let rawResultCount = 0;
   let rejectedReleaseUrls = 0;
+  let draftReleases = 0;
+  let staleReleases = 0;
+  let invalidDates = 0;
+  let acceptedReleases = 0;
   for (let index = 0; index < settled.length; index += 1) {
     const result = settled[index];
     const registryItem = repos[index];
@@ -80,7 +84,14 @@ export async function fetchGitHubReleases({
     rawResultCount += result.value.releases.length;
     if (result.value.requestId) requestIds.push(result.value.requestId);
     for (const release of result.value.releases) {
-      if (release?.draft || !release?.html_url) continue;
+      if (release?.draft) {
+        draftReleases += 1;
+        continue;
+      }
+      if (!release?.html_url) {
+        rejectedReleaseUrls += 1;
+        continue;
+      }
       const releaseUrl = trustedReleaseUrl(release.html_url, registryItem);
       if (!releaseUrl) {
         rejectedReleaseUrls += 1;
@@ -88,7 +99,14 @@ export async function fetchGitHubReleases({
       }
       const publishedAt = release?.published_at || release?.created_at;
       const date = publishedAt ? new Date(publishedAt) : null;
-      if (!date || Number.isNaN(date.getTime()) || date.getTime() < cutoff) continue;
+      if (!date || Number.isNaN(date.getTime())) {
+        invalidDates += 1;
+        continue;
+      }
+      if (date.getTime() < cutoff) {
+        staleReleases += 1;
+        continue;
+      }
       const releaseName = release?.name || release?.tag_name || 'release';
       const normalized = normalizeSourceArticle({
         providerArticleId: release.id,
@@ -107,10 +125,17 @@ export async function fetchGitHubReleases({
         metadata: {
           repository: `${registryItem.owner}/${registryItem.repo}`,
           tagName: release?.tag_name || null,
-          prerelease: Boolean(release?.prerelease)
+          prerelease: Boolean(release?.prerelease),
+          presetKey,
+          qualityTier: 'primary'
         }
       });
-      if (normalized) articles.push(normalized);
+      if (normalized) {
+        articles.push(normalized);
+        acceptedReleases += 1;
+      } else {
+        rejectedReleaseUrls += 1;
+      }
     }
   }
   articles.sort((a, b) => b.publishedAt.getTime() - a.publishedAt.getTime());
@@ -126,6 +151,14 @@ export async function fetchGitHubReleases({
       failedRepositories: failures.length,
       authenticated: Boolean(token),
       rejectedReleaseUrls,
+      draftReleases,
+      staleReleases,
+      invalidDates,
+      acceptedReleases,
+      noResultReason: articles.length ? null
+        : failures.length === repos.length ? 'repository_fetch_failed'
+          : staleReleases ? 'outside_freshness_window'
+            : rawResultCount ? 'no_eligible_release' : 'empty_release_feed',
       failures
     }
   };

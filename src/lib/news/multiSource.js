@@ -4,6 +4,7 @@ import { fetchHackerNewsStories } from './hackerNews.js';
 import { fetchGitHubReleases } from './githubReleases.js';
 import { deduplicateAndRankSources, normalizeSourceArticle } from './sourceContract.js';
 import { classifySourceDomain } from './sourceRegistry.js';
+import { filterRelevantSources, resolveProviderDiscoveryQuery } from './sourceRelevance.js';
 
 function providerOutcome(result) {
   if (result.error) return 'failed';
@@ -51,29 +52,67 @@ function normalizeNewsDataArticles(result) {
       sourceKind: domainClass.sourceKind,
       authorityScore: domainClass.authorityScore,
       isPrimary: domainClass.isPrimary,
-      metadata: { discoveryProvider: 'newsdata' }
+      metadata: {
+        discoveryProvider: 'newsdata',
+        qualityTier: domainClass.qualityTier,
+        baseAuthorityScore: domainClass.authorityScore
+      }
     });
     if (normalized) articles.push(normalized);
   }
   return articles;
 }
 
+function applyRelevance(result, {
+  provider,
+  presetKey,
+  customQuery,
+  providerQuery
+}) {
+  if (result?.error) return result;
+  const relevant = filterRelevantSources(result?.articles || [], {
+    provider,
+    presetKey,
+    customQuery
+  });
+  return {
+    ...result,
+    articles: relevant.articles,
+    detail: {
+      ...(result?.detail || {}),
+      providerQuery,
+      relevance: relevant.detail
+    }
+  };
+}
+
 async function runNewsData({ config, query, preferences, fetchImpl }) {
+  const providerQuery = resolveProviderDiscoveryQuery({
+    presetKey: preferences.preset_key,
+    customQuery: preferences.custom_query,
+    provider: 'newsdata',
+    fallbackQuery: query
+  });
   return runProvider('newsdata', async () => {
     try {
       const result = await fetchNewsDataLatest({
         apiKey: config.newsdata.apiKey,
         baseUrl: config.newsdata.baseUrl,
-        query,
+        query: providerQuery,
         language: preferences.source_language,
         country: preferences.source_country,
         category: preferences.source_category,
         timeoutMs: config.newsdata.timeoutMs,
         maxSourceAgeHours: config.maxSourceAgeHours,
-        maxArticles: config.maxArticles,
+        maxArticles: Math.min(10, Math.max(config.maxArticles * 2, config.source?.providerMaxArticles || config.maxArticles)),
         fetchImpl
       });
-      return { ...result, articles: normalizeNewsDataArticles(result) };
+      return applyRelevance({ ...result, articles: normalizeNewsDataArticles(result) }, {
+        provider: 'newsdata',
+        presetKey: preferences.preset_key,
+        customQuery: preferences.custom_query,
+        providerQuery
+      });
     } catch (error) {
       if (error instanceof NewsDataApiError) {
         error.provider = 'newsdata';
@@ -100,39 +139,43 @@ export async function discoverNewsSources({
     };
   }
 
+  const presetKey = preferences.preset_key;
+  const customQuery = preferences.custom_query;
   const freeTasks = [];
   if (source.enabledProviders.includes('rss')) {
-    freeTasks.push(runProvider('rss', () => fetchTrustedRssSources({
-      presetKey: preferences.preset_key,
-      query,
+    const providerQuery = resolveProviderDiscoveryQuery({ presetKey, customQuery, provider: 'rss', fallbackQuery: query });
+    freeTasks.push(runProvider('rss', async () => applyRelevance(await fetchTrustedRssSources({
+      presetKey,
+      query: providerQuery,
       timeoutMs: source.rssTimeoutMs,
       maxSourceAgeHours: config.maxSourceAgeHours,
       maxArticles: source.providerMaxArticles,
       maxSources: source.rssMaxFeedsPerSearch,
       fetchImpl
-    })));
+    }), { provider: 'rss', presetKey, customQuery, providerQuery })));
   }
   if (source.enabledProviders.includes('hacker_news')) {
-    freeTasks.push(runProvider('hacker_news', () => fetchHackerNewsStories({
-      query,
+    const providerQuery = resolveProviderDiscoveryQuery({ presetKey, customQuery, provider: 'hacker_news', fallbackQuery: query });
+    freeTasks.push(runProvider('hacker_news', async () => applyRelevance(await fetchHackerNewsStories({
+      query: providerQuery,
       timeoutMs: source.hackerNewsTimeoutMs,
       maxSourceAgeHours: config.maxSourceAgeHours,
       maxArticles: source.providerMaxArticles,
       scanLimit: source.hackerNewsScanLimit,
       minScore: source.hackerNewsMinScore,
       fetchImpl
-    })));
+    }), { provider: 'hacker_news', presetKey, customQuery, providerQuery })));
   }
   if (source.enabledProviders.includes('github_releases')) {
-    freeTasks.push(runProvider('github_releases', () => fetchGitHubReleases({
-      presetKey: preferences.preset_key,
+    freeTasks.push(runProvider('github_releases', async () => applyRelevance(await fetchGitHubReleases({
+      presetKey,
       token: source.githubToken,
       timeoutMs: source.githubTimeoutMs,
       maxSourceAgeHours: config.maxSourceAgeHours,
       maxArticles: source.providerMaxArticles,
       maxRepos: source.githubMaxReposPerSearch,
       fetchImpl
-    })));
+    }), { provider: 'github_releases', presetKey, customQuery, providerQuery: `registry:${presetKey}` })));
   }
 
   const providerResults = await Promise.all(freeTasks);

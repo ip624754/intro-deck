@@ -1,0 +1,46 @@
+{
+  "step": "STEP063A-H1A",
+  "packageVersion": "0.63.2",
+  "status": "source_implemented_focused_qa_passed_production_not_verified",
+  "baseline": {
+    "artifact": "IntroDeck_STEP063A_H1_FULL_2026-07-23.zip",
+    "sha256": "5afac6b06efa4c999f37ad616c301e7a6bb7e5627c7a799918fc084a2d402959",
+    "sourceStep": "STEP063A-H1",
+    "packageVersion": "0.63.1"
+  },
+  "environment": {
+    "node": "22.16.0",
+    "canonicalNode20Verified": false
+  },
+  "focusedQa": {
+    "syntaxGate": "pass",
+    "sourceRelevanceBrowseUx": "pass",
+    "generatorFallback": "pass",
+    "multiSourceQuality": "pass",
+    "draftApproval": "pass",
+    "presetsSubscription": "pass",
+    "liveAcceptanceContract": "pass",
+    "linkedinShare": "pass",
+    "linkedinVerificationContracts": "pass",
+    "positioningTruth": "pass",
+    "step057Readiness": "pass"
+  },
+  "smokeInventory": {
+    "baseline": { "pass": 92, "nonPass": 19, "total": 111 },
+    "candidate": { "pass": 93, "nonPass": 19, "total": 112 },
+    "baselinePassToCandidateNonPass": 0,
+    "newTests": [
+      { "script": "scripts/smoke_ai_news_source_relevance_browse_ux.js", "outcome": "pass" }
+    ]
+  },
+  "schema": {
+    "migrationRequired": false,
+    "newRequiredEnv": false
+  },
+  "boundaries": {
+    "generatorAdaptersChanged": false,
+    "linkedinPublisherChanged": false,
+    "automaticPublishing": false
+  },
+  "productionVerified": false
+}

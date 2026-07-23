@@ -10,6 +10,7 @@ import {
   attachAiNewsDraftShareIntent,
   beginAiNewsInputSession,
   cancelAiNewsDraft,
+  calculateAiNewsSearchUsage,
   claimAiNewsSourceSearch,
   clearAiNewsInputSession,
   countAiNewsDraftsSince,
@@ -189,7 +190,8 @@ export async function loadAiNewsHubState({ telegramUserId, telegramUsername = nu
       presets,
       presetPersistenceReady: Boolean(compat.hasAiNewsPresetsTable && compat.hasAiNewsPresetRunsTable && compat.aiNewsDraftsHasPresetRunId),
       presetUsage: { used: presets.length, limit: config.presetLimit, remaining: Math.max(0, config.presetLimit - presets.length) },
-      dailyUsage: { used, limit: config.dailyLimit, remaining: Math.max(0, config.dailyLimit - used) }
+      dailyUsage: { used, limit: config.dailyLimit, remaining: Math.max(0, config.dailyLimit - used) },
+      searchUsage: calculateAiNewsSearchUsage(context.preferences, config.searchDailyLimit)
     };
   });
 }
@@ -370,6 +372,12 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
       query: resolvePreferenceQuery(preferences),
       used,
       draftGenerationAvailable: Boolean(config.generator?.enabled) && used < config.dailyLimit,
+      searchUsage: {
+        used: searchClaim.used,
+        limit: searchClaim.limit,
+        remaining: searchClaim.remaining,
+        resetsAt: searchClaim.resetsAt
+      },
       multiSourceSchema: compat.aiNewsSourcesHasQualityMetadata
     };
   });
@@ -409,7 +417,12 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
       found: false,
       articles: [],
       reason: newsdataOnlyFailure ? 'newsdata_request_failed' : allFailed ? 'ai_news_all_providers_failed' : 'ai_news_no_fresh_sources',
-      providerSummary: providerResults.map(({ provider, outcome, error }) => ({ provider, outcome, errorCode: error?.code || null }))
+      providerSummary: providerResults.map(({ provider, outcome, error, detail }) => ({
+        provider,
+        outcome,
+        errorCode: error?.code || null,
+        noResultReason: detail?.noResultReason || null
+      }))
     };
   }
 
@@ -485,11 +498,13 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
     query: prepared.query,
     preferences: prepared.preferences,
     sourceMode: config.source?.mode || 'newsdata_only',
-    providerSummary: providerResults.map(({ provider, outcome, error, articles }) => ({
+    providerSummary: providerResults.map(({ provider, outcome, error, articles, detail }) => ({
       provider,
       outcome,
       resultCount: articles?.length || 0,
-      errorCode: error?.code || null
+      errorCode: error?.code || null,
+      noResultReason: detail?.noResultReason || null,
+      relevanceRejectedCount: Number(detail?.relevance?.rejectedCount || 0)
     })),
     newsdataFallbackUsed: discovery.newsdataFallbackUsed,
     generatorMode: config.generator?.mode || 'openai',
@@ -498,7 +513,8 @@ export async function findAiNewsSourcesForTelegramUser({ telegramUserId, telegra
       used: prepared.used,
       limit: config.dailyLimit,
       remaining: Math.max(0, config.dailyLimit - prepared.used)
-    }
+    },
+    searchUsage: prepared.searchUsage
   };
 }
 

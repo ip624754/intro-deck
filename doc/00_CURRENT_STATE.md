@@ -1,3 +1,14 @@
+# STEP063A-H1A current source delta
+
+- Current source step: `STEP063A-H1A`; package `0.63.2`.
+- Exact baseline: `IntroDeck_STEP063A_H1_FULL_2026-07-23.zip`, SHA-256 `5afac6b06efa4c999f37ad616c301e7a6bb7e5627c7a799918fc084a2d402959`.
+- Source relevance, promotional filtering, domain authority tiers, provider diagnostics, and browse search-limit UX are implemented.
+- Migration: none. New ENV: none.
+- Source QA is passed; Vercel deployment and live production acceptance are not verified.
+- STEP059 LinkedIn publishing and generator adapters are unchanged.
+
+---
+
 # 00_CURRENT_STATE
 
 ## Current source baseline

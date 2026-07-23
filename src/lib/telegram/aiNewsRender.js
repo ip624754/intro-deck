@@ -6,6 +6,27 @@ function value(value, fallback = '—') {
   return text || fallback;
 }
 
+function parseSourceMetadata(value) {
+  if (!value) return {};
+  if (typeof value === 'object') return value;
+  try {
+    const parsed = JSON.parse(String(value));
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function isoTime(value) {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function searchAvailable(usage) {
+  return !usage || Number(usage.remaining) > 0;
+}
+
 
 function reasonText(reason) {
   const map = {
@@ -69,6 +90,10 @@ export function renderAiNewsHubText({ state, notice = null }) {
     browseOnly
       ? 'Draft allowance: not used in browse-only mode'
       : `Draft allowance: ${state?.dailyUsage?.remaining ?? 0}/${state?.dailyUsage?.limit ?? state?.config?.dailyLimit ?? 0} remaining in 24h`,
+    `Search allowance: ${state?.searchUsage?.remaining ?? state?.config?.searchDailyLimit ?? 0}/${state?.searchUsage?.limit ?? state?.config?.searchDailyLimit ?? 0} remaining in 24h`,
+    state?.searchUsage?.remaining === 0 && isoTime(state?.searchUsage?.resetsAt)
+      ? `Search resets at: ${isoTime(state.searchUsage.resetsAt)}`
+      : null,
     `Saved presets: ${state?.presetUsage?.used ?? state?.presets?.length ?? 0}/${state?.presetUsage?.limit ?? state?.config?.presetLimit ?? 0}`,
     `Generator: ${generatorMode}`,
     `Scheduled delivery: ${state?.config?.schedule?.enabled ? 'drafts only · no auto-posting' : 'off'}`,
@@ -79,10 +104,16 @@ export function renderAiNewsHubText({ state, notice = null }) {
       ? 'Flow: source → evidence → open original.'
       : 'Flow: source → evidence → draft → preview/edit → explicit LinkedIn approval.'
   ];
-  if (!state?.eligible) lines.push('', `⚠️ ${reasonText(state?.reason)}`);
-  if (state?.latestDraft) lines.push('', `Latest draft: ${state.latestDraft.status}`);
-  if (notice) lines.push('', notice);
-  return lines.join('\n');
+  const cleanedLines = lines.filter((line) => line !== null);
+  if (!state?.eligible) cleanedLines.push('', `⚠️ ${reasonText(state?.reason)}`);
+  if (state?.latestDraft && (!browseOnly || ['draft', 'editing', 'share_ready', 'unknown'].includes(state.latestDraft.status))) {
+    cleanedLines.push('', `Latest draft: ${state.latestDraft.status}`);
+  }
+  if (browseOnly && state?.searchUsage?.remaining === 0) {
+    cleanedLines.push('', '⚠️ News search is paused until the rolling allowance resets.');
+  }
+  if (notice) cleanedLines.push('', notice);
+  return cleanedLines.join('\n');
 }
 
 export function renderAiNewsHubKeyboard({ state }) {
@@ -101,7 +132,9 @@ export function renderAiNewsHubKeyboard({ state }) {
       { text: `Tone: ${AI_NEWS_TONES[p.tone] || 'Professional'}`, callback_data: `news:tone:${p.tone === 'professional' ? 'analytical' : p.tone === 'analytical' ? 'concise' : 'professional'}` }
     ]
   ];
-  if (state?.eligible) rows.push([{ text: '🔎 Find fresh news', callback_data: 'news:find' }]);
+  if (state?.eligible && searchAvailable(state?.searchUsage)) {
+    rows.push([{ text: '🔎 Find fresh news', callback_data: 'news:find' }]);
+  }
   if (state?.latestDraft && ['draft', 'editing', 'share_ready', 'unknown'].includes(state.latestDraft.status)) {
     rows.push([{ text: '📝 Open current draft', callback_data: `news:draft:${state.latestDraft.public_token}` }]);
   }
@@ -144,10 +177,14 @@ export function renderAiNewsSourcesText({ result }) {
   ];
   for (const [index, article] of (result?.articles || []).entries()) {
     const authority = Number.isFinite(Number(article.source_authority_score)) ? Number(article.source_authority_score) : null;
+    const metadata = parseSourceMetadata(article.source_metadata_json || article.sourceMetadata || article.metadata);
+    const relevance = Number.isFinite(Number(metadata.relevanceScore)) ? Number(metadata.relevanceScore) : null;
+    const qualityTier = value(metadata.qualityTier, null);
     const quality = [
       sourceProviderLabel(article.provider),
-      article.source_is_primary ? 'primary' : null,
-      authority !== null ? `authority ${authority}/100` : null
+      article.source_is_primary ? 'primary' : qualityTier ? `quality ${qualityTier}` : null,
+      authority !== null ? `authority ${authority}/100` : null,
+      relevance !== null ? `relevance ${relevance}/100` : null
     ].filter(Boolean).join(' · ');
     lines.push(
       '',
@@ -158,7 +195,8 @@ export function renderAiNewsSourcesText({ result }) {
   }
   const failed = (result?.providerSummary || []).filter((item) => item.outcome === 'failed');
   if (failed.length) {
-    lines.push('', `Provider isolation: ${failed.map((item) => sourceProviderLabel(item.provider)).join(', ')} unavailable; remaining sources still returned.`);
+    const labels = failed.map((item) => `${sourceProviderLabel(item.provider)}${item.errorCode ? ` [${item.errorCode}]` : ''}`);
+    lines.push('', `Provider isolation: ${labels.join(', ')} unavailable; remaining sources still returned.`);
   }
   if (result?.newsdataFallbackUsed) lines.push('', 'NewsData fallback was used because primary/free providers did not fill the candidate pool.');
   const validUntil = result?.articles?.[0]?.expires_at;
@@ -183,7 +221,9 @@ export function renderAiNewsSourcesKeyboard({ result }) {
     });
     rows.push(row);
   }
-  rows.push([{ text: '↻ Search again', callback_data: 'news:find' }]);
+  if (searchAvailable(result?.searchUsage)) {
+    rows.push([{ text: '↻ Search again', callback_data: 'news:find' }]);
+  }
   rows.push([{ text: '← News settings', callback_data: 'news:home' }]);
   return { inline_keyboard: rows };
 }

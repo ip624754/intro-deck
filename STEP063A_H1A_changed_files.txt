@@ -1,0 +1,55 @@
+# STEP063A-H1A Changed Files
+
+Baseline: IntroDeck_STEP063A_H1_FULL_2026-07-23.zip
+Baseline SHA-256: 5afac6b06efa4c999f37ad616c301e7a6bb7e5627c7a799918fc084a2d402959
+Candidate package: 0.63.2
+Candidate source step: STEP063A-H1A
+
+Changed files total: 37
+Added: 12
+Modified: 25
+Deleted: 0
+
+## Added
+A	STEP063A_H1A_HANDOFF.md
+A	STEP063A_H1A_PATCH_README.md
+A	STEP063A_H1A_QA_REPORT.md
+A	STEP063A_H1A_QA_checklist.md
+A	STEP063A_H1A_changed_files.txt
+A	doc/92_STEP063A_H1A_OPERATOR_ROLLOUT.md
+A	doc/env/STEP063A_H1A_BROWSE_ONLY_PRODUCTION.env
+A	doc/env/STEP063A_H1A_OPERATOR_ACCEPTANCE.env
+A	doc/qa/evidence/STEP063A_H1A_SOURCE_QA.json
+A	doc/spec/STEP063A_H1A_SOURCE_RELEVANCE_PROVIDER_DIAGNOSTICS_BROWSE_UX.md
+A	scripts/smoke_ai_news_source_relevance_browse_ux.js
+A	src/lib/news/sourceRelevance.js
+
+## Modified
+M	00_CURRENT_STATE.md
+M	README.md
+M	api/health.js
+M	doc/00_CURRENT_STATE.md
+M	doc/36_NEXT_STEPS_ROADMAP.md
+M	package-lock.json
+M	package.json
+M	scripts/smoke_ai_news_generator_fallback.js
+M	scripts/smoke_ai_news_presets_subscription.js
+M	scripts/smoke_linkedin_verification_compat_fail_safe.js
+M	scripts/smoke_linkedin_verified_badges_trust_surfaces.js
+M	scripts/smoke_linkedin_verified_development_integration.js
+M	scripts/smoke_positioning_discovery_truth_contract.js
+M	scripts/smoke_step057_production_readiness.js
+M	scripts/smoke_step061_profile_preview_hotfix.js
+M	src/config/release.js
+M	src/db/aiNewsRepo.js
+M	src/lib/news/githubReleases.js
+M	src/lib/news/hackerNews.js
+M	src/lib/news/multiSource.js
+M	src/lib/news/rss.js
+M	src/lib/news/sourceContract.js
+M	src/lib/news/sourceRegistry.js
+M	src/lib/storage/aiNewsStore.js
+M	src/lib/telegram/aiNewsRender.js
+
+## Deleted
+(none)

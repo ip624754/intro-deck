@@ -1,5 +1,23 @@
 # 36_NEXT_STEPS_ROADMAP
 
+## Current corridor after STEP063A-H1A
+
+STEP063A-H1A is source-implemented and focused-QA passed. The next action is bounded production acceptance, not another provider or generator expansion.
+
+Required sequence:
+
+1. Deploy the exact H1A artifact with the existing browse-only ENV.
+2. Verify `/api/health` reports `STEP063A-H1A` and the source-quality policy.
+3. Run one Crypto search and confirm unrelated/promotional fallback candidates do not fill the list.
+4. Inspect RSS error codes and HN/GitHub no-result diagnostics in provider telemetry.
+5. Confirm browse-only creates zero draft rows.
+6. Confirm rolling search allowance/reset and final-search keyboard behavior.
+7. Roll back to the exact H1 FULL artifact on relevance, latency, telemetry, or UX regression.
+
+Do not add arXiv, RSSHub, scraping, or autonomous publication before H1A production evidence is closed.
+
+---
+
 ## Current corridor after STEP063A-H1
 
 STEP063A-H1 is source-implemented and focused-QA passed. Production acceptance is still required.

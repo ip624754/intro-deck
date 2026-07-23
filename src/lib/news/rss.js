@@ -39,7 +39,6 @@ function rssLink(block) {
   return atomLink(block);
 }
 
-
 function articleHostnameAllowed(urlValue, source) {
   if (!Array.isArray(source?.allowedArticleHostnames) || !source.allowedArticleHostnames.length) return false;
   let hostname;
@@ -62,17 +61,25 @@ function queryTerms(query, source) {
     .replace(/\bor\b/g, ' ')
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .split(/\s+/)
-    .filter((term) => term.length >= 3 && !['artificial', 'technology', 'business', 'growth'].includes(term));
+    .filter((term) => term.length >= 2 && !['artificial', 'technology', 'business', 'growth'].includes(term));
   return [...new Set([...(source.matchTerms || []), ...fromQuery])];
 }
 
 function matchesTerms(article, terms) {
   if (!terms.length) return true;
-  const haystack = `${article.title || ''} ${article.description || ''}`.toLowerCase();
-  return terms.some((term) => haystack.includes(String(term).toLowerCase()));
+  const tokens = `${article.title || ''} ${article.description || ''}`
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  const tokenSet = new Set(tokens);
+  return terms.some((term) => {
+    const normalized = String(term).toLowerCase();
+    return normalized.length <= 3 ? tokenSet.has(normalized) : tokenSet.has(normalized) || tokens.some((token) => token.startsWith(`${normalized}-`));
+  });
 }
 
-export function parseRssOrAtomFeed(xml, {
+function parseFeedDetailed(xml, {
   source,
   query,
   maxSourceAgeHours = 48,
@@ -81,8 +88,18 @@ export function parseRssOrAtomFeed(xml, {
 }) {
   const cutoff = nowMs - maxSourceAgeHours * 3_600_000;
   const terms = queryTerms(query, source);
+  const blocks = itemBlocks(String(xml || '')).slice(0, 80);
   const articles = [];
-  for (const block of itemBlocks(String(xml || '')).slice(0, 80)) {
+  const diagnostics = {
+    registryKey: source.key,
+    itemCount: blocks.length,
+    invalidItems: 0,
+    rejectedArticleHosts: 0,
+    staleItems: 0,
+    queryMismatches: 0,
+    acceptedItems: 0
+  };
+  for (const block of blocks) {
     const title = safeSourceText(tagValue(block, ['title']), 600);
     const url = rssLink(block);
     const publishedAt = tagValue(block, ['pubDate', 'published', 'updated', 'dc:date']);
@@ -100,20 +117,39 @@ export function parseRssOrAtomFeed(xml, {
       publishedAt,
       language: 'en',
       categories: [source.key, 'rss'],
-      metadata: { registryKey: source.key, author }
+      metadata: { registryKey: source.key, author, presetKey: source.presetKeys?.[0] || null }
     }, {
       provider: 'rss',
       sourceKind: source.sourceKind,
       authorityScore: source.authorityScore,
       isPrimary: true,
-      metadata: { registryKey: source.key, author }
+      metadata: { registryKey: source.key, author, qualityTier: 'primary' }
     });
-    if (!normalized || !articleHostnameAllowed(normalized.url, source)) continue;
-    if (normalized.publishedAt.getTime() < cutoff || !matchesTerms(normalized, terms)) continue;
+    if (!normalized) {
+      diagnostics.invalidItems += 1;
+      continue;
+    }
+    if (!articleHostnameAllowed(normalized.url, source)) {
+      diagnostics.rejectedArticleHosts += 1;
+      continue;
+    }
+    if (normalized.publishedAt.getTime() < cutoff) {
+      diagnostics.staleItems += 1;
+      continue;
+    }
+    if (!matchesTerms(normalized, terms)) {
+      diagnostics.queryMismatches += 1;
+      continue;
+    }
     articles.push(normalized);
+    diagnostics.acceptedItems += 1;
     if (articles.length >= maxArticles) break;
   }
-  return articles;
+  return { articles, diagnostics };
+}
+
+export function parseRssOrAtomFeed(xml, options) {
+  return parseFeedDetailed(xml, options).articles;
 }
 
 async function fetchOneFeed(source, options) {
@@ -134,12 +170,19 @@ async function fetchOneFeed(source, options) {
   if (!/<(?:rss|feed|rdf:RDF)\b/i.test(xml)) {
     throw new NewsSourceProviderError('rss_invalid_document', { provider: 'rss', code: 'invalid_xml_document', durationMs: Date.now() - startedAt });
   }
+  const parsed = parseFeedDetailed(xml, { source, ...options });
   return {
-    articles: parseRssOrAtomFeed(xml, { source, ...options }),
+    articles: parsed.articles,
     durationMs: Date.now() - startedAt,
     requestId,
-    registryKey: source.key
+    registryKey: source.key,
+    diagnostics: parsed.diagnostics
   };
+}
+
+function safeFailureCode(error) {
+  return String(error?.code || error?.message || 'rss_fetch_failed')
+    .trim().toLowerCase().replace(/[^a-z0-9_.-]+/g, '_').slice(0, 100) || 'rss_fetch_failed';
 }
 
 export async function fetchTrustedRssSources({
@@ -155,7 +198,7 @@ export async function fetchTrustedRssSources({
   const startedAt = Date.now();
   const sources = listRssSourcesForPreset(presetKey, { maxSources });
   if (!sources.length) {
-    return { provider: 'rss', articles: [], rawResultCount: 0, durationMs: 0, requestId: null, detail: { configuredSources: 0 } };
+    return { provider: 'rss', articles: [], rawResultCount: 0, durationMs: 0, requestId: null, detail: { configuredSources: 0, sourceDiagnostics: [] } };
   }
   const settled = await Promise.allSettled(sources.map((source) => fetchOneFeed(source, {
     query,
@@ -168,29 +211,39 @@ export async function fetchTrustedRssSources({
   const articles = [];
   const failures = [];
   const requestIds = [];
+  const sourceDiagnostics = [];
   for (let index = 0; index < settled.length; index += 1) {
     const result = settled[index];
     if (result.status === 'fulfilled') {
       articles.push(...result.value.articles);
+      sourceDiagnostics.push(result.value.diagnostics);
       if (result.value.requestId) requestIds.push(result.value.requestId);
     } else {
-      failures.push({
-        registryKey: sources[index].key,
-        code: result.reason?.code || result.reason?.message || 'rss_fetch_failed'
-      });
+      const code = safeFailureCode(result.reason);
+      failures.push({ registryKey: sources[index].key, code });
+      sourceDiagnostics.push({ registryKey: sources[index].key, outcome: 'failed', errorCode: code });
     }
   }
+  const allFailed = failures.length === sources.length;
+  const failureCodes = [...new Set(failures.map((failure) => failure.code))];
   return {
     provider: 'rss',
     articles,
-    rawResultCount: articles.length,
+    rawResultCount: sourceDiagnostics.reduce((sum, item) => sum + Number(item.itemCount || 0), 0),
     durationMs: Date.now() - startedAt,
     requestId: requestIds[0] || null,
+    error: allFailed ? {
+      code: failureCodes.length === 1 ? `rss_${failureCodes[0]}` : 'rss_all_sources_failed',
+      status: null,
+      retryable: failureCodes.some((code) => ['timeout', 'body_timeout', 'network_error', 'http_429', 'http_500', 'http_502', 'http_503', 'http_504'].includes(code))
+    } : null,
     detail: {
       configuredSources: sources.length,
       successfulSources: sources.length - failures.length,
       failedSources: failures.length,
-      failures
+      failureCodes,
+      failures,
+      sourceDiagnostics
     }
   };
 }

@@ -56,17 +56,48 @@ const FIRST_PARTY_DOMAIN_SCORES = Object.freeze({
   'stripe.com': 94,
   'blog.ethereum.org': 98,
   'ethereum.org': 97,
-  'solana.com': 97
+  'solana.com': 97,
+  'bitcoin.org': 97
 });
+
+const EDITORIAL_DOMAIN_SCORES = Object.freeze({
+  'reuters.com': { authorityScore: 92, qualityTier: 'high' },
+  'apnews.com': { authorityScore: 92, qualityTier: 'high' },
+  'bloomberg.com': { authorityScore: 90, qualityTier: 'high' },
+  'ft.com': { authorityScore: 90, qualityTier: 'high' },
+  'wsj.com': { authorityScore: 89, qualityTier: 'high' },
+  'techcrunch.com': { authorityScore: 86, qualityTier: 'high' },
+  'arstechnica.com': { authorityScore: 85, qualityTier: 'high' },
+  'theverge.com': { authorityScore: 84, qualityTier: 'high' },
+  'wired.com': { authorityScore: 84, qualityTier: 'high' },
+  'coindesk.com': { authorityScore: 84, qualityTier: 'high' },
+  'theblock.co': { authorityScore: 84, qualityTier: 'high' },
+  'blockworks.co': { authorityScore: 82, qualityTier: 'high' },
+  'decrypt.co': { authorityScore: 80, qualityTier: 'standard' },
+  'techinasia.com': { authorityScore: 76, qualityTier: 'standard' },
+  'cointelegraph.com': { authorityScore: 74, qualityTier: 'standard' },
+  'blockchain.news': { authorityScore: 68, qualityTier: 'standard' },
+  'mpost.io': { authorityScore: 55, qualityTier: 'low' },
+  'coinpedia.org': { authorityScore: 46, qualityTier: 'low' }
+});
+
+function domainMatch(normalized, domain) {
+  return normalized === domain || normalized.endsWith(`.${domain}`);
+}
 
 export function classifySourceDomain(hostname) {
   const normalized = String(hostname || '').toLowerCase().replace(/^www\./, '');
   for (const [domain, authorityScore] of Object.entries(FIRST_PARTY_DOMAIN_SCORES)) {
-    if (normalized === domain || normalized.endsWith(`.${domain}`)) {
-      return { isPrimary: true, authorityScore, sourceKind: 'official_blog' };
+    if (domainMatch(normalized, domain)) {
+      return { isPrimary: true, authorityScore, sourceKind: 'official_blog', qualityTier: 'primary' };
     }
   }
-  return { isPrimary: false, authorityScore: 65, sourceKind: 'news_report' };
+  for (const [domain, policy] of Object.entries(EDITORIAL_DOMAIN_SCORES)) {
+    if (domainMatch(normalized, domain)) {
+      return { isPrimary: false, sourceKind: 'news_report', ...policy };
+    }
+  }
+  return { isPrimary: false, authorityScore: 60, sourceKind: 'news_report', qualityTier: 'standard' };
 }
 
 export function listRssSourcesForPreset(presetKey, { maxSources = 2 } = {}) {

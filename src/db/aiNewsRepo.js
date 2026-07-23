@@ -58,6 +58,21 @@ export async function patchAiNewsPreferences(client, { userId, patch }) {
 }
 
 
+export function calculateAiNewsSearchUsage(row, dailyLimit, nowMs = Date.now()) {
+  const limit = Math.max(0, Number(dailyLimit) || 0);
+  const windowStartedAt = row?.search_window_started_at ? new Date(row.search_window_started_at).getTime() : 0;
+  const windowActive = Boolean(windowStartedAt && windowStartedAt > nowMs - (24 * 60 * 60 * 1000));
+  const used = windowActive ? Math.max(0, Number(row?.search_count_in_window || 0)) : 0;
+  const resetsAt = windowActive ? new Date(windowStartedAt + 24 * 60 * 60 * 1000) : null;
+  return {
+    used,
+    limit,
+    remaining: Math.max(0, limit - used),
+    resetsAt,
+    windowActive
+  };
+}
+
 export async function claimAiNewsSourceSearch(client, { userId, cooldownSeconds, dailyLimit, ignoreCooldown = false }) {
   await client.query(
     `insert into ai_news_preferences (user_id) values ($1)
@@ -74,10 +89,8 @@ export async function claimAiNewsSourceSearch(client, { userId, cooldownSeconds,
   if (!ignoreCooldown && lastSearchAt && lastSearchAt > now - (cooldownSeconds * 1000)) {
     return { claimed: false, reason: 'ai_news_search_cooldown', retryAfterSeconds: Math.max(1, Math.ceil((lastSearchAt + cooldownSeconds * 1000 - now) / 1000)) };
   }
-  const windowStartedAt = row?.search_window_started_at ? new Date(row.search_window_started_at).getTime() : 0;
-  const windowActive = windowStartedAt && windowStartedAt > now - (24 * 60 * 60 * 1000);
-  const count = windowActive ? Number(row.search_count_in_window || 0) : 0;
-  if (count >= dailyLimit) return { claimed: false, reason: 'ai_news_search_daily_limit_reached', used: count, limit: dailyLimit };
+  const usage = calculateAiNewsSearchUsage(row, dailyLimit, now);
+  if (usage.remaining <= 0) return { claimed: false, reason: 'ai_news_search_daily_limit_reached', ...usage };
   const updated = await client.query(
     `update ai_news_preferences
      set last_search_started_at=now(),
@@ -88,7 +101,7 @@ export async function claimAiNewsSourceSearch(client, { userId, cooldownSeconds,
      returning *`,
     [userId]
   );
-  return { claimed: true, preferences: updated.rows[0], used: Number(updated.rows[0]?.search_count_in_window || 0), limit: dailyLimit };
+  return { claimed: true, preferences: updated.rows[0], ...calculateAiNewsSearchUsage(updated.rows[0], dailyLimit, now) };
 }
 
 export async function getAiNewsDraftByUserAndSource(client, { userId, sourceId }) {

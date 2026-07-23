@@ -76,10 +76,29 @@ export async function fetchHackerNewsStories({
   }
 
   const articles = [];
+  let invalidStories = 0;
+  let staleStories = 0;
+  let belowScoreStories = 0;
+  let queryMismatchStories = 0;
+  let rejectedSourceUrls = 0;
   for (const item of items) {
     const publishedAt = Number(item?.time) > 0 ? new Date(Number(item.time) * 1000) : null;
-    if (item?.type !== 'story' || !item?.url || !publishedAt || publishedAt.getTime() < cutoff) continue;
-    if (Number(item.score || 0) < minScore || !matchesQuery(item, terms)) continue;
+    if (item?.type !== 'story' || !item?.url || !publishedAt) {
+      invalidStories += 1;
+      continue;
+    }
+    if (publishedAt.getTime() < cutoff) {
+      staleStories += 1;
+      continue;
+    }
+    if (Number(item.score || 0) < minScore) {
+      belowScoreStories += 1;
+      continue;
+    }
+    if (!matchesQuery(item, terms)) {
+      queryMismatchStories += 1;
+      continue;
+    }
     let sourceDomain = null;
     try { sourceDomain = new URL(item.url).hostname.toLowerCase(); } catch { sourceDomain = null; }
     const domainClass = classifySourceDomain(sourceDomain);
@@ -103,10 +122,12 @@ export async function fetchHackerNewsStories({
         hackerNewsUrl: `https://news.ycombinator.com/item?id=${Number(item.id)}`,
         score: Number(item.score || 0),
         comments: Number(item.descendants || 0),
-        originalSourceDomain: sourceDomain
+        originalSourceDomain: sourceDomain,
+        qualityTier: domainClass.qualityTier || (domainClass.isPrimary ? 'primary' : 'standard')
       }
     });
     if (normalized) articles.push(normalized);
+    else rejectedSourceUrls += 1;
     if (articles.length >= maxArticles) break;
   }
 
@@ -116,6 +137,25 @@ export async function fetchHackerNewsStories({
     rawResultCount: items.length,
     durationMs: Date.now() - startedAt,
     requestId: top.requestId,
-    detail: { scannedStoryIds: ids.length, loadedStories: items.length, failedStoryLoads, minimumScore: minScore, deadlineExceeded }
+    detail: {
+      scannedStoryIds: ids.length,
+      loadedStories: items.length,
+      failedStoryLoads,
+      minimumScore: minScore,
+      deadlineExceeded,
+      invalidStories,
+      staleStories,
+      belowScoreStories,
+      queryMismatchStories,
+      rejectedSourceUrls,
+      acceptedStories: articles.length,
+      noResultReason: articles.length ? null
+        : failedStoryLoads === ids.length && ids.length ? 'story_loads_failed'
+          : queryMismatchStories ? 'query_mismatch'
+            : belowScoreStories ? 'below_minimum_score'
+              : staleStories ? 'outside_freshness_window'
+                : invalidStories ? 'invalid_story_shape'
+                  : ids.length ? 'no_matching_story' : 'empty_top_stories'
+    }
   };
 }
