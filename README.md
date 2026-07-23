@@ -1,6 +1,6 @@
 # LinkedIn Telegram Directory Bot
 
-STEP063A source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP063A-H1 source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
@@ -16,6 +16,15 @@ A Telegram-first professional directory:
 - operator shell with communications, delivery, audit, quality, and search
 - analytics drilldowns and guarded operator bulk-prep
 - runbook/freeze launch discipline
+
+## STEP063A-H1 generator fallback
+
+- `/news` can remain available with `AI_NEWS_GENERATOR_MODE=off`; source browsing does not require OpenAI.
+- `template` creates a deterministic local evidence-bound draft with zero external LLM calls.
+- `groq` uses a dedicated provider adapter and real Groq telemetry.
+- `openai` remains optional and backward-compatible.
+- Migration 034 is required only for `template` and `groq` draft rows.
+- STEP059 remains the sole explicit-approval LinkedIn publisher.
 
 ## Current STEP corridor
 
@@ -42,6 +51,7 @@ A Telegram-first professional directory:
 - STEP061H1 — profile preview runtime and webhook token-log hotfix
 - STEP061A — AI/news E2E live acceptance, provider telemetry, and rollout hardening
 - STEP063A — multi-source news ingestion, source quality, deduplication, and NewsData fallback
+- STEP063A-H1 — browse-only, deterministic template, and Groq/OpenAI generator selection
 - STEP060 — evidence-bound AI/news drafts with preview/edit and explicit one-post approval
 
 ## Core docs
@@ -170,3 +180,13 @@ STEP specification: `doc/spec/STEP061A_AI_NEWS_E2E_LIVE_ACCEPTANCE_AND_ROLLOUT_H
 
 Operator runbook: `doc/90_STEP063A_OPERATOR_ROLLOUT.md`.
 STEP specification: `doc/spec/STEP063A_MULTI_SOURCE_NEWS_INGESTION_AND_SOURCE_QUALITY_FOUNDATION.md`.
+
+## STEP063A-H1 provider-neutral generator rollout
+
+1. Deploy browse-only with `AI_NEWS_GENERATOR_MODE=off`.
+2. Apply migration 034 before enabling `template` or `groq`.
+3. Use `template` for a zero-external-LLM draft path or `groq` for bounded external generation.
+4. Keep scheduling off during operator acceptance.
+5. STEP059 explicit approval remains mandatory for every LinkedIn post.
+
+Operator runbook: `doc/91_STEP063A_H1_OPERATOR_ROLLOUT.md`.

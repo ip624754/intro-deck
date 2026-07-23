@@ -22,8 +22,8 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const packageJson = JSON.parse(read('package.json'));
 const vercel = JSON.parse(read('vercel.json'));
 
-assert.equal(CURRENT_SOURCE_STEP, 'STEP063A');
-assert.equal(packageJson.version, '0.63.0');
+assert.equal(CURRENT_SOURCE_STEP, 'STEP063A-H1');
+assert.equal(packageJson.version, '0.63.1');
 assert.equal(packageJson.scripts['smoke:ai-news-productization'], 'node scripts/smoke_ai_news_presets_subscription.js');
 
 const migration = read('migrations/031_ai_news_presets_subscription.sql');
@@ -117,7 +117,7 @@ try {
   };
   await healthHandler({}, healthResponse);
   assert.equal(healthResponse.statusCode, 200);
-  assert.equal(healthResponse.body.step, 'STEP063A');
+  assert.equal(healthResponse.body.step, 'STEP063A-H1');
   assert.equal(healthResponse.body.aiNewsDraft.mode, 'pro');
   assert.equal(healthResponse.body.aiNewsDraft.schedule.enabled, true);
   assert.equal(healthResponse.body.aiNewsDraft.schedule.scheduledEffect, 'telegram_draft_only');

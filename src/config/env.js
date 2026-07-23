@@ -18,8 +18,14 @@ const DEFAULT_AI_NEWS_DRAFT_MODE = 'off';
 const DEFAULT_NEWSDATA_BASE_URL = 'https://newsdata.io/api/1/';
 const DEFAULT_NEWSDATA_API_TIMEOUT_MS = 8000;
 const DEFAULT_OPENAI_BASE_URL = 'https://api.openai.com';
-const DEFAULT_OPENAI_DRAFT_MODEL = 'gpt-5.6-luna';
+const DEFAULT_OPENAI_DRAFT_MODEL = 'gpt-5.2';
 const DEFAULT_OPENAI_API_TIMEOUT_MS = 30000;
+const DEFAULT_AI_NEWS_GENERATOR_MODE = 'openai';
+const DEFAULT_GROQ_BASE_URL = 'https://api.groq.com/openai/v1';
+const DEFAULT_GROQ_DRAFT_MODEL = 'openai/gpt-oss-20b';
+const DEFAULT_GROQ_API_TIMEOUT_MS = 30000;
+const DEFAULT_GROQ_INPUT_COST_USD_PER_1M = 0;
+const DEFAULT_GROQ_OUTPUT_COST_USD_PER_1M = 0;
 const DEFAULT_AI_NEWS_DAILY_LIMIT = 3;
 const DEFAULT_AI_NEWS_SEARCH_DAILY_LIMIT = 10;
 const DEFAULT_AI_NEWS_SEARCH_COOLDOWN_SECONDS = 60;
@@ -392,8 +398,9 @@ function readHttpsUrlEnv(name, fallback, { allowedHostnames = null } = {}) {
   return url.toString();
 }
 
-function parseAiNewsScheduleConfig() {
-  const mode = readEnumEnv('AI_NEWS_SCHEDULE_MODE', DEFAULT_AI_NEWS_SCHEDULE_MODE, ['off', 'live']);
+function parseAiNewsScheduleConfig({ generatorMode = DEFAULT_AI_NEWS_GENERATOR_MODE } = {}) {
+  const requestedMode = readEnumEnv('AI_NEWS_SCHEDULE_MODE', DEFAULT_AI_NEWS_SCHEDULE_MODE, ['off', 'live']);
+  const mode = generatorMode === 'off' ? 'off' : requestedMode;
   const driver = readEnumEnv('AI_NEWS_SCHEDULE_DRIVER', DEFAULT_AI_NEWS_SCHEDULE_DRIVER, ['vercel_daily', 'external_hourly']);
   const vercelCronSecret = readSecretEnv('CRON_SECRET');
   const dedicatedCronSecret = readSecretEnv('AI_NEWS_CRON_SECRET');
@@ -409,7 +416,9 @@ function parseAiNewsScheduleConfig() {
   }
   return {
     mode,
+    requestedMode,
     enabled: mode === 'live',
+    disabledReason: generatorMode === 'off' && requestedMode === 'live' ? 'ai_news_generator_disabled' : null,
     configurationValid: true,
     configurationError: null,
     cronSecret,
@@ -426,8 +435,10 @@ function parseAiNewsScheduleConfig() {
 function buildAiNewsScheduleFailSafeConfig(error) {
   const rawMode = String(readEnv('AI_NEWS_SCHEDULE_MODE', DEFAULT_AI_NEWS_SCHEDULE_MODE) || '').trim().toLowerCase();
   return {
-    mode: rawMode === 'live' ? 'live' : 'off',
+    mode: 'off',
+    requestedMode: rawMode === 'live' ? 'live' : 'off',
     enabled: false,
+    disabledReason: null,
     configurationValid: false,
     configurationError: { code: 'ai_news_schedule_config_invalid', message: error?.message || String(error) },
     cronSecret: null,
@@ -449,13 +460,16 @@ function parseAiNewsDraftConfigStrict() {
     ? ['newsdata']
     : readCsvEnumListEnv('AI_NEWS_ENABLED_PROVIDERS', DEFAULT_AI_NEWS_ENABLED_PROVIDERS, ['rss', 'hacker_news', 'github_releases', 'newsdata']);
   const newsdataApiKey = readEnv('NEWSDATA_API_KEY') || null;
+  const generatorMode = readEnumEnv('AI_NEWS_GENERATOR_MODE', DEFAULT_AI_NEWS_GENERATOR_MODE, ['off', 'template', 'groq', 'openai']);
   const openaiApiKey = readEnv('OPENAI_API_KEY') || null;
+  const groqApiKey = readEnv('GROQ_API_KEY') || null;
   if (enabled && !enabledProviders.length) throw new Error('AI_NEWS_ENABLED_PROVIDERS must contain at least one provider');
   if (enabled && enabledProviders.includes('newsdata') && !newsdataApiKey) throw new Error('NEWSDATA_API_KEY is required when the newsdata provider is enabled');
-  if (enabled && !openaiApiKey) throw new Error('OPENAI_API_KEY is required when AI_NEWS_DRAFT_MODE is enabled');
+  if (enabled && generatorMode === 'openai' && !openaiApiKey) throw new Error('OPENAI_API_KEY is required when AI_NEWS_GENERATOR_MODE=openai');
+  if (enabled && generatorMode === 'groq' && !groqApiKey) throw new Error('GROQ_API_KEY is required when AI_NEWS_GENERATOR_MODE=groq');
   let schedule;
   try {
-    schedule = parseAiNewsScheduleConfig();
+    schedule = parseAiNewsScheduleConfig({ generatorMode });
   } catch (error) {
     schedule = buildAiNewsScheduleFailSafeConfig(error);
   }
@@ -481,6 +495,12 @@ function parseAiNewsDraftConfigStrict() {
     draftTtlSeconds: readBoundedIntegerEnv('AI_NEWS_DRAFT_TTL_SECONDS', DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS, { min: 900, max: 86400 }),
     presetLimit: readBoundedIntegerEnv('AI_NEWS_PRESET_LIMIT', DEFAULT_AI_NEWS_PRESET_LIMIT, { min: 1, max: 10 }),
     schedule,
+    generator: {
+      mode: generatorMode,
+      enabled: generatorMode !== 'off',
+      provider: generatorMode === 'off' ? null : generatorMode,
+      browseOnly: generatorMode === 'off'
+    },
     source: {
       mode: sourceMode,
       enabledProviders,
@@ -511,6 +531,16 @@ function parseAiNewsDraftConfigStrict() {
       outputCostUsdPerMillion: readNonNegativeNumberEnv('OPENAI_OUTPUT_COST_USD_PER_1M', DEFAULT_OPENAI_OUTPUT_COST_USD_PER_1M),
       store: false
     },
+    groq: {
+      configured: Boolean(groqApiKey),
+      apiKey: groqApiKey,
+      baseUrl: readHttpsUrlEnv('GROQ_BASE_URL', DEFAULT_GROQ_BASE_URL, { allowedHostnames: ['api.groq.com'] }),
+      model: String(readEnv('GROQ_DRAFT_MODEL', DEFAULT_GROQ_DRAFT_MODEL) || '').trim(),
+      timeoutMs: readBoundedIntegerEnv('GROQ_API_TIMEOUT_MS', DEFAULT_GROQ_API_TIMEOUT_MS, { min: 3000, max: 120000 }),
+      inputCostUsdPerMillion: readNonNegativeNumberEnv('GROQ_INPUT_COST_USD_PER_1M', DEFAULT_GROQ_INPUT_COST_USD_PER_1M),
+      outputCostUsdPerMillion: readNonNegativeNumberEnv('GROQ_OUTPUT_COST_USD_PER_1M', DEFAULT_GROQ_OUTPUT_COST_USD_PER_1M),
+      store: false
+    },
     explicitApprovalRequired: true,
     automaticPublishing: false,
     scheduledDeliveryCreatesDraftOnly: true,
@@ -536,6 +566,14 @@ function buildAiNewsDraftFailSafeConfig(error) {
     draftTtlSeconds: DEFAULT_AI_NEWS_DRAFT_TTL_SECONDS,
     presetLimit: DEFAULT_AI_NEWS_PRESET_LIMIT,
     schedule: buildAiNewsScheduleFailSafeConfig(error),
+    generator: {
+      mode: ['off', 'template', 'groq', 'openai'].includes(String(readEnv('AI_NEWS_GENERATOR_MODE', DEFAULT_AI_NEWS_GENERATOR_MODE)).toLowerCase())
+        ? String(readEnv('AI_NEWS_GENERATOR_MODE', DEFAULT_AI_NEWS_GENERATOR_MODE)).toLowerCase()
+        : DEFAULT_AI_NEWS_GENERATOR_MODE,
+      enabled: false,
+      provider: null,
+      browseOnly: false
+    },
     source: {
       mode: String(readEnv('AI_NEWS_SOURCE_MODE', DEFAULT_AI_NEWS_SOURCE_MODE) || '').trim().toLowerCase() === 'multi_source' ? 'multi_source' : 'newsdata_only',
       enabledProviders: [],
@@ -551,6 +589,7 @@ function buildAiNewsDraftFailSafeConfig(error) {
     },
     newsdata: { configured: Boolean(readEnv('NEWSDATA_API_KEY')), apiKey: null, baseUrl: DEFAULT_NEWSDATA_BASE_URL, timeoutMs: DEFAULT_NEWSDATA_API_TIMEOUT_MS, estimatedRequestCostUsd: DEFAULT_NEWSDATA_REQUEST_COST_USD },
     openai: { configured: Boolean(readEnv('OPENAI_API_KEY')), apiKey: null, baseUrl: DEFAULT_OPENAI_BASE_URL, model: String(readEnv('OPENAI_DRAFT_MODEL', DEFAULT_OPENAI_DRAFT_MODEL)), timeoutMs: DEFAULT_OPENAI_API_TIMEOUT_MS, inputCostUsdPerMillion: DEFAULT_OPENAI_INPUT_COST_USD_PER_1M, outputCostUsdPerMillion: DEFAULT_OPENAI_OUTPUT_COST_USD_PER_1M, store: false },
+    groq: { configured: Boolean(readEnv('GROQ_API_KEY')), apiKey: null, baseUrl: DEFAULT_GROQ_BASE_URL, model: String(readEnv('GROQ_DRAFT_MODEL', DEFAULT_GROQ_DRAFT_MODEL)), timeoutMs: DEFAULT_GROQ_API_TIMEOUT_MS, inputCostUsdPerMillion: DEFAULT_GROQ_INPUT_COST_USD_PER_1M, outputCostUsdPerMillion: DEFAULT_GROQ_OUTPUT_COST_USD_PER_1M, store: false },
     explicitApprovalRequired: true,
     automaticPublishing: false,
     scheduledDeliveryCreatesDraftOnly: true,

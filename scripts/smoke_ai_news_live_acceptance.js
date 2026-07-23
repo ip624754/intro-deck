@@ -97,7 +97,7 @@ assert.match(migration, /requires migrations 030 and 031/);
 const store = fs.readFileSync(new URL('../src/lib/storage/aiNewsStore.js', import.meta.url), 'utf8');
 assert.match(store, /insertAiNewsProviderUsageEvent/);
 assert.match(store, /migration_032_required/);
-assert.match(store, /estimateOpenAiCostMicrousd/);
+assert.match(store, /estimateTokenCostMicrousd/);
 
 const preflight = fs.readFileSync(new URL('./step061a/productionPreflight.js', import.meta.url), 'utf8');
 assert.match(preflight, /begin read only/i);

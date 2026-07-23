@@ -168,7 +168,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
   composer.callbackQuery(/^news:generate:([0-9a-f-]{36})$/i, async (ctx) => {
     await answer(ctx);
     await clearAllPendingInputs(ctx.from.id);
-    await safeEditOrReply(ctx, '🧠 Generating an evidence-bound draft. Nothing will be published…');
+    await safeEditOrReply(ctx, '📝 Building an evidence-bound draft with the configured generator. Nothing will be published…');
     const result = await generateAiNewsDraftForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, sourceToken: ctx.match?.[1] }).catch((error) => ({ generated: false, reason: error?.message || String(error) }));
     if (!result.generated) return showHub(ctx, `⚠️ Draft generation failed: ${aiNewsReasonText(result.reason)}`);
     await showDraft(ctx, result.draft.public_token);

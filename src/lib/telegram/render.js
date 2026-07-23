@@ -2626,7 +2626,11 @@ export function renderOperatorDiagnosticsText({
     lines.push(`• enabled source providers: ${(aiNewsConfig.source?.enabledProviders || ['newsdata']).join(', ') || 'none'}`);
     lines.push(`• NewsData fallback: ${aiNewsConfig.newsdata?.configured ? 'configured' : 'not configured'}`);
     lines.push(`• GitHub API: ${aiNewsConfig.source?.githubToken ? 'authenticated' : 'public / bounded'}`);
-    lines.push(`• OpenAI model: ${aiNewsConfig.openai?.model || 'not configured'}`);
+    lines.push(`• generator mode: ${aiNewsConfig.generator?.mode || 'openai'}${aiNewsConfig.generator?.browseOnly ? ' / browse only' : ''}`);
+    lines.push(`• selected generator: ${aiNewsConfig.generator?.provider || 'none'}`);
+    lines.push(`• OpenAI: ${aiNewsConfig.openai?.configured ? `configured / ${aiNewsConfig.openai.model}` : 'not configured'}`);
+    lines.push(`• Groq: ${aiNewsConfig.groq?.configured ? `configured / ${aiNewsConfig.groq.model}` : 'not configured'}`);
+    lines.push('• template generator: built-in / deterministic');
     lines.push(`• access product: ${aiNewsConfig.mode === 'pro' ? 'Pro members + operators' : aiNewsConfig.mode === 'operator' ? 'operators only' : 'off'}`);
     lines.push(`• preset limit: ${aiNewsConfig.presetLimit || 0}`);
     lines.push(`• scheduler: ${aiNewsConfig.schedule?.enabled ? `${aiNewsConfig.schedule.driver} / live` : 'off'}`);
@@ -2639,8 +2643,10 @@ export function renderOperatorDiagnosticsText({
       if (Object.prototype.hasOwnProperty.call(aiNewsPresetSummary, 'newsdata_calls_24h')) {
         const estimatedUsd = (Number(aiNewsPresetSummary.estimated_cost_microusd_24h || 0) / 1_000_000).toFixed(6);
         lines.push(`• discovery calls/24h: RSS ${aiNewsPresetSummary.rss_calls_24h || 0} • HN ${aiNewsPresetSummary.hacker_news_calls_24h || 0} • GitHub ${aiNewsPresetSummary.github_releases_calls_24h || 0} • NewsData ${aiNewsPresetSummary.newsdata_calls_24h || 0}`);
-        lines.push(`• OpenAI calls/24h: ${aiNewsPresetSummary.openai_calls_24h || 0} • provider failures ${aiNewsPresetSummary.provider_failures_24h || 0}`);
+        lines.push(`• generator calls/24h: OpenAI ${aiNewsPresetSummary.openai_calls_24h || 0} • Groq ${aiNewsPresetSummary.groq_calls_24h || 0} • template ${aiNewsPresetSummary.template_calls_24h || 0}`);
+        lines.push(`• provider failures/24h: ${aiNewsPresetSummary.provider_failures_24h || 0}`);
         lines.push(`• OpenAI tokens/24h: in ${aiNewsPresetSummary.openai_input_tokens_24h || 0} • out ${aiNewsPresetSummary.openai_output_tokens_24h || 0}`);
+        lines.push(`• Groq tokens/24h: in ${aiNewsPresetSummary.groq_input_tokens_24h || 0} • out ${aiNewsPresetSummary.groq_output_tokens_24h || 0}`);
         lines.push(`• estimated provider cost/24h: $${estimatedUsd}`);
         lines.push(`• drafts/24h: attempts ${aiNewsPresetSummary.draft_attempts_24h || 0} • generated ${aiNewsPresetSummary.generated_drafts_24h || 0} • edited ${aiNewsPresetSummary.edited_drafts_24h || 0} • LinkedIn published ${aiNewsPresetSummary.linkedin_posts_24h || 0}`);
         lines.push(`• unknown LinkedIn outcomes/24h: ${aiNewsPresetSummary.unknown_share_outcomes_24h || 0}`);

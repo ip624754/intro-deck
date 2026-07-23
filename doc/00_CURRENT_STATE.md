@@ -1,5 +1,20 @@
 # 00_CURRENT_STATE
 
+## Current source baseline
+STEP063A-H1 — Browse-Only and Provider-Neutral Draft Generation
+
+## STEP063A-H1 source delta
+
+- Exact input: STEP063A FULL SHA-256 `70cc1e0b6c572f1acdf0274d71b85915dfabceadf85e067a935e0778ba77adc7`.
+- `/news` supports browse-only mode without OpenAI.
+- Built-in template and dedicated Groq generation are available behind explicit ENV selection.
+- Migration 034 extends generator-provider constraints without changing existing OpenAI rows.
+- Scheduling is forced off when generation is off.
+- Provider identity is preserved in health, diagnostics, audit, drafts, and telemetry.
+- STEP059 publishing remains unchanged and explicit.
+- Production deployment and live Groq/template evidence remain not verified.
+
+## Historical state
 ## Project
 Intro Deck
 

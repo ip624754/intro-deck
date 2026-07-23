@@ -1,12 +1,24 @@
 # 00_CURRENT_STATE
 
+## STEP063A-H1 current source delta
+
+- Current source step: `STEP063A-H1`; package `0.63.1`.
+- Exact input: STEP063A FULL SHA-256 `70cc1e0b6c572f1acdf0274d71b85915dfabceadf85e067a935e0778ba77adc7`.
+- Generator modes: `off | template | groq | openai`.
+- `off` is browse-only: source search/open remain available, draft callbacks are absent, draft allowance is not consumed, and effective scheduling is off.
+- `template` is deterministic and uses no external LLM/API key.
+- `groq` uses the dedicated Groq adapter and provider-specific telemetry; no hidden OpenAI fallback exists.
+- Migration 034 is required before `template` or `groq`; missing compatibility fails closed.
+- STEP059 publisher and explicit one-post LinkedIn approval are unchanged.
+- Source/focused QA is passed; production migration/deployment/live provider acceptance is not verified.
+
 ## Snapshot
 
 - Project: LinkedIn Telegram Directory Bot
-- Current STEP: STEP063A
-- Phase: multi-source news ingestion and source-quality foundation on top of STEP061A
-- Primary mode: HEAVY / PROVIDER EGRESS / URL SAFETY / SOURCE EVIDENCE / MIGRATION / ROLLOUT GOVERNANCE
-- Runtime status: STEP061A is the uploaded source baseline. STEP063A is source-implemented and focused-QA verified only; migration 033, Node 20 QA, Vercel deployment, live provider telemetry, and operator E2E evidence are not verified.
+- Current STEP: STEP063A-H1
+- Phase: browse-only and provider-neutral draft generation on top of STEP063A
+- Primary mode: HEAVY / GENERATOR AUTH / SOURCE EVIDENCE / MIGRATION / TELEMETRY / ROLLOUT GOVERNANCE
+- Runtime status: STEP063A is the exact uploaded baseline. STEP063A-H1 is source-implemented and focused-QA verified only; migration 034, Node 20 dependency-backed QA, Vercel deployment, live Groq/template telemetry, and operator E2E evidence are not verified.
 
 
 ## STEP063A delta

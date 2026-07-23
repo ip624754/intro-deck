@@ -3,7 +3,7 @@ function nonNegativeNumber(value) {
   return Number.isFinite(number) && number >= 0 ? number : 0;
 }
 
-export function estimateOpenAiCostMicrousd({
+export function estimateTokenCostMicrousd({
   inputTokens = 0,
   outputTokens = 0,
   inputUsdPerMillion = 0,
@@ -24,3 +24,5 @@ export function estimateFixedRequestCostMicrousd(usdPerRequest = 0) {
 export function formatMicrousd(microusd = 0) {
   return (Math.max(0, Number(microusd) || 0) / 1_000_000).toFixed(6);
 }
+
+export const estimateOpenAiCostMicrousd = estimateTokenCostMicrousd;

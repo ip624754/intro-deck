@@ -1,5 +1,23 @@
 # 36_NEXT_STEPS_ROADMAP
 
+## Current corridor after STEP063A-H1
+
+STEP063A-H1 is source-implemented and focused-QA passed. Production acceptance is still required.
+
+Required sequence:
+
+1. Deploy `AI_NEWS_GENERATOR_MODE=off` and verify browse-only search/open with zero new draft rows.
+2. Apply migration 034 and verify both generator-provider constraints.
+3. Run one `template` draft as the zero-external-provider acceptance path.
+4. Optionally run one bounded Groq draft with a server-side key and inspect provider telemetry.
+5. Edit and explicitly authorize exactly one LinkedIn post only after the draft path passes.
+6. Return to browse-only on any provider, schema, quality, latency, or audit regression.
+
+Do not add another generator or autonomous publication before H1 production evidence is closed.
+
+---
+
+## Historical roadmap
 ## Current corridor after STEP063A
 
 STEP063A is source-implemented but not production-accepted. The next move is operational acceptance, not another provider expansion.

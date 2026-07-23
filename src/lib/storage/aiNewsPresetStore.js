@@ -247,9 +247,14 @@ export async function deleteAiNewsPresetForTelegramUser({ telegramUserId, telegr
 }
 
 async function createRunNowClaim({ telegramUserId, telegramUsername, publicToken, config }) {
+  if (config.generator?.mode === 'off') return { ok: false, reason: 'ai_news_generator_disabled' };
   return withDbTransaction(async (client) => {
     const compat = await getSchemaCompat(client);
     if (!compat.hasAiNewsPresetRunsTable || !compat.aiNewsDraftsHasPresetRunId) return { ok: false, reason: 'migration_031_required' };
+    if (['groq', 'template'].includes(config.generator?.mode)
+      && (!compat.aiNewsDraftsHasGeneratorProviders || !compat.aiNewsTelemetryHasGeneratorProviders)) {
+      return { ok: false, reason: 'migration_034_required' };
+    }
     const context = await loadPresetAccessContext(client, { telegramUserId, telegramUsername });
     const access = hasAccess({ config, telegramUserId, entitlements: context.entitlements });
     if (!access.allowed) return { ok: false, reason: access.reason };
@@ -339,6 +344,7 @@ async function deliverPresetDraft({ runId, config }) {
 
 async function executePresetRun({ runId, deliver, fetchImpl = fetch }) {
   const config = getAiNewsDraftConfig();
+  if (config.generator?.mode === 'off') return { ok: false, reason: 'ai_news_generator_disabled' };
   const envelope = await withDbTransaction((client) => getAiNewsPresetRunEnvelope(client, { runId }));
   if (!envelope) return { ok: false, reason: 'ai_news_preset_run_not_found' };
   if (envelope.draft_public_token) {
@@ -432,6 +438,7 @@ export async function processDueAiNewsPresetRuns({ batchSize = null, fetchImpl =
   const config = getAiNewsDraftConfig();
   if (!isDatabaseConfigured()) return { ok: false, reason: 'database_not_configured' };
   if (!config.enabled || config.configurationValid === false) return { ok: false, reason: 'ai_news_disabled' };
+  if (config.generator?.mode === 'off') return { ok: false, reason: 'ai_news_generator_disabled' };
   if (!config.schedule.enabled || config.schedule.configurationValid === false) return { ok: false, reason: config.schedule.configurationError?.code || 'ai_news_schedule_disabled' };
 
   const effectiveBatch = Number.isFinite(Number(batchSize)) ? Math.min(config.schedule.batchSize, Math.max(1, Number(batchSize))) : config.schedule.batchSize;

@@ -20,6 +20,19 @@ export default async function handler(req, res) {
   const linkedInVerification = getLinkedInVerificationConfig();
   const linkedInShare = getLinkedInShareConfig();
   const aiNewsDraft = getAiNewsDraftConfig();
+  const generatorMode = aiNewsDraft.generator?.mode || 'openai';
+  const generatorConfigured = generatorMode === 'off' || generatorMode === 'template'
+    ? true
+    : generatorMode === 'groq'
+      ? aiNewsDraft.groq.configured
+      : aiNewsDraft.openai.configured;
+  const generatorModel = generatorMode === 'groq'
+    ? aiNewsDraft.groq.model
+    : generatorMode === 'template'
+      ? 'introdeck-template-v1'
+      : generatorMode === 'openai'
+        ? aiNewsDraft.openai.model
+        : null;
   res.status(200).json({
     ok: true,
     step: CURRENT_SOURCE_STEP,
@@ -85,14 +98,26 @@ export default async function handler(req, res) {
         githubRepositoryCount: publicSourceRegistrySummary().githubReleases.length
       },
       newsdataFallbackPolicy: aiNewsDraft.source?.mode === 'multi_source' ? 'only_when_primary_pool_is_below_limit' : 'primary_provider',
-      aiProvider: 'openai',
-      aiProviderConfigured: aiNewsDraft.openai.configured,
-      model: aiNewsDraft.openai.model,
+      generatorMode,
+      generatorEnabled: Boolean(aiNewsDraft.generator?.enabled),
+      browseOnly: Boolean(aiNewsDraft.generator?.browseOnly),
+      generatorProvider: aiNewsDraft.generator?.provider || null,
+      generatorProviderConfigured: generatorConfigured,
+      aiProvider: aiNewsDraft.generator?.provider || 'none',
+      aiProviderConfigured: generatorConfigured,
+      model: generatorModel,
+      generatorProviderStatus: {
+        template: true,
+        groq: aiNewsDraft.groq.configured,
+        openai: aiNewsDraft.openai.configured
+      },
       providerTelemetryRequired: true,
       costEstimationConfigured: Boolean(
         Number(aiNewsDraft.newsdata.estimatedRequestCostUsd || 0) > 0 ||
         Number(aiNewsDraft.openai.inputCostUsdPerMillion || 0) > 0 ||
-        Number(aiNewsDraft.openai.outputCostUsdPerMillion || 0) > 0
+        Number(aiNewsDraft.openai.outputCostUsdPerMillion || 0) > 0 ||
+        Number(aiNewsDraft.groq.inputCostUsdPerMillion || 0) > 0 ||
+        Number(aiNewsDraft.groq.outputCostUsdPerMillion || 0) > 0
       ),
       dailyLimit: aiNewsDraft.dailyLimit,
       searchDailyLimit: aiNewsDraft.searchDailyLimit,
@@ -102,6 +127,8 @@ export default async function handler(req, res) {
       schedule: {
         enabled: aiNewsDraft.schedule.enabled,
         mode: aiNewsDraft.schedule.mode,
+        requestedMode: aiNewsDraft.schedule.requestedMode || aiNewsDraft.schedule.mode,
+        disabledReason: aiNewsDraft.schedule.disabledReason || null,
         driver: aiNewsDraft.schedule.driver,
         configurationValid: aiNewsDraft.schedule.configurationValid !== false,
         configurationError: aiNewsDraft.schedule.configurationError || null,

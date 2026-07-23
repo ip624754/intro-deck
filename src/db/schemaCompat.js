@@ -102,6 +102,30 @@ export async function getSchemaCompat(client) {
       exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_provider_usage_events') as has_ai_news_provider_usage_events_table,
       exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_drafts' and column_name='openai_total_tokens') as ai_news_drafts_has_openai_usage,
       exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='ai_news_sources' and column_name='source_authority_score') as ai_news_sources_has_quality_metadata,
+      exists (
+        select 1
+        from pg_constraint c
+        join pg_class t on t.oid = c.conrelid
+        join pg_namespace n on n.oid = t.relnamespace
+        where n.nspname = current_schema()
+          and t.relname = 'ai_news_drafts'
+          and c.contype = 'c'
+          and pg_get_constraintdef(c.oid) ilike '%model_provider%'
+          and pg_get_constraintdef(c.oid) ilike '%groq%'
+          and pg_get_constraintdef(c.oid) ilike '%template%'
+      ) as ai_news_drafts_has_generator_providers,
+      exists (
+        select 1
+        from pg_constraint c
+        join pg_class t on t.oid = c.conrelid
+        join pg_namespace n on n.oid = t.relnamespace
+        where n.nspname = current_schema()
+          and t.relname = 'ai_news_provider_usage_events'
+          and c.contype = 'c'
+          and pg_get_constraintdef(c.oid) ilike '%provider%'
+          and pg_get_constraintdef(c.oid) ilike '%groq%'
+          and pg_get_constraintdef(c.oid) ilike '%template%'
+      ) as ai_news_telemetry_has_generator_providers,
       exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='linkedin_share_intents' and column_name='source_kind') as linkedin_share_has_source_kind
   `);
 
@@ -130,6 +154,8 @@ export async function getSchemaCompat(client) {
     hasAiNewsProviderUsageEventsTable: Boolean(result.rows[0]?.has_ai_news_provider_usage_events_table),
     aiNewsDraftsHasOpenAiUsage: Boolean(result.rows[0]?.ai_news_drafts_has_openai_usage),
     aiNewsSourcesHasQualityMetadata: Boolean(result.rows[0]?.ai_news_sources_has_quality_metadata),
+    aiNewsDraftsHasGeneratorProviders: Boolean(result.rows[0]?.ai_news_drafts_has_generator_providers),
+    aiNewsTelemetryHasGeneratorProviders: Boolean(result.rows[0]?.ai_news_telemetry_has_generator_providers),
     linkedInShareHasSourceKind: Boolean(result.rows[0]?.linkedin_share_has_source_kind)
   };
 
