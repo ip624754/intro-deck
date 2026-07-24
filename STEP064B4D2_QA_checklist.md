@@ -1,0 +1,21 @@
+# STEP064B4D2 QA Checklist
+
+- [x] Exact STEP064B4D1A baseline used.
+- [x] HEAVY mode and risk 12/12 recorded.
+- [x] EN and RU branded PNG assets added.
+- [x] Assets are 1200×630 valid PNG files.
+- [x] Image initialize/upload provider calls are bounded by timeout.
+- [x] Image URN is validated before Posts API request.
+- [x] Alt text is language-matched and bounded.
+- [x] Image path applies only to ordinary profile shares.
+- [x] AI/news publisher path is unchanged.
+- [x] Text-only fallback happens only before Posts API creation.
+- [x] Existing unknown-outcome and duplicate protections remain.
+- [x] `👤 Profile` / `👤 Профиль` use unchanged callback `p:menu`.
+- [x] No migration.
+- [x] No new ENV.
+- [x] Full regression comparison has zero baseline PASS regressions.
+- [ ] Production deploy.
+- [ ] Live EN image post.
+- [ ] Live RU image post.
+- [ ] Duplicate callback replay check.

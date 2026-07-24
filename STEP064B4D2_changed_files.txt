@@ -1,0 +1,49 @@
+STEP064B4D2 changed files
+Added: 12
+Modified: 29
+Deleted: 0
+
+[ADDED]
+STEP064B4D2_BRANDED_LINKEDIN_IMAGE_PUBLICATION.md
+STEP064B4D2_HANDOFF.md
+STEP064B4D2_OPERATOR_ROLLOUT.md
+STEP064B4D2_PATCH_README.md
+STEP064B4D2_QA_REPORT.md
+STEP064B4D2_QA_checklist.md
+STEP064B4D2_REGRESSION_COMPARISON.json
+STEP064B4D2_changed_files.txt
+assets/social/intro-deck-profile-share-en-1200x630.png
+assets/social/intro-deck-profile-share-ru-1200x630.png
+scripts/smoke_profile_share_media_publication.js
+src/lib/linkedin/profileShareMedia.js
+
+[MODIFIED]
+00_CURRENT_STATE.md
+api/health.js
+api/oauth/callback/linkedin.js
+doc/36_NEXT_STEPS_ROADMAP.md
+package-lock.json
+package.json
+scripts/smoke_ai_news_audience_discovery_presets.js
+scripts/smoke_ai_news_migration_claim_recovery.js
+scripts/smoke_ai_news_personalized_query_final_fit.js
+scripts/smoke_ai_news_presets_subscription.js
+scripts/smoke_ai_news_search_progress_recovery.js
+scripts/smoke_critical_transaction_copy_semantics.js
+scripts/smoke_interface_language_boundary_foundation.js
+scripts/smoke_linkedin_verification_compat_fail_safe.js
+scripts/smoke_linkedin_verified_badges_trust_surfaces.js
+scripts/smoke_linkedin_verified_development_integration.js
+scripts/smoke_member_copy_navigation_consistency.js
+scripts/smoke_member_interface_language_rendering.js
+scripts/smoke_member_mixed_language_copy_polish.js
+scripts/smoke_profile_share_compact_above_fold.js
+scripts/smoke_profile_share_editorial_upgrade.js
+scripts/smoke_router_contract.js
+scripts/smoke_transaction_notification_oauth_language_boundary.js
+src/bot/surfaces/appSurfaces.js
+src/config/release.js
+src/lib/linkedin/share.js
+src/lib/storage/linkedinShareStore.js
+src/lib/telegram/memberCopy.js
+vercel.json

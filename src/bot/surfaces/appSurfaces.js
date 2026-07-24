@@ -33,7 +33,7 @@ function fallbackRenderHelpText({ aiNewsVisible = false } = {}) {
 
 function fallbackRenderHelpKeyboard({ aiNewsVisible = false } = {}) {
   const rows = [
-    [{ text: '🧩 Edit profile', callback_data: 'p:menu' }, { text: '🌐 Browse', callback_data: 'dir:list:0' }],
+    [{ text: '👤 Profile', callback_data: 'p:menu' }, { text: '🌐 Browse', callback_data: 'dir:list:0' }],
     [{ text: '📥 Requests', callback_data: 'contact:inbox' }],
     ...(aiNewsVisible ? [[{ text: '🗞 Story finder', callback_data: 'news:home' }]] : []),
     [{ text: '⭐ Pro', callback_data: 'plans:root' }, { text: '✉️ Invite people', callback_data: 'invite:root' }],

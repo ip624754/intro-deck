@@ -5,8 +5,8 @@ import { buildProfileSharePostText } from '../src/lib/linkedin/share.js';
 import { renderLinkedInSharePreviewText } from '../src/lib/telegram/render.js';
 
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-assert.ok(['STEP064B4D1', 'STEP064B4D1A'].includes(CURRENT_SOURCE_STEP));
-assert.ok(['0.64.8', '0.64.9'].includes(packageJson.version));
+assert.ok(['STEP064B4D1', 'STEP064B4D1A', 'STEP064B4D2'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['0.64.8', '0.64.9', '0.65.0'].includes(packageJson.version));
 
 const profile = {
   display_name: 'Rustam Lukmanov',
@@ -42,6 +42,6 @@ assert.match(preview, new RegExp(ruPost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
 const healthSource = readFileSync(new URL('../api/health.js', import.meta.url), 'utf8');
 assert.match(healthSource, /profileShareEditorialPolicy/);
 assert.match(healthSource, /previewMatchesPublishedPost: true/);
-assert.match(healthSource, /imageAttachmentIncluded: false/);
+assert.match(healthSource, /imageAttachmentIncluded: true/);
 
 console.log('OK: STEP064B4D1 profile share editorial corridor');

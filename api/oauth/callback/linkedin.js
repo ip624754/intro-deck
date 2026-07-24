@@ -658,7 +658,8 @@ export default async function handler(req, res) {
           telegramUserId: statePayload.telegramUserId,
           linkedinSub: identity.linkedinSub,
           accessToken: tokenPayload.access_token,
-          shareConfig
+          shareConfig,
+          postLanguage: statePayload.postLanguage || 'en'
         });
       }
 

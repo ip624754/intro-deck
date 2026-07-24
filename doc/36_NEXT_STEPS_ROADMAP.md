@@ -1,3 +1,18 @@
+# STEP064B4D2 rollout corridor
+
+1. Deploy STEP064B4D2 over the exact STEP064B4D1A baseline.
+2. Verify health media-policy markers and Node 20 runtime.
+3. Confirm Home uses `Profile` / `Профиль` without changing `p:menu`.
+4. Publish one EN ordinary profile share and verify the English branded image.
+5. Publish one RU ordinary profile share and verify the Russian branded image.
+6. Confirm an image-preparation failure degrades to text-only before post creation.
+7. Re-open a completed callback and confirm no duplicate post.
+8. Roll back to exact STEP064B4D1A on bundle, media, timeout, or idempotency regression.
+
+Do not extend image publishing to AI/news or add dynamic per-member rendering until D2 production evidence is accepted.
+
+---
+
 ## STEP064B4D1A — Compact Above-the-Fold Profile Share
 
 Status: source implemented; production acceptance pending.

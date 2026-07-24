@@ -9,5 +9,11 @@
       "path": "/api/cron/ai-news-drafts",
       "schedule": "10 8 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/oauth/callback/linkedin.js": {
+      "maxDuration": 60,
+      "includeFiles": "assets/social/intro-deck-profile-share-*.png"
+    }
+  }
 }

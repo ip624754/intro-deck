@@ -1,3 +1,20 @@
+# Current canonical source step — STEP064B4D2
+
+- Package: `0.65.0`
+- Baseline: STEP064B4D1A FULL SHA-256 `587229626b5e0fbe43a5c64485063ca109438d53d8247f85be9e0fe57d607ca5`
+- Ordinary LinkedIn profile shares now attach a versioned EN/RU Intro Deck branded PNG through the LinkedIn Images API.
+- Signed `postLanguage` selects the asset and localized alt text.
+- Image preparation failure before Posts API creation falls back to the existing compact text-only post.
+- Unknown post outcomes remain fail-closed and automatic retry remains blocked.
+- AI/news LinkedIn publishing is unchanged and remains text-only.
+- Home CTA is `👤 Profile` / `👤 Профиль`; callback `p:menu` is unchanged.
+- Vercel callback bundle explicitly includes assets and uses `maxDuration=60`.
+- Migration: none. New ENV: none.
+- Source QA: candidate 104/111 PASS versus baseline 103/110; baseline PASS regressions 0; seven matching inherited/environmental NON_PASS remain.
+- Production deployment: not verified.
+
+---
+
 # Current canonical source step — STEP064B4D1A
 
 - Package: `0.64.9`

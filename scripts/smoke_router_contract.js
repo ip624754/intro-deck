@@ -75,7 +75,7 @@ const keyboard = renderHomeKeyboard({
 });
 
 const serialized = JSON.stringify(keyboard.inline_keyboard);
-if (!serialized.includes('Edit profile')) {
+if (!serialized.includes('p:menu')) {
   throw new Error('home keyboard missing profile entrypoint');
 }
 if (!serialized.includes('plans:root')) {

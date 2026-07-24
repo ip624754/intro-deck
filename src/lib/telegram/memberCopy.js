@@ -16,7 +16,7 @@ export const MEMBER_SURFACES = Object.freeze({
 
 export const MEMBER_BUTTONS = Object.freeze({
   home: '🏠 Home',
-  editProfile: '🧩 Edit profile',
+  editProfile: '👤 Profile',
   continueSetup: '➡️ Continue setup',
   browseDirectory: '🌐 Browse',
   requests: '📥 Requests',
@@ -48,7 +48,7 @@ const MEMBER_SURFACES_RU = Object.freeze({
 
 const MEMBER_BUTTONS_RU = Object.freeze({
   home: '🏠 Главная',
-  editProfile: '🧩 Редактировать профиль',
+  editProfile: '👤 Профиль',
   continueSetup: '➡️ Продолжить настройку',
   browseDirectory: '🌐 Открыть каталог',
   requests: '📥 Запросы',

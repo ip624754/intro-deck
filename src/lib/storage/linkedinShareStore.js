@@ -23,6 +23,7 @@ import {
 } from '../../db/aiNewsRepo.js';
 import { getSchemaCompat } from '../../db/schemaCompat.js';
 import { buildProfileSharePostText, LinkedInShareApiError, publishLinkedInTextPost } from '../linkedin/share.js';
+import { publishProfileShareWithOptionalImage } from '../linkedin/profileShareMedia.js';
 
 function requirePersistence() {
   if (!isDatabaseConfigured()) {
@@ -221,7 +222,9 @@ export async function publishLinkedInShareForOAuthCallback({
   linkedinSub,
   accessToken,
   shareConfig,
-  publishImpl = publishLinkedInTextPost
+  postLanguage = 'en',
+  publishImpl = publishLinkedInTextPost,
+  publishProfileWithMediaImpl = publishProfileShareWithOptionalImage
 }) {
   const unavailable = requirePersistence();
   if (unavailable) return unavailable;
@@ -249,14 +252,25 @@ export async function publishLinkedInShareForOAuthCallback({
 
   let provider;
   try {
-    provider = await publishImpl({
-      accessToken,
-      authorId: linkedinSub,
-      commentary: claim.intent.post_text,
-      visibility: claim.intent.visibility,
-      apiVersion: shareConfig.postsApiVersion,
-      timeoutMs: shareConfig.timeoutMs
-    });
+    provider = claim.intent.source_kind === 'profile_share'
+      ? await publishProfileWithMediaImpl({
+          accessToken,
+          authorId: linkedinSub,
+          commentary: claim.intent.post_text,
+          visibility: claim.intent.visibility,
+          postLanguage,
+          apiVersion: shareConfig.postsApiVersion,
+          timeoutMs: shareConfig.timeoutMs,
+          publishImpl
+        })
+      : await publishImpl({
+          accessToken,
+          authorId: linkedinSub,
+          commentary: claim.intent.post_text,
+          visibility: claim.intent.visibility,
+          apiVersion: shareConfig.postsApiVersion,
+          timeoutMs: shareConfig.timeoutMs
+        });
   } catch (error) {
     const isProviderError = error instanceof LinkedInShareApiError;
     const outcomeUnknown = Boolean(isProviderError && error.outcomeUnknown);
@@ -403,7 +417,11 @@ export async function publishLinkedInShareForOAuthCallback({
         providerRequestId: provider.requestId,
         visibility: claim.intent.visibility,
         sourceKind: claim.intent.source_kind,
-        sourceRefId: claim.intent.source_ref_id
+        sourceRefId: claim.intent.source_ref_id,
+        mediaAttached: Boolean(provider.mediaAttached),
+        mediaId: provider.mediaId || null,
+        mediaLanguage: provider.mediaLanguage || null,
+        mediaFallbackReason: provider.mediaFallbackReason || null
       }
       });
     });

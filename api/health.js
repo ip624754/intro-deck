@@ -98,6 +98,7 @@ export default async function handler(req, res) {
     memberCopyPolishPolicy: {
       languageSettingsLabels: 'localized_full_words',
       profileSystemLabels: 'localized_without_translating_user_content',
+      homeProfileButton: 'profile_without_edit_verb',
       linkedinReceiptIdentifierLabel: 'localized_label_plus_immutable_raw_id',
       callbackIdsChanged: false,
       businessLogicChanged: false
@@ -136,10 +137,26 @@ export default async function handler(req, res) {
       previewMatchesPublishedPost: true,
       permissionPositioningIncluded: true,
       publicProfileUrlIncluded: true,
-      imageAttachmentIncluded: false,
+      imageAttachmentIncluded: true,
       callbackIdsChanged: false,
-      publisherChanged: false,
+      publisherChanged: true,
       businessLogicChanged: false
+    },
+    profileShareMediaPolicy: {
+      enabled: true,
+      sourceKinds: ['profile_share'],
+      assetStrategy: 'versioned_language_specific_png',
+      supportedAssetLanguages: ['en', 'ru'],
+      imageApi: 'rest_images_initialize_upload',
+      postContent: 'single_image_media',
+      textOnlyFallback: 'before_post_request_only',
+      unknownOutcomePolicy: 'block_automatic_retry',
+      orphanedAssetRisk: 'possible_no_post_side_effect',
+      maxDurationSeconds: 60,
+      callbackIdsChanged: false,
+      oauthScopesChanged: false,
+      idempotencyChanged: false,
+      aiNewsPublisherChanged: false
     },
     transactionCopyPolicy: {
       consentButtons: 'verb_plus_object_plus_consequence',

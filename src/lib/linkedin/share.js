@@ -100,6 +100,7 @@ export async function publishLinkedInTextPost({
   visibility = 'PUBLIC',
   apiVersion,
   timeoutMs = 8000,
+  media = null,
   fetchImpl = fetch
 }) {
   if (!accessToken) throw new Error('linkedin_share_access_token_required');
@@ -107,6 +108,11 @@ export async function publishLinkedInTextPost({
   if (!commentary || typeof commentary !== 'string') throw new Error('linkedin_share_commentary_required');
   if (!['PUBLIC', 'CONNECTIONS'].includes(visibility)) throw new Error('linkedin_share_visibility_invalid');
   if (!/^\d{6}$/.test(String(apiVersion || ''))) throw new Error('linkedin_share_api_version_invalid');
+  if (media != null) {
+    if (!/^urn:li:image:/i.test(String(media?.id || ''))) throw new Error('linkedin_share_media_id_invalid');
+    if (typeof media?.altText !== 'string' || !media.altText.trim()) throw new Error('linkedin_share_media_alt_text_required');
+    if (media.altText.length > 4086) throw new Error('linkedin_share_media_alt_text_too_long');
+  }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -130,6 +136,14 @@ export async function publishLinkedInTextPost({
           targetEntities: [],
           thirdPartyDistributionChannels: []
         },
+        ...(media ? {
+          content: {
+            media: {
+              id: String(media.id),
+              altText: media.altText.trim()
+            }
+          }
+        } : {}),
         lifecycleState: 'PUBLISHED',
         isReshareDisabledByAuthor: false
       }),

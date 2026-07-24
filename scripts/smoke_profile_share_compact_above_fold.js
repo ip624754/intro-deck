@@ -5,8 +5,8 @@ import { buildProfileSharePostText } from '../src/lib/linkedin/share.js';
 import { renderLinkedInSharePreviewText } from '../src/lib/telegram/render.js';
 
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-assert.equal(CURRENT_SOURCE_STEP, 'STEP064B4D1A');
-assert.equal(packageJson.version, '0.64.9');
+assert.ok(['STEP064B4D1A', 'STEP064B4D2'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['0.64.9', '0.65.0'].includes(packageJson.version));
 
 const profile = {
   display_name: 'Rustam Lukmanov',
@@ -65,7 +65,7 @@ for (const token of [
   'identityDuplicationInsidePost: false',
   'focusLabelLimit: 3',
   "emojiPolicy: 'none_arrow_only'",
-  'publisherChanged: false'
+  'publisherChanged: true'
 ]) assert.match(healthSource, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 
 console.log('OK: STEP064B4D1A compact above-the-fold profile share');

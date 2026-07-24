@@ -20,7 +20,7 @@ import { renderAiNewsHubText, renderAiNewsSourcesText } from '../src/lib/telegra
 import { formatUserFacingError } from '../src/bot/utils/notices.js';
 import { buildPersistenceSummary } from '../src/lib/linkedin/profile.js';
 
-assert.ok(['STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C', 'STEP064B4C1', 'STEP064B4D1', 'STEP064B4D1A'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C', 'STEP064B4C1', 'STEP064B4D1', 'STEP064B4D1A', 'STEP064B4D2'].includes(CURRENT_SOURCE_STEP));
 
 const profile = {
   linkedin_sub: 'sub', linkedin_name: 'Rustam', display_name: 'Rustam Lukmanov',
@@ -36,7 +36,7 @@ assert.doesNotMatch(home, /Directory readiness|Setup progress|Connected as:|prof
 
 const homeButtons = renderHomeKeyboard({ appBaseUrl: 'https://example.com', telegramUserId: 1, profileSnapshot: profile, persistenceEnabled: true, aiNewsVisible: true }).inline_keyboard.flat().map((b) => b.text);
 for (const label of ['🌐 Browse', '📥 Requests', '🗞 Story finder', '✉️ Invite people', '⭐ Pro']) assert.ok(homeButtons.includes(label), label);
-assert.ok(homeButtons.includes('🧩 Edit profile') || homeButtons.includes('➡️ Continue setup'));
+assert.ok(homeButtons.includes('👤 Profile') || homeButtons.includes('➡️ Continue setup'));
 assert.ok(!homeButtons.includes('📨 Contact inbox'));
 assert.ok(!homeButtons.includes('🧠 News drafts'));
 assert.ok(!homeButtons.includes('📨 Invite contacts'));
