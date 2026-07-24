@@ -1,0 +1,58 @@
+STEP064B3 changed files
+
+Added: 8
+Modified: 38
+Deleted: 0
+Total changed: 46
+
+ADDED
++ STEP064B3_HANDOFF.md
++ STEP064B3_PATCH_README.md
++ STEP064B3_QA_REPORT.md
++ STEP064B3_changed_files.txt
++ doc/100_STEP064B3_OPERATOR_ROLLOUT.md
++ doc/spec/STEP064B3_ADMIN_LANGUAGE_AND_DIAGNOSTIC_CONSISTENCY.md
++ scripts/smoke_admin_language_diagnostic_consistency.js
++ src/lib/telegram/adminCopy.js
+
+MODIFIED
+~ 00_CURRENT_STATE.md
+~ README.md
+~ api/health.js
+~ doc/00_CURRENT_STATE.md
+~ doc/02_HANDOFF_STANDARD.md
+~ doc/15_NEW_CHAT_HANDOFF.md
+~ doc/36_NEXT_STEPS_ROADMAP.md
+~ package-lock.json
+~ package.json
+~ scripts/smoke_admin_allowlist_gate.js
+~ scripts/smoke_admin_delivery_contract.js
+~ scripts/smoke_admin_intros_contract.js
+~ scripts/smoke_admin_invite_copy_polish.js
+~ scripts/smoke_admin_live_verification_contract.js
+~ scripts/smoke_admin_polish_contract.js
+~ scripts/smoke_admin_productivity_contract.js
+~ scripts/smoke_admin_runbook_freeze_contract.js
+~ scripts/smoke_admin_search_contract.js
+~ scripts/smoke_admin_trends_contract.js
+~ scripts/smoke_admin_user_card_contract.js
+~ scripts/smoke_admin_users_contract.js
+~ scripts/smoke_ai_news_audience_discovery_presets.js
+~ scripts/smoke_ai_news_migration_claim_recovery.js
+~ scripts/smoke_ai_news_personalized_query_final_fit.js
+~ scripts/smoke_ai_news_presets_subscription.js
+~ scripts/smoke_ai_news_search_progress_recovery.js
+~ scripts/smoke_critical_transaction_copy_semantics.js
+~ scripts/smoke_invite_admin_contract.js
+~ scripts/smoke_invite_rewards_read_surfaces.js
+~ scripts/smoke_linkedin_verification_compat_fail_safe.js
+~ scripts/smoke_linkedin_verified_badges_trust_surfaces.js
+~ scripts/smoke_linkedin_verified_development_integration.js
+~ scripts/smoke_member_copy_navigation_consistency.js
+~ scripts/smoke_notice_targeting_contract.js
+~ src/bot/composers/operatorComposer.js
+~ src/bot/surfaces/adminSurfaces.js
+~ src/config/release.js
+~ src/db/adminRepo.js
+
+DELETED

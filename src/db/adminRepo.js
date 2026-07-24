@@ -12,8 +12,8 @@ export const ADMIN_USER_SEGMENTS = {
   listact: { key: 'listact', label: 'Активны в каталоге' },
   listinact: { key: 'listinact', label: 'Неактивны в каталоге' },
   nointro: { key: 'nointro', label: 'Без интро' },
-  pend: { key: 'pend', label: 'Есть pending интро' },
-  relink: { key: 'relink', label: 'Недавние relink' }
+  pend: { key: 'pend', label: 'Есть интро в ожидании' },
+  relink: { key: 'relink', label: 'Недавние повторные привязки' }
 };
 
 export function normalizeAdminUserSegment(segmentKey) {
@@ -603,8 +603,8 @@ export const ADMIN_BROADCAST_AUDIENCES = {
   COMPLETE_NO_SKILLS: { key: 'COMPLETE_NO_SKILLS', label: 'Готовые без навыков' },
   READY_NOT_LISTED: { key: 'READY_NOT_LISTED', label: 'Готовые, но не опубликованы' },
   LISTED_NO_INTROS_YET: { key: 'LISTED_NO_INTROS_YET', label: 'Опубликованы без интро' },
-  PENDING_INTROS: { key: 'PENDING_INTROS', label: 'Есть pending интро' },
-  RECENT_PENDING_INTROS: { key: 'RECENT_PENDING_INTROS', label: 'Недавние pending интро' },
+  PENDING_INTROS: { key: 'PENDING_INTROS', label: 'Есть интро в ожидании' },
+  RECENT_PENDING_INTROS: { key: 'RECENT_PENDING_INTROS', label: 'Недавние интро в ожидании' },
   ACCEPTED_RECENT: { key: 'ACCEPTED_RECENT', label: 'Недавно принятые' },
   DECLINED_RECENT: { key: 'DECLINED_RECENT', label: 'Недавно отклонённые' },
   RECENT_RELINKS: { key: 'RECENT_RELINKS', label: 'Недавние повторные привязки' }

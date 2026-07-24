@@ -23,16 +23,16 @@ const listedCard = await surfaces.buildAdminUserCardSurface({
   },
   segmentKey: 'listd',
   page: 1,
-  notice: '✅ Listing updated.'
+  notice: '✅ Видимость профиля обновлена.'
 });
 
-if (!listedCard.text.includes('🪪 User Card')) {
+if (!listedCard.text.includes('🪪 Карточка пользователя')) {
   throw new Error('User card surface must expose the User Card title');
 }
-if (!listedCard.text.includes('Operator note: High-signal founder')) {
+if (!listedCard.text.includes('Заметка оператора: High-signal founder')) {
   throw new Error('User card surface must include the operator note summary');
 }
-if (!listedCard.text.includes('Intros: sent 1 • received 2 • pending 1')) {
+if (!listedCard.text.includes('Интро: отправлено 1 • получено 2 • в ожидании 1')) {
   throw new Error('User card surface must include intro counts');
 }
 

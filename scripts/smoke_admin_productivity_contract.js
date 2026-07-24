@@ -14,7 +14,7 @@ const home = await surfaces.buildAdminHomeSurface({
   }
 });
 const homeKeyboard = JSON.stringify(home.reply_markup.inline_keyboard);
-for (const callback of ['adm:usr:list', 'adm:intro:seg:pend', 'adm:dlv:seg:fail', 'adm:not', 'adm:bc', 'adm:outbox', 'adm:qual']) {
+for (const callback of ['adm:ops', 'adm:comms', 'adm:money', 'adm:sys']) {
   if (!homeKeyboard.includes(callback)) {
     throw new Error(`Admin home missing quick action: ${callback}`);
   }

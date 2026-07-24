@@ -35,7 +35,7 @@ const deliveryList = await surfaces.buildAdminDeliverySurface({
 if (!deliveryList.text.includes('🧾 Доставка')) {
   throw new Error('Admin delivery surface must expose the Russian delivery title');
 }
-if (!deliveryList.text.includes('ждут повтора 1')) {
+if (!deliveryList.text.includes('готовы к повтору: 1')) {
   throw new Error('Admin delivery surface must include the retry due summary');
 }
 

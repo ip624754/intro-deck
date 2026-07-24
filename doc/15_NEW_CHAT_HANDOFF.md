@@ -1,3 +1,15 @@
+# Latest handoff — STEP064B3
+
+Canonical candidate: STEP064B3 over exact STEP064B2 baseline SHA-256 `2f76c704053a951f6256011915727bd2032528bc55d7599bfb21469838875ca2`.
+
+Source status: implemented and QA-passed. Admin Telegram labels are Russian; immutable English codes are displayed separately; callback IDs and admin mutations are unchanged. No migration or new ENV. Standalone admin web UI is not present in the canonical repository.
+
+Full smoke: 111/120 PASS versus baseline 101/119; baseline PASS regressions: 0.
+
+Next action: deploy and run `doc/100_STEP064B3_OPERATOR_ROLLOUT.md`. After production acceptance, consider STEP064B4 for independent interface-language selection.
+
+---
+
 # Latest handoff — STEP064B2
 
 Canonical candidate: STEP064B2 over exact STEP064B1 baseline SHA-256 `7552952ba134444dbfa6ed6205bf7b9d4cef9c508750b36f39ed73dd6d245dd3`.

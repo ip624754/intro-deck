@@ -76,6 +76,17 @@ export default async function handler(req, res) {
       enabled: flags.operatorDiagnosticsSurfaceConfigured,
       operatorCount: operatorConfig.operatorTelegramUserIds.length
     },
+    adminCopyPolicy: {
+      uiLanguage: 'ru',
+      rawCodes: 'english_code_separate_from_label',
+      mixedLanguageButtons: false,
+      navigation: 'contextual_back_plus_home',
+      diagnostics: 'russian_explanation_plus_bounded_raw_code',
+      standaloneAdminWebSurfacePresent: false,
+      callbackIdsChanged: false,
+      adminMutationsChanged: false,
+      businessLogicChanged: false
+    },
     memberCopyPolicy: {
       canonicalSurfaces: ['home', 'profile', 'directory', 'requests', 'story_finder', 'invite', 'pro', 'help'],
       memberDiagnostics: 'user_safe_copy_only',

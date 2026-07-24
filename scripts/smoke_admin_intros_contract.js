@@ -28,10 +28,10 @@ const introList = await surfaces.buildAdminIntrosSurface({
   }
 });
 
-if (!introList.text.includes('📨 Intros')) {
+if (!introList.text.includes('📨 Интро')) {
   throw new Error('Admin intros surface must expose the Intros title');
 }
-if (!introList.text.includes('Pending 1')) {
+if (!introList.text.includes('В ожидании: 1')) {
   throw new Error('Admin intros surface must include the pending summary');
 }
 

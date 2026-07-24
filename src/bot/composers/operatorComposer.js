@@ -401,7 +401,7 @@ export function createOperatorComposer({
     const surface = await buildAdminSearchPromptSurface({
       scopeKey: started.scopeKey || scopeKey,
       currentQuery: '',
-      notice: started.started ? notice : `⚠️ ${formatUserFacingError(started.reason, 'Could not open admin search right now.')}`
+      notice: started.started ? notice : `⚠️ ${formatUserFacingError(started.reason, 'Не удалось открыть поиск в админке.')}`
     });
     if (method === 'reply') {
       await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
@@ -894,13 +894,13 @@ export function createOperatorComposer({
         await renderAdminNotice(ctx, {}, 'edit');
         return;
       case 'last_bc':
-        await renderAdminOutbox(ctx, { notice: 'Открываю outbox для последнего broadcast.' }, 'edit');
+        await renderAdminOutbox(ctx, { notice: 'Открываю исходящие для последней рассылки.' }, 'edit');
         return;
       case 'outbox_fail':
-        await renderAdminOutbox(ctx, { notice: 'Открываю outbox с recent failures.' }, 'edit');
+        await renderAdminOutbox(ctx, { notice: 'Открываю исходящие с недавними ошибками.' }, 'edit');
         return;
       case 'direct_recent':
-        await renderAdminOutbox(ctx, { notice: 'Открываю outbox для recent direct messages.' }, 'edit');
+        await renderAdminOutbox(ctx, { notice: 'Открываю исходящие с недавними личными сообщениями.' }, 'edit');
         return;
       default:
         await renderAdminSurface(ctx, 'comms', 'edit');
@@ -920,7 +920,7 @@ export function createOperatorComposer({
         await renderAdminAudit(ctx, { segmentKey: 'all', page: 0 }, 'edit');
         return;
       case 'listing_changes':
-        await renderAdminAudit(ctx, { segmentKey: 'user', page: 0, notice: 'Показываю аудит пользовательских действий; listing changes помечены внутри событий.' }, 'edit');
+        await renderAdminAudit(ctx, { segmentKey: 'user', page: 0, notice: 'Показываю аудит пользовательских действий. Изменения публикаций отмечены внутри событий.' }, 'edit');
         return;
       case 'relinks':
         await renderAdminAudit(ctx, { segmentKey: 'relink', page: 0 }, 'edit');
@@ -1007,7 +1007,7 @@ export function createOperatorComposer({
 
   composer.callbackQuery('adm:invite:settlement:reconcile', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await renderAdminInvite(ctx, { notice: 'Ниже показаны предупреждения по сверке и число завершённых redeem-операций.', view: 'settlement' }, 'edit');
+    await renderAdminInvite(ctx, { notice: 'Ниже показаны предупреждения сверки и число завершённых операций с баллами.', view: 'settlement' }, 'edit');
   });
 
   composer.callbackQuery('adm:comms', async (ctx) => {
@@ -1128,7 +1128,7 @@ export function createOperatorComposer({
       if (!result.prepared) {
         const warning = result.reason === 'admin_bulk_notice_blocked_active_notice'
           ? '⚠️ Активный notice сначала нужно выключить вручную.'
-          : `⚠️ ${formatUserFacingError(result.reason, 'Could not prepare safe bulk notice right now.')}`;
+          : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось подготовить безопасное уведомление.')}`;
         await renderAdminBulkActions(ctx, { segmentKey, page, notice: warning }, 'edit');
         return;
       }
@@ -1136,7 +1136,7 @@ export function createOperatorComposer({
       const state = await loadAdminNoticeState().catch(() => ({ persistenceEnabled: true, notice: result.notice, estimate: result.estimate }));
       const surface = await buildAdminNoticePreviewSurface({
         state,
-        notice: `✅ Notice prepared for segment ${segmentKey}. Проверь превью и включи вручную.`
+        notice: `✅ Уведомление подготовлено для сегмента ${segmentKey}. Проверьте превью и включите его вручную.`
       });
       await renderSurface(ctx, surface, 'edit');
       return;
@@ -1152,7 +1152,7 @@ export function createOperatorComposer({
       await renderAdminBulkActions(ctx, {
         segmentKey,
         page,
-        notice: `⚠️ ${formatUserFacingError(result.reason, 'Could not prepare safe bulk broadcast right now.')}`
+        notice: `⚠️ ${formatUserFacingError(result.reason, 'Не удалось подготовить безопасную рассылку.')}`
       }, 'edit');
       return;
     }
@@ -1160,7 +1160,7 @@ export function createOperatorComposer({
     const state = await loadAdminBroadcastState().catch(() => ({ persistenceEnabled: true, draft: result.draft, estimate: result.estimate, latestRecord: null }));
     const surface = await buildAdminBroadcastPreviewSurface({
       state,
-      notice: `✅ Broadcast prepared for segment ${segmentKey}. Проверь превью и подтверди отправку.`
+      notice: `✅ Рассылка подготовлена для сегмента ${segmentKey}. Проверьте превью и подтвердите отправку.`
     });
     await renderSurface(ctx, surface, 'edit');
   });
@@ -1204,17 +1204,17 @@ export function createOperatorComposer({
       card: null
     }));
 
-    let notice = 'Listing updated.';
+    let notice = 'Видимость профиля обновлена.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ Сохранение данных сейчас недоступно.';
     } else if (result.blocked) {
       notice = action === 'hide'
-        ? '⚠️ Could not hide this listing right now.'
-        : '⚠️ This profile must be directory-ready before it can be listed.';
+        ? '⚠️ Не удалось скрыть профиль из каталога.'
+        : '⚠️ Профиль должен быть готов к публикации в каталоге.';
     } else if (!result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update listing visibility right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Не удалось изменить видимость профиля.')}`;
     } else {
-      notice = action === 'hide' ? '✅ Listing hidden.' : '✅ Listing is now visible in the directory.';
+      notice = action === 'hide' ? '✅ Профиль скрыт из каталога.' : '✅ Профиль опубликован в каталоге.';
     }
 
     await renderAdminUserCard(ctx, { targetUserId, segmentKey, page, notice }, 'edit');
@@ -1228,7 +1228,7 @@ export function createOperatorComposer({
 
     const state = await loadAdminUserCard({ targetUserId }).catch(() => ({ persistenceEnabled: true, card: null }));
     if (!state?.card) {
-      await renderAdminUsers(ctx, { segmentKey, page, notice: '⚠️ Could not open the user card right now.' }, 'edit');
+      await renderAdminUsers(ctx, { segmentKey, page, notice: '⚠️ Не удалось открыть карточку пользователя.' }, 'edit');
       return;
     }
 
@@ -1245,12 +1245,12 @@ export function createOperatorComposer({
     }));
 
     if (!started.persistenceEnabled) {
-      await renderAdminUserCard(ctx, { targetUserId, segmentKey, page, notice: '⚠️ Persistence is disabled in this environment.' }, 'edit');
+      await renderAdminUserCard(ctx, { targetUserId, segmentKey, page, notice: '⚠️ Сохранение данных сейчас недоступно.' }, 'edit');
       return;
     }
 
     if (!started.started) {
-      await renderAdminUserCard(ctx, { targetUserId, segmentKey, page, notice: `⚠️ ${formatUserFacingError(started.reason, 'Could not open note editing right now.')}` }, 'edit');
+      await renderAdminUserCard(ctx, { targetUserId, segmentKey, page, notice: `⚠️ ${formatUserFacingError(started.reason, 'Не удалось открыть редактирование заметки.')}` }, 'edit');
       return;
     }
 
@@ -1339,7 +1339,7 @@ export function createOperatorComposer({
       state: { draft: result.draft || { targetUserId, body: '', templateKey, segmentKey, page } },
       segmentKey,
       page,
-      notice: result.draft ? '✅ Template applied.' : `⚠️ ${formatUserFacingError(result.reason, 'Could not apply this template right now.')}`
+      notice: result.draft ? '✅ Шаблон применён.' : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось применить шаблон.')}`
     });
     await renderSurface(ctx, surface, 'edit');
   });
@@ -1354,11 +1354,11 @@ export function createOperatorComposer({
     const started = await beginAdminDirectMessageEdit({ operatorTelegramUserId: ctx.from.id, targetUserId, segmentKey, page }).catch((error) => ({ persistenceEnabled: true, started: false, reason: String(error?.message || error) }));
     if (!started.persistenceEnabled || !started.started) {
       const cardState = await loadAdminUserCard({ targetUserId }).catch(() => ({ persistenceEnabled: true, card: null }));
-      const surface = await buildAdminUserMessageSurface({ card: cardState.card, state: directState, segmentKey, page, notice: `⚠️ ${formatUserFacingError(started.reason, 'Could not open direct message editing right now.')}` });
+      const surface = await buildAdminUserMessageSurface({ card: cardState.card, state: directState, segmentKey, page, notice: `⚠️ ${formatUserFacingError(started.reason, 'Не удалось открыть редактирование личного сообщения.')}` });
       await renderSurface(ctx, surface, 'edit');
       return;
     }
-    const surface = await buildAdminCommsEditPromptSurface({ title: '✏️ Direct message text', currentValue: directState?.draft?.body || '', cancelCallback: `adm:card:msg:${targetUserId}:${segmentKey}:${page}` });
+    const surface = await buildAdminCommsEditPromptSurface({ title: '✏️ Текст личного сообщения', currentValue: directState?.draft?.body || '', cancelCallback: `adm:card:msg:${targetUserId}:${segmentKey}:${page}` });
     await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
   });
 
@@ -1385,7 +1385,7 @@ export function createOperatorComposer({
       sendAdminDirectMessage({ operatorTelegramUserId: ctx.from.id, operatorTelegramUsername: ctx.from.username || null, targetUserId }).catch((error) => ({ persistenceEnabled: true, sent: false, reason: String(error?.message || error) }))
     ]);
     const directState = await loadAdminDirectMessageState({ operatorTelegramUserId: ctx.from.id, targetUserId, segmentKey, page }).catch(() => ({ persistenceEnabled: true, draft: { targetUserId, body: '', templateKey: 'blank', segmentKey, page } }));
-    const notice = result.sent ? '✅ Direct message sent.' : `⚠️ ${formatUserFacingError(result.reason, 'Could not send this direct message right now.')}`;
+    const notice = result.sent ? '✅ Личное сообщение отправлено.' : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось отправить личное сообщение.')}`;
     const surface = await buildAdminUserMessageSurface({ card: cardState.card, state: directState, segmentKey, page, notice });
     await renderSurface(ctx, surface, 'edit');
   });
@@ -1400,7 +1400,7 @@ export function createOperatorComposer({
       clearAdminDirectMessageDraftState({ operatorTelegramUserId: ctx.from.id }).catch((error) => ({ persistenceEnabled: true, cleared: false, reason: String(error?.message || error) }))
     ]);
     const directState = await loadAdminDirectMessageState({ operatorTelegramUserId: ctx.from.id, targetUserId, segmentKey, page }).catch(() => ({ persistenceEnabled: true, draft: { targetUserId, body: '', templateKey: 'blank', segmentKey, page } }));
-    const notice = result.cleared ? '✅ Direct message draft cleared.' : `⚠️ ${formatUserFacingError(result.reason, 'Could not clear this direct message draft right now.')}`;
+    const notice = result.cleared ? '✅ Черновик личного сообщения очищен.' : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось очистить черновик личного сообщения.')}`;
     const surface = await buildAdminUserMessageSurface({ card: cardState.card, state: directState, segmentKey, page, notice });
     await renderSurface(ctx, surface, 'edit');
   });
@@ -1553,7 +1553,7 @@ export function createOperatorComposer({
 
   composer.callbackQuery('adm:tpl:direct', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await renderAdminTemplates(ctx, { notice: 'Direct message templates are available inside User Card → Message.' }, 'edit');
+    await renderAdminTemplates(ctx, { notice: 'Шаблоны личных сообщений доступны в карточке пользователя → «Сообщение».' }, 'edit');
   });
 
 
@@ -1582,10 +1582,10 @@ export function createOperatorComposer({
     await clearAllPendingInputs(ctx.from.id);
     const started = await beginAdminNoticeEdit({ operatorTelegramUserId: ctx.from.id }).catch((error) => ({ persistenceEnabled: true, started: false, reason: String(error?.message || error) }));
     if (!started.persistenceEnabled || !started.started) {
-      await renderAdminNotice(ctx, { notice: `⚠️ ${formatUserFacingError(started.reason, 'Could not open notice editing right now.')}` }, 'edit');
+      await renderAdminNotice(ctx, { notice: `⚠️ ${formatUserFacingError(started.reason, 'Не удалось открыть редактирование уведомления.')}` }, 'edit');
       return;
     }
-    const surface = await buildAdminCommsEditPromptSurface({ title: '✏️ Notice text', currentValue: state.notice?.body || '', cancelCallback: 'adm:not' });
+    const surface = await buildAdminCommsEditPromptSurface({ title: '✏️ Текст уведомления', currentValue: state.notice?.body || '', cancelCallback: 'adm:not' });
     await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
   });
 
@@ -1602,8 +1602,8 @@ export function createOperatorComposer({
       templateKey: ctx.match?.[1] || 'complete_profile'
     }).catch((error) => ({ persistenceEnabled: true, notice: null, estimate: 0, reason: String(error?.message || error) }));
     const notice = result.notice
-      ? `✅ Template applied. Audience: ${result.notice.audienceKey}. Estimated visibility: ${result.estimate || 0}.`
-      : `⚠️ ${formatUserFacingError(result.reason, 'Could not apply this notice template right now.')}`;
+      ? `✅ Шаблон применён. Аудитория: ${result.notice.audienceKey}. Оценка охвата: ${result.estimate || 0}.`
+      : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось применить шаблон уведомления.')}`;
     await renderAdminNotice(ctx, { notice }, 'edit');
   });
 
@@ -1619,7 +1619,7 @@ export function createOperatorComposer({
       operatorTelegramUsername: ctx.from.username || null,
       audienceKey: ctx.match?.[1] || 'ALL'
     }).catch((error) => ({ persistenceEnabled: true, notice: null, reason: String(error?.message || error) }));
-    await renderAdminNotice(ctx, { notice: result.persistenceEnabled ? '✅ Audience updated.' : '⚠️ Persistence is disabled in this environment.' }, 'edit');
+    await renderAdminNotice(ctx, { notice: result.persistenceEnabled ? '✅ Аудитория обновлена.' : '⚠️ Сохранение данных сейчас недоступно.' }, 'edit');
   });
 
   composer.callbackQuery('adm:not:preview', async (ctx) => {
@@ -1630,14 +1630,14 @@ export function createOperatorComposer({
   composer.callbackQuery('adm:not:on', async (ctx) => {
     await ctx.answerCallbackQuery();
     const result = await activateAdminNoticeState({ operatorTelegramUserId: ctx.from.id, operatorTelegramUsername: ctx.from.username || null }).catch((error) => ({ persistenceEnabled: true, activated: false, reason: String(error?.message || error) }));
-    const notice = result.activated ? '✅ Notice activated.' : `⚠️ ${formatUserFacingError(result.reason, 'Could not activate the notice right now.')}`;
+    const notice = result.activated ? '✅ Уведомление включено.' : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось включить уведомление.')}`;
     await renderAdminNotice(ctx, { notice }, 'edit');
   });
 
   composer.callbackQuery('adm:not:off', async (ctx) => {
     await ctx.answerCallbackQuery();
     const result = await disableAdminNoticeState({ operatorTelegramUserId: ctx.from.id, operatorTelegramUsername: ctx.from.username || null }).catch((error) => ({ persistenceEnabled: true, disabled: false, reason: String(error?.message || error) }));
-    const notice = result.disabled ? '✅ Notice disabled.' : `⚠️ ${formatUserFacingError(result.reason, 'Could not disable the notice right now.')}`;
+    const notice = result.disabled ? '✅ Уведомление выключено.' : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось выключить уведомление.')}`;
     await renderAdminNotice(ctx, { notice }, 'edit');
   });
 
@@ -1652,10 +1652,10 @@ export function createOperatorComposer({
     await clearAllPendingInputs(ctx.from.id);
     const started = await beginAdminBroadcastEdit({ operatorTelegramUserId: ctx.from.id }).catch((error) => ({ persistenceEnabled: true, started: false, reason: String(error?.message || error) }));
     if (!started.persistenceEnabled || !started.started) {
-      await renderAdminBroadcast(ctx, { notice: `⚠️ ${formatUserFacingError(started.reason, 'Could not open broadcast editing right now.')}` }, 'edit');
+      await renderAdminBroadcast(ctx, { notice: `⚠️ ${formatUserFacingError(started.reason, 'Не удалось открыть редактирование рассылки.')}` }, 'edit');
       return;
     }
-    const surface = await buildAdminCommsEditPromptSurface({ title: '✏️ Broadcast text', currentValue: state.draft?.body || '', cancelCallback: 'adm:bc' });
+    const surface = await buildAdminCommsEditPromptSurface({ title: '✏️ Текст рассылки', currentValue: state.draft?.body || '', cancelCallback: 'adm:bc' });
     await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
   });
 
@@ -1665,7 +1665,7 @@ export function createOperatorComposer({
     await clearAllPendingInputs(ctx.from.id);
     const started = await beginAdminBroadcastMediaEdit({ operatorTelegramUserId: ctx.from.id }).catch((error) => ({ persistenceEnabled: true, started: false, reason: String(error?.message || error) }));
     if (!started.persistenceEnabled || !started.started) {
-      await renderAdminBroadcast(ctx, { notice: `⚠️ ${formatUserFacingError(started.reason, 'Could not open broadcast image editing right now.')}` }, 'edit');
+      await renderAdminBroadcast(ctx, { notice: `⚠️ ${formatUserFacingError(started.reason, 'Не удалось открыть редактирование изображения рассылки.')}` }, 'edit');
       return;
     }
     const surface = await buildAdminCommsEditPromptSurface({
@@ -1681,7 +1681,7 @@ export function createOperatorComposer({
   composer.callbackQuery('adm:bc:media:clear', async (ctx) => {
     await ctx.answerCallbackQuery();
     const result = await clearAdminBroadcastMediaState({ operatorTelegramUserId: ctx.from.id, operatorTelegramUsername: ctx.from.username || null }).catch((error) => ({ persistenceEnabled: true, cleared: false, reason: String(error?.message || error) }));
-    const notice = result.cleared ? '✅ Broadcast image cleared.' : `⚠️ ${formatUserFacingError(result.reason, 'Could not clear the broadcast image right now.')}`;
+    const notice = result.cleared ? '✅ Изображение рассылки удалено.' : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось удалить изображение рассылки.')}`;
     await renderAdminBroadcast(ctx, { notice }, 'edit');
   });
 
@@ -1696,7 +1696,7 @@ export function createOperatorComposer({
     await clearAllPendingInputs(ctx.from.id);
     const started = await beginAdminBroadcastButtonTextEdit({ operatorTelegramUserId: ctx.from.id }).catch((error) => ({ persistenceEnabled: true, started: false, reason: String(error?.message || error) }));
     if (!started.persistenceEnabled || !started.started) {
-      await renderAdminBroadcastButton(ctx, { notice: `⚠️ ${formatUserFacingError(started.reason, 'Could not open button label editing right now.')}` }, 'edit');
+      await renderAdminBroadcastButton(ctx, { notice: `⚠️ ${formatUserFacingError(started.reason, 'Не удалось открыть редактирование текста кнопки.')}` }, 'edit');
       return;
     }
     const surface = await buildAdminCommsEditPromptSurface({
@@ -1715,7 +1715,7 @@ export function createOperatorComposer({
     await clearAllPendingInputs(ctx.from.id);
     const started = await beginAdminBroadcastButtonUrlEdit({ operatorTelegramUserId: ctx.from.id }).catch((error) => ({ persistenceEnabled: true, started: false, reason: String(error?.message || error) }));
     if (!started.persistenceEnabled || !started.started) {
-      await renderAdminBroadcastButton(ctx, { notice: `⚠️ ${formatUserFacingError(started.reason, 'Could not open button URL editing right now.')}` }, 'edit');
+      await renderAdminBroadcastButton(ctx, { notice: `⚠️ ${formatUserFacingError(started.reason, 'Не удалось открыть редактирование ссылки кнопки.')}` }, 'edit');
       return;
     }
     const surface = await buildAdminCommsEditPromptSurface({
@@ -1731,7 +1731,7 @@ export function createOperatorComposer({
   composer.callbackQuery('adm:bc:btn:clear', async (ctx) => {
     await ctx.answerCallbackQuery();
     const result = await clearAdminBroadcastButtonState({ operatorTelegramUserId: ctx.from.id, operatorTelegramUsername: ctx.from.username || null }).catch((error) => ({ persistenceEnabled: true, cleared: false, reason: String(error?.message || error) }));
-    const notice = result.cleared ? '✅ Broadcast button cleared.' : `⚠️ ${formatUserFacingError(result.reason, 'Could not clear the broadcast button right now.')}`;
+    const notice = result.cleared ? '✅ Кнопка рассылки очищена.' : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось очистить кнопку рассылки.')}`;
     await renderAdminBroadcastButton(ctx, { notice }, 'edit');
   });
 
@@ -1748,8 +1748,8 @@ export function createOperatorComposer({
       templateKey: ctx.match?.[1] || 'complete_profile'
     }).catch((error) => ({ persistenceEnabled: true, draft: null, estimate: 0, reason: String(error?.message || error) }));
     const notice = result.draft
-      ? `✅ Template applied. Audience: ${result.draft.audienceKey}. Estimated recipients: ${result.estimate || 0}.`
-      : `⚠️ ${formatUserFacingError(result.reason, 'Could not apply this broadcast template right now.')}`;
+      ? `✅ Шаблон применён. Аудитория: ${result.draft.audienceKey}. Оценка получателей: ${result.estimate || 0}.`
+      : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось применить шаблон рассылки.')}`;
     await renderAdminBroadcast(ctx, { notice }, 'edit');
   });
 
@@ -1765,7 +1765,7 @@ export function createOperatorComposer({
       operatorTelegramUsername: ctx.from.username || null,
       audienceKey: ctx.match?.[1] || 'ALL_CONNECTED'
     }).catch((error) => ({ persistenceEnabled: true, reason: String(error?.message || error) }));
-    const notice = result.persistenceEnabled ? '✅ Audience updated.' : '⚠️ Persistence is disabled in this environment.';
+    const notice = result.persistenceEnabled ? '✅ Аудитория обновлена.' : '⚠️ Сохранение данных сейчас недоступно.';
     await renderAdminBroadcast(ctx, { notice }, 'edit');
   });
 
@@ -1783,7 +1783,7 @@ export function createOperatorComposer({
     }).catch((error) => ({ persistenceEnabled: true, sent: false, reason: String(error?.message || error) }));
     const notice = result.sent
       ? '✅ Живое превью отправлено в этот чат.'
-      : `⚠️ ${formatUserFacingError(result.reason, 'Could not send the live preview right now.')}`;
+      : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось отправить тестовое превью.')}`;
     await renderAdminBroadcastPreview(ctx, { notice }, 'edit');
   });
 
@@ -1800,12 +1800,12 @@ export function createOperatorComposer({
 
   composer.callbackQuery('adm:bc:send', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await renderAdminBroadcastPreview(ctx, { notice: 'Review the preview, then confirm the send.' }, 'edit');
+    await renderAdminBroadcastPreview(ctx, { notice: 'Проверьте превью и подтвердите отправку.' }, 'edit');
   });
 
   composer.callbackQuery('adm:bc:refresh', async (ctx) => {
     await ctx.answerCallbackQuery();
-    await renderAdminBroadcast(ctx, { notice: '🔄 Broadcast status refreshed.' }, 'edit');
+    await renderAdminBroadcast(ctx, { notice: '🔄 Статус рассылки обновлён.' }, 'edit');
   });
 
   composer.callbackQuery(/^adm:bc:fail:(\d+):(\d+)$/, async (ctx) => {
@@ -1832,10 +1832,10 @@ export function createOperatorComposer({
     }).catch((error) => ({ persistenceEnabled: true, retried: false, skipped: false, reason: String(error?.message || error) }));
     const notice = result.retried
       ? (mode === 'retry_due'
-          ? `✅ Повторная доставка retry_due запущена. Обновлено: доставлено ${result.deliveredCount || 0}, retry_due ${result.retryDueCount || 0}, failed ${result.failedCount || 0}.`
-          : `✅ Повторная доставка failed получателей запущена. Обновлено: доставлено ${result.deliveredCount || 0}, failed ${result.failedCount || 0}, retry_due ${result.retryDueCount || 0}.`)
+          ? `✅ Повторная доставка запущена. Доставлено: ${result.deliveredCount || 0}. Готово к повтору: ${result.retryDueCount || 0} · код: \`retry_due\`. Ошибки: ${result.failedCount || 0} · код: \`failed\`.`
+          : `✅ Повторная доставка получателям с ошибкой запущена. Доставлено: ${result.deliveredCount || 0}. Ошибки: ${result.failedCount || 0} · код: \`failed\`. Готово к повтору: ${result.retryDueCount || 0} · код: \`retry_due\`.`)
       : result.skipped
-        ? `ℹ️ ${formatUserFacingError(result.reason, mode === 'retry_due' ? 'Нет retry_due элементов для повторной доставки.' : 'Нет failed получателей для повторной доставки.')}`
+        ? `ℹ️ ${formatUserFacingError(result.reason, mode === 'retry_due' ? 'Нет элементов, готовых к повтору.' : 'Нет получателей с ошибкой доставки.')}`
         : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось запустить повторную доставку.')}`;
     await renderAdminOutboxRecord(ctx, { outboxId, notice, backCallback: 'adm:bc' }, 'edit');
   });
@@ -1845,16 +1845,16 @@ export function createOperatorComposer({
     const result = await sendAdminBroadcast({ operatorTelegramUserId: ctx.from.id, operatorTelegramUsername: ctx.from.username || null }).catch((error) => ({ persistenceEnabled: true, sent: false, reason: String(error?.message || error) }));
     const notice = result.sent
       ? (result.failedCount > 0
-          ? `✅ Broadcast completed. Delivered ${result.deliveredCount}, failed ${result.failedCount}. Последняя задача сохранена — можно открыть статус и ошибки.`
-          : `✅ Broadcast sent to ${result.deliveredCount} recipients. Последняя задача сохранена — можно открыть статус.`)
-      : `⚠️ ${formatUserFacingError(result.reason, 'Could not send this broadcast right now.')}`;
+          ? `✅ Рассылка завершена. Доставлено: ${result.deliveredCount}. Ошибки: ${result.failedCount}. Последняя задача сохранена — можно открыть статус и ошибки.`
+          : `✅ Рассылка отправлена. Получателей: ${result.deliveredCount}. Последняя задача сохранена — можно открыть статус.`)
+      : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось отправить рассылку.')}`;
     await renderAdminBroadcast(ctx, { notice }, 'edit');
   });
 
   composer.callbackQuery('adm:bc:clear', async (ctx) => {
     await ctx.answerCallbackQuery();
     const result = await clearAdminBroadcastDraftState().catch((error) => ({ persistenceEnabled: true, cleared: false, reason: String(error?.message || error) }));
-    const notice = result.cleared ? '✅ Broadcast draft cleared.' : `⚠️ ${formatUserFacingError(result.reason, 'Could not clear this draft right now.')}`;
+    const notice = result.cleared ? '✅ Черновик рассылки очищен.' : `⚠️ ${formatUserFacingError(result.reason, 'Не удалось очистить черновик.')}`;
     await renderAdminBroadcast(ctx, { notice }, 'edit');
   });
 

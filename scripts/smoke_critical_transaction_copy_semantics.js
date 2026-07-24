@@ -32,7 +32,7 @@ import {
   formatIntroDecisionReason
 } from '../src/bot/utils/notices.js';
 
-assert.equal(CURRENT_SOURCE_STEP, 'STEP064B2');
+assert.ok(['STEP064B2', 'STEP064B3'].includes(CURRENT_SOURCE_STEP));
 
 const intro = {
   intro_request_id: 11,

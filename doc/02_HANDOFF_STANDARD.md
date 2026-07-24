@@ -43,3 +43,19 @@ For this project, a usable handoff should always mention:
 - public browse truth = `listed + active`
 - intro requests persist, but accept/reply/chat are not done yet
 - the current next narrow step, not a speculative roadmap
+
+
+---
+
+## Current corridor after STEP064B3
+
+STEP064B3 is source-implemented and QA-passed. The next action is production operator acceptance, not another broad copy rewrite.
+
+1. Deploy the exact STEP064B3 artifact over STEP064B2.
+2. Verify `/api/health` exposes `adminCopyPolicy` and `step=STEP064B3`.
+3. Walk through Admin root, Operations, Communications, Monetization, System, Invite/Rewards, Search, Audit, and Outbox.
+4. Confirm Russian labels and separate raw English codes.
+5. Confirm callback behavior and mutations are unchanged.
+6. Roll back to exact STEP064B2 on navigation, consent, mutation, or diagnostic regression.
+
+Do not add interface-language switching until this acceptance is closed.

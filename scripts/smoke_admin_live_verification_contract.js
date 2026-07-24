@@ -27,12 +27,12 @@ for (const callback of ['adm:verify', 'adm:rehearse']) {
 }
 
 const verify = await surfaces.buildAdminLiveVerificationSurface();
-if (!verify.text.includes('✅ Live verification') || !verify.text.includes('/api/health?full=1') || !verify.text.includes('go / no-go')) {
+if (!verify.text.includes('✅ Проверка продакшена') || !verify.text.includes('/api/health?full=1') || !verify.text.includes('решение: запускать или остановить')) {
   throw new Error('Live verification surface missing verification copy');
 }
 
 const rehearse = await surfaces.buildAdminLaunchRehearsalSurface();
-if (!rehearse.text.includes('🎭 Репетиция запуска') || !rehearse.text.includes('direct message') || !rehearse.text.includes('freeze сохраняется')) {
+if (!rehearse.text.includes('🎭 Репетиция запуска') || !rehearse.text.includes('личное сообщение') || !rehearse.text.includes('заморозка сохраняется')) {
   throw new Error('Launch rehearsal surface missing rehearsal copy');
 }
 

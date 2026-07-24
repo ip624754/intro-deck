@@ -38,7 +38,7 @@ const surface = await surfaces.buildAdminNoticeSurface({
   }
 });
 
-for (const fragment of ['📣 Уведомление', 'Подключили, без профиля', 'Оценка видимости: 14']) {
+for (const fragment of ['📣 Уведомление', 'Подключили, без профиля', 'Оценка охвата: 14']) {
   if (!surface.text.includes(fragment)) {
     throw new Error(`Notice surface missing targeting fragment: ${fragment}`);
   }

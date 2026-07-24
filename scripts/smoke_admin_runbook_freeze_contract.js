@@ -27,12 +27,12 @@ for (const callback of ['adm:runbook', 'adm:freeze', 'adm:health']) {
 }
 
 const runbook = await surfaces.buildAdminRunbookSurface();
-if (!runbook.text.includes('🧭 Регламент запуска') || !runbook.text.includes('Проверка перед уведомлением или рассылкой')) {
+if (!runbook.text.includes('🧭 Регламент запуска') || !runbook.text.includes('Проверка перед отправкой:')) {
   throw new Error('Runbook surface missing launch ops copy');
 }
 
 const freeze = await surfaces.buildAdminFreezeSurface();
-if (!freeze.text.includes('🧊 Заморозка') || !freeze.text.includes('Что замораживаем:') || !freeze.text.includes('Выход из заморозки только после ручного прохода проверки.')) {
+if (!freeze.text.includes('🧊 Заморозка') || !freeze.text.includes('Что замораживаем:') || !freeze.text.includes('Выход из заморозки — только после успешной ручной проверки.')) {
   throw new Error('Freeze surface missing freeze policy copy');
 }
 

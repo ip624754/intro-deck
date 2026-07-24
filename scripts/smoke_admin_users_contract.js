@@ -35,10 +35,10 @@ const surface = await surfaces.buildAdminUsersSurface({
   }
 });
 
-if (!surface.text.includes('👥 Users')) {
+if (!surface.text.includes('👥 Пользователи')) {
   throw new Error('Users surface must expose the Users title');
 }
-if (!surface.text.includes('Connected 1')) {
+if (!surface.text.includes('Подключили LinkedIn 1')) {
   throw new Error('Users surface must include the connected count summary');
 }
 

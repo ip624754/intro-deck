@@ -1,6 +1,6 @@
-# Current release: STEP064B2 / 0.64.2
+# Current release: STEP064B3 / 0.64.3
 
-The current candidate makes critical consent, payment, contact-reveal, draft-approval, and LinkedIn-publication actions consequence-explicit without changing their mechanics. See `doc/spec/STEP064B2_CRITICAL_TRANSACTION_COPY_AND_CTA_SEMANTICS.md` and `doc/99_STEP064B2_OPERATOR_ROLLOUT.md`.
+The current candidate unifies operator/admin Telegram copy in Russian, renders immutable English states separately as bounded code values, and standardizes diagnostic/navigation labels without changing callbacks or mutations. See `doc/spec/STEP064B3_ADMIN_LANGUAGE_AND_DIAGNOSTIC_CONSISTENCY.md` and `doc/100_STEP064B3_OPERATOR_ROLLOUT.md`.
 
 ---
 

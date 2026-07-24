@@ -16,12 +16,14 @@ for (const needle of ['adm:search:(users|intros|delivery|outbox|audit)', 'beginA
 }
 
 const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP039' });
-const home = await surfaces.buildAdminHomeSurface({ summary: {} });
-const homeKeyboard = JSON.stringify(home.reply_markup.inline_keyboard);
-for (const callback of ['adm:search:users', 'adm:search:intros', 'adm:search:delivery', 'adm:search:audit']) {
-  if (!homeKeyboard.includes(callback)) {
-    throw new Error(`Admin home missing search shortcut: ${callback}`);
-  }
-}
+const users = await surfaces.buildAdminUsersSurface({ state: { persistenceEnabled: true, segmentKey: 'all', page: 0, pageSize: 8, totalCount: 0, counts: {}, users: [] } });
+const usersKeyboard = JSON.stringify(users.reply_markup.inline_keyboard);
+if (!usersKeyboard.includes('adm:search:users')) throw new Error('Users surface missing search shortcut');
+const intros = await surfaces.buildAdminIntrosSurface({ state: { persistenceEnabled: true, segmentKey: 'all', page: 0, pageSize: 8, totalCount: 0, counts: {}, intros: [] } });
+if (!JSON.stringify(intros.reply_markup.inline_keyboard).includes('adm:search:intros')) throw new Error('Intros surface missing search shortcut');
+const delivery = await surfaces.buildAdminDeliverySurface({ state: { persistenceEnabled: true, segmentKey: 'all', page: 0, pageSize: 8, totalCount: 0, counts: {}, records: [] } });
+if (!JSON.stringify(delivery.reply_markup.inline_keyboard).includes('adm:search:delivery')) throw new Error('Delivery surface missing search shortcut');
+const audit = await surfaces.buildAdminAuditSurface({ state: { persistenceEnabled: true, segmentKey: 'all', page: 0, pageSize: 8, totalCount: 0, records: [] } });
+if (!JSON.stringify(audit.reply_markup.inline_keyboard).includes('adm:search:audit')) throw new Error('Audit surface missing search shortcut');
 
 console.log('OK: admin search contract');

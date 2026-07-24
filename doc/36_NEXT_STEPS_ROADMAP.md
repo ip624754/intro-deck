@@ -172,3 +172,13 @@ Required manual outputs:
 
 Do not open new feature scope before the manual verification readout exists.
 Premium gating, advanced ranking, or broader admin expansion stay blocked until that pass is written down.
+
+
+---
+
+## STEP064B copy consistency corridor
+
+- STEP064B1 — Member Copy System & Primary Navigation: source complete.
+- STEP064B2 — Critical Transaction Copy & CTA Semantics: source complete.
+- STEP064B3 — Admin Language & Diagnostic Consistency: source complete; production acceptance pending.
+- STEP064B4 — Interface Language Boundary: next only after B3 acceptance; interface locale must remain independent from post language.

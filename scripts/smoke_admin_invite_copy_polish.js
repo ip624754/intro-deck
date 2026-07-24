@@ -24,7 +24,7 @@ const overview = await builders.buildAdminInviteSurface({
   view: 'overview'
 });
 
-for (const fragment of ['Главный обзор invite-потока', 'Сейчас:', 'Куда дальше:']) {
+for (const fragment of ['Вход, активация и источники приглашений.', 'Сводка:', 'Источники:']) {
   if (!overview.text.includes(fragment)) {
     throw new Error(`Overview copy missing fragment: ${fragment}`);
   }
@@ -47,7 +47,7 @@ const rewards = await builders.buildAdminInviteSurface({
   view: 'rewards'
 });
 
-for (const fragment of ['Текущий режим:', 'Что это значит:', 'Что делать здесь:']) {
+for (const fragment of ['Режим и балансы программы наград.', 'Режим:', 'Балансы:']) {
   if (!rewards.text.includes(fragment)) {
     throw new Error(`Rewards copy missing fragment: ${fragment}`);
   }

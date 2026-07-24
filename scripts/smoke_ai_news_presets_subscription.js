@@ -22,8 +22,8 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const packageJson = JSON.parse(read('package.json'));
 const vercel = JSON.parse(read('vercel.json'));
 
-assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2'].includes(CURRENT_SOURCE_STEP), true);
-assert.equal(['0.63.6', '0.64.0', '0.64.1', '0.64.2'].includes(packageJson.version), true);
+assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['0.63.6', '0.64.0', '0.64.1', '0.64.2', '0.64.3'].includes(packageJson.version), true);
 assert.equal(packageJson.scripts['smoke:ai-news-productization'], 'node scripts/smoke_ai_news_presets_subscription.js');
 
 const migration = read('migrations/031_ai_news_presets_subscription.sql');

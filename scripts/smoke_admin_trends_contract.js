@@ -36,7 +36,7 @@ const home = await surfaces.buildAdminHomeSurface({
     directMessages7d: 7
   }
 });
-for (const fragment of ['Разделы:', 'Подключили, без профиля: 20', 'Pending >24ч: 3', 'Последняя рассылка: отправлен с ошибками']) {
+for (const fragment of ['Разделы:', 'Подключили, без профиля: 20', 'В ожидании >24 ч: 3', 'Последняя рассылка: отправлен с ошибками']) {
   if (!home.text.includes(fragment)) {
     throw new Error(`Admin home missing STEP040 fragment: ${fragment}`);
   }
@@ -62,7 +62,7 @@ const comms = await surfaces.buildAdminCommunicationsSurface({
     outboxFailures7d: 3
   }
 });
-for (const fragment of ['Активное уведомление: да', 'Видимость notice: 18', 'Последняя рассылка: частично', 'Ошибки outbox 7д: 3']) {
+for (const fragment of ['Уведомление: активно', 'Охват уведомления: 18', 'Последняя рассылка: частично', 'Ошибки исходящих за 7 дней: 3']) {
   if (!comms.text.includes(fragment)) {
     throw new Error(`Communications hub missing STEP040 fragment: ${fragment}`);
   }
@@ -84,7 +84,7 @@ const system = await surfaces.buildAdminSystemSurface({
     relinks7d: 1
   }
 });
-for (const fragment of ['Ждут повтора: 2', 'Исчерпано: 1', 'Ошибки 1/24ч • 4/7д', 'Изменения листинга 4/7д • релинки 1/7д']) {
+for (const fragment of ['Готовы к повтору: 2', 'Попытки исчерпаны: 1', 'Ошибки: 1 за 24 часа • 4 за 7 дней', 'Изменения публикации: 4 • повторные привязки: 1']) {
   if (!system.text.includes(fragment)) {
     throw new Error(`System hub missing STEP040 fragment: ${fragment}`);
   }

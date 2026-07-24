@@ -14,7 +14,7 @@ if (!operatorComposerSource.includes("composer.command('ops'")) {
 
 const surfaces = createAdminSurfaceBuilders({ currentStep: 'STEP028' });
 const denied = await surfaces.buildOperatorOnlySurface();
-if (!denied.text.includes('only available to the operator account')) {
+if (!denied.text.includes('доступна только операторскому аккаунту')) {
   throw new Error('Operator-only denial surface must use product-safe copy');
 }
 if (!JSON.stringify(denied.reply_markup.inline_keyboard).includes('home:root')) {

@@ -38,7 +38,7 @@ const surface = await builders.buildAdminInviteSurface({
   }
 });
 
-if (!surface.text.includes('Всего инвайтов') || !surface.text.includes('Топ инвайтеры') || !surface.text.includes('Последние инвайты')) {
+if (!surface.text.includes('Сводка:') || !surface.text.includes('Топ приглашающих:') || !surface.text.includes('Последние приглашения:')) {
   throw new Error('Admin invite surface text must expose summary, top inviters, and recent invites');
 }
 
@@ -49,7 +49,7 @@ const rewardsSurface = await builders.buildAdminInviteSurface({
   },
   view: 'rewards'
 });
-if (!rewardsSurface.text.includes('Экран режима и балансов rewards-программы') || !JSON.stringify(rewardsSurface.reply_markup.inline_keyboard).includes('adm:invite:mode:live')) {
+if (!rewardsSurface.text.includes('Режим и балансы программы наград.') || !JSON.stringify(rewardsSurface.reply_markup.inline_keyboard).includes('adm:invite:mode:live')) {
   throw new Error('Admin invite rewards view must expose focused rewards text and mode controls');
 }
 

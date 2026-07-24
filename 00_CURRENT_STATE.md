@@ -1,3 +1,17 @@
+# Current canonical step — STEP064B3
+
+- Package: `0.64.3`
+- Baseline: STEP064B2 FULL SHA-256 `2f76c704053a951f6256011915727bd2032528bc55d7599bfb21469838875ca2`
+- Admin Telegram labels are unified in Russian; immutable English states/events are rendered separately as bounded `code` values.
+- Contextual Back/Home navigation and operator-safe diagnostic copy are standardized.
+- No standalone admin web UI exists in the canonical repo; web scope is limited to health/operator diagnostics metadata.
+- Callback IDs, admin mutations, auth, payments, rewards, AI/news, and LinkedIn publishing are unchanged.
+- No migration or new ENV.
+- Source QA: 111/120 PASS versus baseline 101/119; baseline PASS regressions 0; nine inherited NON_PASS remain.
+- Production deployment: not verified.
+
+---
+
 # Current canonical step — STEP064B2
 
 - Package: `0.64.2`
