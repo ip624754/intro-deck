@@ -1,8 +1,15 @@
 import { Composer } from 'grammy';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
+import { createLanguageComposer } from './languageComposer.js';
 
-export function createHomeComposer({ buildHomeSurface, buildHelpSurface, clearAllPendingInputs }) {
+export function createHomeComposer({
+  buildHomeSurface,
+  buildHelpSurface,
+  buildLanguageSettingsSurface,
+  clearAllPendingInputs
+}) {
   const composer = new Composer();
+  composer.use(createLanguageComposer({ clearAllPendingInputs, buildLanguageSettingsSurface }));
 
   const renderHome = async (ctx, method = 'edit') => {
     await clearAllPendingInputs(ctx.from.id);

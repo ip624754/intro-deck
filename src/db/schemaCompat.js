@@ -147,7 +147,36 @@ export async function getSchemaCompat(client) {
           and pg_get_constraintdef(c.oid) ilike '%groq%'
           and pg_get_constraintdef(c.oid) ilike '%template%'
       ) as ai_news_telemetry_has_generator_providers,
-      exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='linkedin_share_intents' and column_name='source_kind') as linkedin_share_has_source_kind
+      exists (select 1 from information_schema.columns where table_schema=current_schema() and table_name='linkedin_share_intents' and column_name='source_kind') as linkedin_share_has_source_kind,
+      (
+        select count(*) = 2
+        from information_schema.columns
+        where table_schema = current_schema()
+          and table_name = 'users'
+          and column_name in ('interface_language', 'default_post_language')
+      ) as users_has_language_columns,
+      exists (
+        select 1
+        from pg_constraint c
+        join pg_class t on t.oid = c.conrelid
+        join pg_namespace n on n.oid = t.relnamespace
+        where n.nspname = current_schema()
+          and t.relname = 'users'
+          and c.conname = 'users_interface_language_check'
+          and pg_get_constraintdef(c.oid) ilike '%en%'
+          and pg_get_constraintdef(c.oid) ilike '%ru%'
+      ) as users_has_interface_language_constraint,
+      exists (
+        select 1
+        from pg_constraint c
+        join pg_class t on t.oid = c.conrelid
+        join pg_namespace n on n.oid = t.relnamespace
+        where n.nspname = current_schema()
+          and t.relname = 'users'
+          and c.conname = 'users_default_post_language_check'
+          and pg_get_constraintdef(c.oid) ilike '%en%'
+          and pg_get_constraintdef(c.oid) ilike '%ru%'
+      ) as users_has_default_post_language_constraint
   `);
 
   const compat = {
@@ -185,7 +214,15 @@ export async function getSchemaCompat(client) {
     ),
     aiNewsDraftsHasGeneratorProviders: Boolean(result.rows[0]?.ai_news_drafts_has_generator_providers),
     aiNewsTelemetryHasGeneratorProviders: Boolean(result.rows[0]?.ai_news_telemetry_has_generator_providers),
-    linkedInShareHasSourceKind: Boolean(result.rows[0]?.linkedin_share_has_source_kind)
+    linkedInShareHasSourceKind: Boolean(result.rows[0]?.linkedin_share_has_source_kind),
+    usersHasLanguageColumns: Boolean(result.rows[0]?.users_has_language_columns),
+    usersHasInterfaceLanguageConstraint: Boolean(result.rows[0]?.users_has_interface_language_constraint),
+    usersHasDefaultPostLanguageConstraint: Boolean(result.rows[0]?.users_has_default_post_language_constraint),
+    userLanguageContractReady: Boolean(
+      result.rows[0]?.users_has_language_columns
+      && result.rows[0]?.users_has_interface_language_constraint
+      && result.rows[0]?.users_has_default_post_language_constraint
+    )
   };
 
   schemaCompatCache.set(client, compat);
@@ -198,4 +235,21 @@ export function selectHiddenTelegramUsername(alias, compat) {
   }
 
   return `null::text`;
+}
+
+
+export function selectUserLanguageColumns(alias, compat) {
+  if (compat?.userLanguageContractReady) {
+    return {
+      interfaceLanguage: `${alias}.interface_language`,
+      defaultPostLanguage: `${alias}.default_post_language`,
+      schemaReady: 'true'
+    };
+  }
+
+  return {
+    interfaceLanguage: `'en'::text`,
+    defaultPostLanguage: `'en'::text`,
+    schemaReady: 'false'
+  };
 }

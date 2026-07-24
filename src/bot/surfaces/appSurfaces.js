@@ -13,6 +13,8 @@ import { loadProfileEditorState } from '../../lib/storage/profileEditStore.js';
 import { getAiNewsDraftConfig, getLinkedInConfig, getLinkedInShareConfig, getLinkedInVerificationConfig, getPricingConfig, isOperatorTelegramUser } from '../../config/env.js';
 import { loadActiveAdminNotice } from '../../lib/storage/adminStore.js';
 import { buildSignedLinkedInLaunchTicket } from '../../lib/linkedin/oidc.js';
+import { loadUserLanguagePreferences } from '../../lib/storage/languagePreferenceStore.js';
+import { resolveLanguagePreferences } from '../../lib/i18n/language.js';
 
 
 function fallbackRenderHelpText({ aiNewsVisible = false } = {}) {
@@ -42,6 +44,8 @@ function fallbackRenderHelpKeyboard({ aiNewsVisible = false } = {}) {
 
 const renderHelpText = typeof render.renderHelpText === 'function' ? render.renderHelpText : fallbackRenderHelpText;
 const renderHelpKeyboard = typeof render.renderHelpKeyboard === 'function' ? render.renderHelpKeyboard : fallbackRenderHelpKeyboard;
+const renderLanguageSettingsText = render.renderLanguageSettingsText;
+const renderLanguageSettingsKeyboard = render.renderLanguageSettingsKeyboard;
 const renderDirectoryCardKeyboard = render.renderDirectoryCardKeyboard;
 const renderDirectoryCardText = render.renderDirectoryCardText;
 const renderContactRequestText = render.renderContactRequestText;
@@ -156,12 +160,15 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
   async function buildHomeSurface(ctx, homeExtraNotice = null) {
     const storeResult = await touchTelegramUserAndLoadProfile({
       telegramUserId: ctx.from.id,
-      telegramUsername: ctx.from.username || null
+      telegramUsername: ctx.from.username || null,
+      telegramLanguageCode: ctx.from.language_code || null
     }).catch((error) => {
       console.warn('[home surface] profile load skipped', error?.message || error);
       return {
         persistenceEnabled: false,
+        user: null,
         profile: null,
+        languagePreferences: resolveLanguagePreferences(null),
         reason: 'profile_load_failed'
       };
     });
@@ -193,6 +200,7 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
       : { persistenceEnabled: false, notice: null };
     const activeNotice = noticeMatchesProfile(adminNoticeResult.notice, storeResult.profile);
     const combinedNotice = [activeNotice, homeExtraNotice].filter(Boolean).join('\n\n') || null;
+    const languagePreferences = storeResult.languagePreferences || resolveLanguagePreferences(storeResult.user || storeResult.profile);
 
     return {
       text: renderHomeText({
@@ -201,7 +209,8 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         directoryStats: directoryResult ? { totalCount: directoryResult.totalCount || 0 } : null,
         introInboxStats: introInboxResult?.inbox?.counts || null,
         isOperator: isOperatorTelegramUser(ctx.from.id),
-        notice: combinedNotice
+        notice: combinedNotice,
+        interfaceLanguage: languagePreferences.interfaceLanguage
       }),
       reply_markup: renderHomeKeyboard({
         appBaseUrl,
@@ -209,6 +218,7 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         profileSnapshot: storeResult.profile,
         persistenceEnabled: storeResult.persistenceEnabled,
         isOperator: isOperatorTelegramUser(ctx.from.id),
+        interfaceLanguage: languagePreferences.interfaceLanguage,
         aiNewsVisible: (() => {
           const config = getAiNewsDraftConfig();
           return config.enabled && (config.mode === 'pro' || isOperatorTelegramUser(ctx.from.id));
@@ -220,9 +230,48 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
   async function buildHelpSurface(ctx) {
     const config = getAiNewsDraftConfig();
     const aiNewsVisible = config.enabled && (config.mode === 'pro' || isOperatorTelegramUser(ctx?.from?.id));
+    const languageState = await loadUserLanguagePreferences({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      telegramLanguageCode: ctx.from.language_code || null,
+      touch: true
+    }).catch(() => ({
+      persistenceEnabled: false,
+      schemaReady: false,
+      interfaceLanguage: 'en',
+      defaultPostLanguage: 'en'
+    }));
     return {
-      text: renderHelpText({ aiNewsVisible }),
-      reply_markup: renderHelpKeyboard({ aiNewsVisible })
+      text: renderHelpText({ aiNewsVisible, interfaceLanguage: languageState.interfaceLanguage }),
+      reply_markup: renderHelpKeyboard({ aiNewsVisible, interfaceLanguage: languageState.interfaceLanguage })
+    };
+  }
+
+  async function buildLanguageSettingsSurface(ctx, notice = null) {
+    const languageState = await loadUserLanguagePreferences({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      telegramLanguageCode: ctx.from.language_code || null,
+      touch: true
+    }).catch(() => ({
+      persistenceEnabled: false,
+      schemaReady: false,
+      interfaceLanguage: 'en',
+      defaultPostLanguage: 'en',
+      reason: 'language_preferences_load_failed'
+    }));
+    return {
+      text: renderLanguageSettingsText({
+        preferences: languageState,
+        persistenceEnabled: languageState.persistenceEnabled,
+        schemaReady: languageState.schemaReady,
+        notice
+      }),
+      reply_markup: renderLanguageSettingsKeyboard({
+        preferences: languageState,
+        persistenceEnabled: languageState.persistenceEnabled,
+        schemaReady: languageState.schemaReady
+      })
     };
   }
 
@@ -248,12 +297,15 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
 
   async function buildProfileMenuSurface(ctx, notice = null) {
     const state = await loadProfileEditorState({
-      telegramUserId: ctx.from.id
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      telegramLanguageCode: ctx.from.language_code || null
     }).catch((error) => {
       console.warn('[profile menu] load failed', error?.message || error);
       return {
         persistenceEnabled: false,
         profile: null,
+        languagePreferences: resolveLanguagePreferences(null),
         reason: 'profile_menu_load_failed'
       };
     });
@@ -277,7 +329,8 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         profileSnapshot: state.profile,
         persistenceEnabled: state.persistenceEnabled,
         linkedinVerificationAccess,
-        notice: combinedNotice
+        notice: combinedNotice,
+        interfaceLanguage: state.languagePreferences?.interfaceLanguage || 'en'
       }),
       reply_markup: renderProfileMenuKeyboard({
         appBaseUrl,
@@ -285,19 +338,23 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         profileSnapshot: state.profile,
         persistenceEnabled: state.persistenceEnabled,
         linkedinVerificationAccess,
-        linkedinVerificationLaunchTicket
+        linkedinVerificationLaunchTicket,
+        interfaceLanguage: state.languagePreferences?.interfaceLanguage || 'en'
       })
     };
   }
 
   async function buildProfilePreviewSurface(ctx, notice = null) {
     const state = await loadProfileEditorState({
-      telegramUserId: ctx.from.id
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      telegramLanguageCode: ctx.from.language_code || null
     }).catch((error) => {
       console.warn('[profile preview] load failed', error?.message || error);
       return {
         persistenceEnabled: false,
         profile: null,
+        languagePreferences: resolveLanguagePreferences(null),
         reason: 'profile_preview_load_failed'
       };
     });
@@ -308,24 +365,29 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         profileSnapshot: state.profile,
         persistenceEnabled: state.persistenceEnabled,
         linkedinVerificationConfig: linkedinVerificationAccess,
-        notice
+        notice,
+        interfaceLanguage: state.languagePreferences?.interfaceLanguage || 'en'
       }),
       reply_markup: renderProfilePreviewKeyboard({
         profileSnapshot: state.profile,
         persistenceEnabled: state.persistenceEnabled,
-        linkedinShareConfig: getLinkedInShareConfig()
+        linkedinShareConfig: getLinkedInShareConfig(),
+        interfaceLanguage: state.languagePreferences?.interfaceLanguage || 'en'
       })
     };
   }
 
   async function buildProfileSkillsSurface(ctx, notice = null) {
     const state = await loadProfileEditorState({
-      telegramUserId: ctx.from.id
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      telegramLanguageCode: ctx.from.language_code || null
     }).catch((error) => {
       console.warn('[profile skills] load failed', error?.message || error);
       return {
         persistenceEnabled: false,
         profile: null,
+        languagePreferences: resolveLanguagePreferences(null),
         reason: 'profile_skills_load_failed'
       };
     });
@@ -345,12 +407,15 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
 
   async function buildProfileOptionalSurface(ctx, notice = null) {
     const state = await loadProfileEditorState({
-      telegramUserId: ctx.from.id
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      telegramLanguageCode: ctx.from.language_code || null
     }).catch((error) => {
       console.warn('[profile optional] load failed', error?.message || error);
       return {
         persistenceEnabled: false,
         profile: null,
+        languagePreferences: resolveLanguagePreferences(null),
         reason: 'profile_optional_load_failed'
       };
     });
@@ -895,6 +960,7 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
   return {
     buildHomeSurface,
     buildHelpSurface,
+    buildLanguageSettingsSurface,
     buildInviteSurface,
     buildInviteLinkSurface,
     buildInvitePerformanceSurface,

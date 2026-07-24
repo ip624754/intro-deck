@@ -95,6 +95,27 @@ export default async function handler(req, res) {
       callbackIdsChanged: false,
       businessLogicChanged: false
     },
+    interfaceLanguagePolicy: {
+      supportedLanguages: ['en', 'ru'],
+      defaultLanguage: 'en',
+      persistenceColumn: 'users.interface_language',
+      schemaRequirement: 'migration_037',
+      telegramLocaleInference: 'first_seen_only',
+      fallbackWhenUnavailable: 'en',
+      explicitMemberOverride: true,
+      initialLocalizedSurfaces: ['home', 'profile_root', 'profile_preview', 'help', 'language_settings'],
+      existingCallbackIdsChanged: false,
+      businessLogicChanged: false
+    },
+    postLanguagePolicy: {
+      supportedLanguages: ['en', 'ru'],
+      defaultLanguage: 'en',
+      persistenceColumn: 'users.default_post_language',
+      independentFromInterfaceLanguage: true,
+      aiNewsPresetOverridePreserved: true,
+      existingAiNewsLanguageContractChanged: false,
+      ordinaryProfileShareIntegration: 'deferred_to_step064b4c'
+    },
     transactionCopyPolicy: {
       consentButtons: 'verb_plus_object_plus_consequence',
       paymentCopy: 'request_delivery_fee_no_approval_guarantee_no_auto_refund',

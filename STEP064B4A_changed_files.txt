@@ -1,0 +1,62 @@
+STEP064B4A changed files
+Added: 16
+Modified: 35
+Deleted: 0
+Total changed: 51
+
+ADDED
++ STEP064B4A_HANDOFF.md
++ STEP064B4A_PATCH_README.md
++ STEP064B4A_QA_REPORT.md
++ STEP064B4A_QA_checklist.md
++ STEP064B4A_changed_files.txt
++ doc/101_STEP064B4A_OPERATOR_ROLLOUT.md
++ doc/qa/STEP064B4A_QA_REPORT.md
++ doc/qa/evidence/STEP064B4A_BASELINE_SMOKE_INVENTORY.json
++ doc/qa/evidence/STEP064B4A_CANDIDATE_SMOKE_INVENTORY.json
++ doc/qa/evidence/STEP064B4A_QA_EVIDENCE_SUMMARY.json
++ doc/spec/STEP064B4A_LANGUAGE_PREFERENCE_FOUNDATION.md
++ migrations/037_interface_language_boundary.sql
++ scripts/smoke_interface_language_boundary_foundation.js
++ src/bot/composers/languageComposer.js
++ src/lib/i18n/language.js
++ src/lib/storage/languagePreferenceStore.js
+
+MODIFIED
+~ 00_CURRENT_STATE.md
+~ README.md
+~ api/health.js
+~ doc/00_CURRENT_STATE.md
+~ doc/02_HANDOFF_STANDARD.md
+~ doc/15_NEW_CHAT_HANDOFF.md
+~ doc/36_NEXT_STEPS_ROADMAP.md
+~ package-lock.json
+~ package.json
+~ scripts/smoke_ai_news_audience_discovery_presets.js
+~ scripts/smoke_ai_news_migration_claim_recovery.js
+~ scripts/smoke_ai_news_personalized_query_final_fit.js
+~ scripts/smoke_ai_news_presets_subscription.js
+~ scripts/smoke_ai_news_search_progress_recovery.js
+~ scripts/smoke_critical_transaction_copy_semantics.js
+~ scripts/smoke_linkedin_verification_compat_fail_safe.js
+~ scripts/smoke_linkedin_verified_badges_trust_surfaces.js
+~ scripts/smoke_linkedin_verified_development_integration.js
+~ scripts/smoke_member_copy_navigation_consistency.js
+~ scripts/smoke_positioning_discovery_truth_contract.js
+~ scripts/smoke_router_contract.js
+~ scripts/smoke_step057_production_readiness.js
+~ src/bot/composers/homeComposer.js
+~ src/bot/composers/inviteComposer.js
+~ src/bot/createBot.js
+~ src/bot/surfaces/appSurfaces.js
+~ src/config/release.js
+~ src/db/profileRepo.js
+~ src/db/schemaCompat.js
+~ src/db/usersRepo.js
+~ src/lib/storage/inviteStore.js
+~ src/lib/storage/profileEditStore.js
+~ src/lib/storage/profileStore.js
+~ src/lib/telegram/memberCopy.js
+~ src/lib/telegram/render.js
+
+DELETED

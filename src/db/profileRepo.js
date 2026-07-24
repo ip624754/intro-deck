@@ -5,7 +5,7 @@ import {
   normalizeSkills,
   REQUIRED_PROFILE_FIELD_KEYS
 } from '../lib/profile/contract.js';
-import { getSchemaCompat, selectHiddenTelegramUsername } from './schemaCompat.js';
+import { getSchemaCompat, selectHiddenTelegramUsername, selectUserLanguageColumns } from './schemaCompat.js';
 import { buildLinkedInVerificationSnapshotSql } from './linkedinVerificationRepo.js';
 
 function firstNonEmpty(...values) {
@@ -69,6 +69,7 @@ function buildProfileSnapshotSelect(hiddenTelegramSelect, compat) {
     accountAlias: 'la',
     snapshotAlias: 'liv'
   });
+  const userLanguage = selectUserLanguageColumns('u', compat);
 
   return `
       select
@@ -77,6 +78,9 @@ function buildProfileSnapshotSelect(hiddenTelegramSelect, compat) {
         u.telegram_username,
         u.first_seen_at,
         u.last_seen_at,
+        ${userLanguage.interfaceLanguage} as interface_language,
+        ${userLanguage.defaultPostLanguage} as default_post_language,
+        ${userLanguage.schemaReady} as language_schema_ready,
         la.linkedin_sub,
         la.full_name as linkedin_name,
         la.given_name as linkedin_given_name,

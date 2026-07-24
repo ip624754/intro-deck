@@ -52,7 +52,7 @@ export async function createBot() {
   bot.use(createHomeComposer({
     clearAllPendingInputs,
     buildHomeSurface: surfaces.buildHomeSurface,
-    buildHelpSurface: surfaces.buildHelpSurface
+    buildHelpSurface: surfaces.buildHelpSurface, buildLanguageSettingsSurface: surfaces.buildLanguageSettingsSurface
   }));
 
   bot.use(createMonetizationComposer({

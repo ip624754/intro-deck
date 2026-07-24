@@ -1,3 +1,13 @@
+# Current roadmap position — STEP064B4A
+
+1. Apply migration 037 and production-accept STEP064B4A.
+2. STEP064B4B: localize the remaining member surfaces while preserving callback and business contracts.
+3. STEP064B4C: localize transaction/notification/OAuth rendering and bind ordinary profile-share text to the independent default post language.
+
+Do not combine B4B and B4C into one broad rewrite. Do not change AI/news preset `post_language`, publisher authority, payment logic, or OAuth state machines.
+
+---
+
 # Current roadmap position — after STEP064B2
 
 1. Deploy STEP064B2 and complete critical consent/payment/publication copy acceptance.

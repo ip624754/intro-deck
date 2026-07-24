@@ -1,5 +1,6 @@
 import { Composer } from 'grammy';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
+import { loadUserLanguagePreferences } from '../../lib/storage/languagePreferenceStore.js';
 import {
   attemptInviteAttributionForTelegramUser,
   beginInviteRewardRedemptionForTelegramUser,
@@ -21,27 +22,37 @@ function parseStartParam(ctx) {
   return parts.length > 1 ? parts[1].trim() : null;
 }
 
-function formatInviteStartNotice(result) {
+function formatInviteStartNotice(result, interfaceLanguage = 'en') {
   if (!result || !result.persistenceEnabled) {
     return null;
   }
 
+  const russian = interfaceLanguage === 'ru';
   if (result.created) {
-    const inviter = result.invitedBy?.displayName || 'your contact';
-    return `✅ Invite linked: you joined from ${inviter}.`;
+    const inviter = result.invitedBy?.displayName || (russian ? 'вашего контакта' : 'your contact');
+    return russian
+      ? `✅ Приглашение учтено: вы присоединились от ${inviter}.`
+      : `✅ Invite linked: you joined from ${inviter}.`;
   }
 
   if (result.alreadyLinked) {
-    return 'ℹ️ Invite already linked earlier.';
+    return russian ? 'ℹ️ Приглашение уже было учтено ранее.' : 'ℹ️ Invite already linked earlier.';
   }
 
   if (result.existingUser) {
-    return 'ℹ️ Invite link ignored: referral credit only applies on the first start.';
+    return russian
+      ? 'ℹ️ Ссылка приглашения не учтена: бонус действует только при первом запуске.'
+      : 'ℹ️ Invite link ignored: referral credit only applies on the first start.';
   }
 
   if (result.invalid) {
-    return result.reason === 'self_referral'
-      ? '⚠️ Invite link ignored: you cannot use your own invite link.'
+    if (result.reason === 'self_referral') {
+      return russian
+        ? '⚠️ Нельзя использовать собственную ссылку приглашения.'
+        : '⚠️ Invite link ignored: you cannot use your own invite link.';
+    }
+    return russian
+      ? '⚠️ Эта ссылка не подходит для начисления бонуса.'
       : '⚠️ Invite link ignored: this link is not valid for invite credit.';
   }
 
@@ -174,6 +185,7 @@ export function createInviteComposer({
     const attribution = await attemptInviteAttributionForTelegramUser({
       telegramUserId: ctx.from.id,
       telegramUsername: ctx.from.username || null,
+      telegramLanguageCode: ctx.from.language_code || null,
       startParam
     }).catch((error) => ({
       persistenceEnabled: true,
@@ -181,7 +193,13 @@ export function createInviteComposer({
       reason: String(error?.message || error)
     }));
 
-    const notice = formatInviteStartNotice(attribution);
+    const languageState = await loadUserLanguagePreferences({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      telegramLanguageCode: ctx.from.language_code || null,
+      touch: true
+    }).catch(() => ({ interfaceLanguage: 'en' }));
+    const notice = formatInviteStartNotice(attribution, languageState.interfaceLanguage);
     await renderHome(ctx, 'reply', notice);
     if (typeof next === 'function') {
       return next();

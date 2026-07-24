@@ -1,0 +1,26 @@
+{
+  "step": "STEP064B4A",
+  "package": "0.64.4",
+  "baselineSha256": "92ab03586a7f216a79c7ae2bb80abd0cf194bdbb1b60ad520c9bee1cc28a1b60",
+  "localRuntime": "node 22.16.0",
+  "canonicalNode20Verified": false,
+  "check": "PASS",
+  "focusedSmoke": "PASS",
+  "baselineInventory": {
+    "pass": 99,
+    "nonPass": 5,
+    "total": 104
+  },
+  "candidateInventory": {
+    "pass": 100,
+    "nonPass": 5,
+    "total": 105
+  },
+  "baselinePassRegressions": 0,
+  "migrationApplied": false,
+  "productionDeployed": false,
+  "npmCi": {
+    "status": "BLOCKED",
+    "reason": "did_not_complete_within_120_seconds; local Node 22 engine mismatch warning"
+  }
+}

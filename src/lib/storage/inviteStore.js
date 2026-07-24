@@ -136,7 +136,7 @@ export async function loadInviteSurfaceState({ telegramUserId, telegramUsername 
   });
 }
 
-export async function attemptInviteAttributionForTelegramUser({ telegramUserId, telegramUsername = null, startParam = null }) {
+export async function attemptInviteAttributionForTelegramUser({ telegramUserId, telegramUsername = null, telegramLanguageCode = null, startParam = null }) {
   if (!isDatabaseConfigured()) {
     return {
       persistenceEnabled: false,
@@ -158,7 +158,8 @@ export async function attemptInviteAttributionForTelegramUser({ telegramUserId, 
 
     const invitedUser = await upsertTelegramUser(client, {
       telegramUserId,
-      telegramUsername
+      telegramUsername,
+      telegramLanguageCode
     });
 
     if (String(invitedUser.telegram_user_id) === String(parsed.referrerTelegramUserId)) {

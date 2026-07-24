@@ -1,3 +1,16 @@
+# STEP064B4A current handoff
+
+- Source step: `STEP064B4A`; package `0.64.4`.
+- Exact baseline: STEP064B3 FULL SHA-256 `92ab03586a7f216a79c7ae2bb80abd0cf194bdbb1b60ad520c9bee1cc28a1b60`.
+- Migration 037 adds independent persistent `interface_language` and `default_post_language` to `users`; no new ENV.
+- Existing users default to English; new users seed once from Telegram locale.
+- `/language` plus Home/Profile/Help provide the initial EN/RU vertical slice.
+- Existing AI/news `post_language`, callback IDs, payment/reward logic, OAuth state machines, admin mutations, and LinkedIn publisher are unchanged.
+- QA: 100/105 candidate PASS vs 99/104 baseline PASS; zero baseline PASS regressions; five inherited NON_PASS.
+- Production migration/deployment acceptance is pending.
+
+---
+
 # 02_HANDOFF_STANDARD
 
 Use this whenever work moves to a new chat or new execution context.

@@ -84,6 +84,9 @@ if (!serialized.includes('plans:root')) {
 if (!serialized.includes('help:root')) {
   throw new Error('home keyboard missing help callback');
 }
+if (!serialized.includes('lang:root')) {
+  throw new Error('home keyboard missing language settings callback');
+}
 if (serialized.includes('home:root')) {
   throw new Error('home keyboard must not include a home callback on the home surface');
 }
@@ -93,7 +96,7 @@ const expectedHomeRows = [
   'p:menu + dir:list:0',
   'contact:inbox + plans:root',
   'invite:root',
-  'help:root'
+  'help:root + lang:root'
 ];
 if (JSON.stringify(homeRows.slice(0, expectedHomeRows.length)) !== JSON.stringify(expectedHomeRows)) {
   throw new Error(`home keyboard order mismatch: ${homeRows.join(' | ')}`);
@@ -122,7 +125,7 @@ const disconnectedRows = disconnectedKeyboard.map((row) => row.map((button) => b
 if (!disconnectedRows[0].includes('/api/oauth/start/linkedin')) {
   throw new Error('disconnected home keyboard must keep Connect LinkedIn first');
 }
-const expectedDisconnectedTail = ['dir:list:0 + plans:root', 'help:root'];
+const expectedDisconnectedTail = ['dir:list:0 + plans:root', 'help:root + lang:root'];
 if (JSON.stringify(disconnectedRows.slice(1)) !== JSON.stringify(expectedDisconnectedTail)) {
   throw new Error(`disconnected home keyboard order mismatch: ${disconnectedRows.join(' | ')}`);
 }
@@ -219,6 +222,7 @@ const expectedHelpRows = [
   'contact:inbox',
   'news:home',
   'plans:root + invite:root',
+  'lang:root',
   'home:root'
 ];
 const helpRows = helpKeyboardInline.map((row) => row.map((button) => button.callback_data || '').join(' + '));

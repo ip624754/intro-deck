@@ -1,4 +1,6 @@
 import { isDatabaseConfigured, withDbTransaction } from '../../db/pool.js';
+import { upsertTelegramUser } from '../../db/usersRepo.js';
+import { resolveLanguagePreferences } from '../i18n/language.js';
 import { clearProfileEditSessionByUserId, getActiveProfileEditSessionByTelegramUserId, startProfileEditSession } from '../../db/editSessionRepo.js';
 import {
   clearProfileSkills,
@@ -14,24 +16,37 @@ import { maybeCreatePendingInviteRewardForActivationWithClient } from './inviteS
 
 const EDIT_SESSION_TTL_MINUTES = 20;
 
-export async function loadProfileEditorState({ telegramUserId }) {
+export async function loadProfileEditorState({
+  telegramUserId,
+  telegramUsername = null,
+  telegramLanguageCode = null
+}) {
   if (!isDatabaseConfigured()) {
     return {
       persistenceEnabled: false,
+      user: null,
       profile: null,
       pendingSession: null,
+      languagePreferences: resolveLanguagePreferences(null),
       reason: 'DATABASE_URL is not configured'
     };
   }
 
   return withDbTransaction(async (client) => {
+    const user = await upsertTelegramUser(client, {
+      telegramUserId,
+      telegramUsername,
+      telegramLanguageCode
+    });
     const profile = await getProfileSnapshotByTelegramUserId(client, telegramUserId);
     const pendingSession = await getActiveProfileEditSessionByTelegramUserId(client, telegramUserId);
 
     return {
       persistenceEnabled: true,
+      user,
       profile,
       pendingSession,
+      languagePreferences: resolveLanguagePreferences(user),
       reason: profile ? 'profile_loaded' : 'profile_missing'
     };
   });

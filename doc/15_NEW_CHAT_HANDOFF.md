@@ -1,3 +1,15 @@
+# Latest handoff — STEP064B4A
+
+Canonical candidate: STEP064B4A over exact STEP064B3 FULL SHA-256 `92ab03586a7f216a79c7ae2bb80abd0cf194bdbb1b60ad520c9bee1cc28a1b60`.
+
+Implemented: additive migration 037; persistent independent interface/default-post language preferences; first-seen-only Telegram locale seed; fail-closed schema compatibility; `/language`; initial EN/RU Home/Profile/Help slice; health policy markers. Existing AI/news `post_language`, callback IDs, publisher, OAuth state machines, payments, rewards, and admin mutations are unchanged. No new ENV.
+
+QA: `npm run check` PASS; focused B4A smoke PASS; full candidate 100/105 PASS versus baseline 99/104; baseline PASS regressions 0; five inherited NON_PASS remain.
+
+Next action: apply migration 037, deploy, and execute `doc/101_STEP064B4A_OPERATOR_ROLLOUT.md`. B4B/B4C remain deferred until production acceptance.
+
+---
+
 # Latest handoff — STEP064B3
 
 Canonical candidate: STEP064B3 over exact STEP064B2 baseline SHA-256 `2f76c704053a951f6256011915727bd2032528bc55d7599bfb21469838875ca2`.

@@ -1,3 +1,9 @@
+# Current release: STEP064B4A / 0.64.4
+
+The current source candidate adds persistent and independent member interface/default-post language preferences, first-seen-only Telegram locale seeding, fail-closed migration compatibility, a `/language` surface, and an initial EN/RU Home/Profile/Help slice. Migration 037 is required; no new ENV. Existing AI/news preset language, callback IDs, payments, OAuth state machines, rewards, admin mutations, and LinkedIn publishing remain unchanged. See `doc/spec/STEP064B4A_LANGUAGE_PREFERENCE_FOUNDATION.md` and `doc/101_STEP064B4A_OPERATOR_ROLLOUT.md`.
+
+---
+
 # Current release: STEP064B3 / 0.64.3
 
 The current candidate unifies operator/admin Telegram copy in Russian, renders immutable English states separately as bounded code values, and standardizes diagnostic/navigation labels without changing callbacks or mutations. See `doc/spec/STEP064B3_ADMIN_LANGUAGE_AND_DIAGNOSTIC_CONSISTENCY.md` and `doc/100_STEP064B3_OPERATOR_ROLLOUT.md`.
@@ -6,7 +12,7 @@ The current candidate unifies operator/admin Telegram copy in Russian, renders i
 
 # LinkedIn Telegram Directory Bot
 
-STEP064A source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP064B4A source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 
@@ -125,6 +131,10 @@ A Telegram-first professional directory:
 - STEP063B-H1R1 — migration 035 ordering repair, strict schema readiness, and exact post-claim recovery
 - STEP063B-H2 — personalized phrase queries and final-fit rejection gate
 - STEP064A — invite card conversion and share menu simplification
+- STEP064B1 — member copy and primary navigation consistency
+- STEP064B2 — critical transaction copy semantics
+- STEP064B3 — admin language and diagnostic consistency
+- STEP064B4A — persistent interface/default-post language foundation
 
 ## Core docs
 

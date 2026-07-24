@@ -18,7 +18,7 @@ import { releaseAiNewsSourceSearchClaim } from '../src/db/aiNewsRepo.js';
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A'].includes(CURRENT_SOURCE_STEP), true);
 
 const state = {
   preferences: {

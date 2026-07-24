@@ -23,11 +23,18 @@ import {
 import {
   MEMBER_BUTTONS,
   MEMBER_SURFACES,
+  getMemberButtons,
+  getMemberSurfaces,
   memberUnavailable,
   profileStateLabel,
   profileVisibilityLabel,
   sanitizeMemberNotice
 } from './memberCopy.js';
+import {
+  languageDisplayName,
+  normalizeInterfaceLanguage,
+  resolveLanguagePreferences
+} from '../i18n/language.js';
 import {
   TRANSACTION_BUTTONS,
   TRANSACTION_DISCLOSURES,
@@ -181,8 +188,36 @@ function activationNextStepLine(profileSnapshot) {
   return `Next required step: ${action.label}`;
 }
 
-function buildActivationStepLines(profileSnapshot) {
-  return getProfileActivationState(profileSnapshot || {}).steps.map((step) => `${step.complete ? '✅' : '▫️'} ${step.label}`);
+const PROFILE_FIELD_LABELS_RU = Object.freeze({
+  dn: 'Имя в каталоге',
+  hl: 'Заголовок',
+  in: 'Индустрия',
+  ab: 'О себе',
+  co: 'Компания',
+  ci: 'Город',
+  li: 'Публичная ссылка LinkedIn',
+  tg: 'Скрытый username Telegram'
+});
+
+function activationStepLabel(step, interfaceLanguage = 'en') {
+  if (normalizeInterfaceLanguage(interfaceLanguage) !== 'ru') return step.label;
+  if (step.kind === 'linkedin') return 'Аккаунт LinkedIn';
+  if (step.kind === 'skills') return 'Навыки';
+  if (step.kind === 'field') return PROFILE_FIELD_LABELS_RU[step.fieldKey] || step.label;
+  return step.label;
+}
+
+function activationNextLabel(profileSnapshot, interfaceLanguage = 'en') {
+  const action = getProfileActivationNextAction(profileSnapshot || {});
+  if (normalizeInterfaceLanguage(interfaceLanguage) !== 'ru') return action.label;
+  if (action.kind === 'linkedin') return 'Подключить LinkedIn';
+  if (action.kind === 'skills') return 'Выбрать минимум один навык';
+  if (action.kind === 'field') return `Добавить: ${PROFILE_FIELD_LABELS_RU[action.fieldKey] || 'поле профиля'}`;
+  return action.kind === 'listed_preview' ? 'Проверить опубликованный профиль' : 'Проверить и опубликовать профиль';
+}
+
+function buildActivationStepLines(profileSnapshot, interfaceLanguage = 'en') {
+  return getProfileActivationState(profileSnapshot || {}).steps.map((step) => `${step.complete ? '✅' : '▫️'} ${activationStepLabel(step, interfaceLanguage)}`);
 }
 
 function buildOptionalFieldStatusLines(profileSnapshot) {
@@ -606,21 +641,38 @@ function formatVerificationSyncedAt(value) {
   return date.toISOString().slice(0, 10);
 }
 
-function buildLinkedInVerificationPrivateLines(profileSnapshot, access) {
+function buildLinkedInVerificationPrivateLines(profileSnapshot, access, interfaceLanguage = 'en') {
   if (!access?.enabled) return [];
 
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const russian = language === 'ru';
   const trust = resolveLinkedInTrustState({
     profileSnapshot,
     verificationConfig: access
   });
-  const tierLabel = access.mode === 'development' ? 'Development testing' : 'Lite';
+  const tierLabel = access.mode === 'development'
+    ? (russian ? 'Тестовый режим' : 'Development testing')
+    : 'Lite';
   const lines = [
     '',
-    `🛡 Verified on LinkedIn • ${tierLabel}`,
+    `🛡 ${russian ? 'Проверка LinkedIn' : 'Verified on LinkedIn'} • ${tierLabel}`,
     access.mode === 'development'
-      ? 'Private trust status. Development data is not shown as a public badge.'
-      : 'Private trust status and public badge eligibility.'
+      ? (russian ? 'Приватный статус доверия. Тестовые данные не показываются как публичный бейдж.' : 'Private trust status. Development data is not shown as a public badge.')
+      : (russian ? 'Приватный статус доверия и доступность публичного бейджа.' : 'Private trust status and public badge eligibility.')
   ];
+
+  if (russian) {
+    lines.push(`• Снимок: ${trust.hasSnapshot ? 'получен' : 'не получен'}`);
+    if (trust.syncedAt) lines.push(`• Последняя синхронизация: ${formatVerificationSyncedAt(trust.syncedAt)}`);
+    lines.push(`• Личность: ${trust.identityVerified ? 'подтверждена LinkedIn' : 'нет подтверждения'}`);
+    lines.push(`• Место работы: ${trust.workplaceVerified ? 'подтверждено LinkedIn' : 'нет подтверждения'}`);
+    if (trust.verificationUrlOffered && !trust.hasVerifiedCategory) {
+      lines.push('• LinkedIn сообщил о доступном действии проверки. Обновите статус, чтобы запросить новую ссылку.');
+    }
+    lines.push(`• Публичный бейдж: ${trust.publicBadgeEligible ? 'доступен' : 'пока недоступен'}`);
+    lines.push('• Роль, компания, навыки, описание и опыт указываются пользователем.');
+    return lines;
+  }
 
   lines.push(`• Snapshot: ${describeLinkedInTrustSnapshotStatus(trust)}`);
   if (trust.syncedAt) lines.push(`• Last synced: ${formatVerificationSyncedAt(trust.syncedAt)}`);
@@ -634,10 +686,31 @@ function buildLinkedInVerificationPrivateLines(profileSnapshot, access) {
   return lines;
 }
 
-function buildLinkedInTrustPreviewLines(profileSnapshot, verificationConfig) {
+function buildLinkedInTrustPreviewLines(profileSnapshot, verificationConfig, interfaceLanguage = 'en') {
   if (!verificationConfig?.enabled) return [];
 
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const russian = language === 'ru';
   const trust = resolveLinkedInTrustState({ profileSnapshot, verificationConfig });
+  if (russian) {
+    const lines = ['', '🛡 Доверие LinkedIn'];
+    if (trust.publicBadgeEligible) {
+      if (trust.identityVerified) lines.push('✅ Личность подтверждена LinkedIn');
+      if (trust.workplaceVerified) lines.push('✅ Место работы подтверждено LinkedIn');
+      if (trust.syncedAt) lines.push(`Синхронизация: ${formatVerificationSyncedAt(trust.syncedAt)}`);
+    } else if (trust.hasVerifiedCategory) {
+      lines.push('🧪 Приватный предпросмотр бейджа');
+      if (trust.identityVerified) lines.push('• Личность подтверждена LinkedIn');
+      if (trust.workplaceVerified) lines.push('• Место работы подтверждено LinkedIn');
+      lines.push('• Публичный бейдж пока недоступен.');
+    } else {
+      lines.push(`• Снимок проверки: ${trust.hasSnapshot ? 'получен' : 'не получен'}`);
+      lines.push('• Публичный бейдж пока недоступен.');
+    }
+    lines.push('• Данные профессиональной карточки указываются пользователем.');
+    return lines;
+  }
+
   const lines = ['', '🛡 LinkedIn trust'];
   const badges = buildLinkedInPublicBadgeLines(trust);
   if (badges.length) {
@@ -667,96 +740,137 @@ function buildLinkedInPublicTrustLines(profileSnapshot, verificationConfig) {
   ];
 }
 
-export function renderHomeText({ profileSnapshot = null, persistenceEnabled = false, directoryStats = null, introInboxStats = null, isOperator = false, notice = null } = {}) {
+export function renderHomeText({ profileSnapshot = null, persistenceEnabled = false, directoryStats = null, introInboxStats = null, isOperator = false, notice = null, interfaceLanguage = 'en' } = {}) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const russian = language === 'ru';
+  const surfaces = getMemberSurfaces(language);
   const lines = [
-    MEMBER_SURFACES.home,
+    surfaces.home,
     '',
-    'Find professionals. Connect by permission.'
+    russian ? 'Находите профессионалов. Общайтесь только по взаимному согласию.' : 'Find professionals. Connect by permission.'
   ];
 
   if (!persistenceEnabled) {
-    lines.push('', memberUnavailable('Profile and directory access'));
+    lines.push('', memberUnavailable(russian ? 'Профиль и каталог' : 'Profile and directory access', language));
   } else if (!profileSnapshot?.linkedin_sub) {
-    lines.push('', 'LinkedIn: Not connected');
-    lines.push('Next: Connect LinkedIn to create your profile.');
+    lines.push('', russian ? 'LinkedIn: не подключён' : 'LinkedIn: Not connected');
+    lines.push(russian ? 'Следующий шаг: подключите LinkedIn, чтобы создать профиль.' : 'Next: Connect LinkedIn to create your profile.');
   } else {
     const activation = getProfileActivationState(profileSnapshot || {});
-    const displayName = profileSnapshot.display_name || profileSnapshot.linkedin_name || 'LinkedIn member';
+    const displayName = profileSnapshot.display_name || profileSnapshot.linkedin_name || (russian ? 'Участник LinkedIn' : 'LinkedIn member');
     lines.push('', displayName);
-    lines.push(`Profile: ${profileVisibilityLabel(profileSnapshot.visibility_status)}`);
-    lines.push('LinkedIn: Connected');
+    lines.push(`${russian ? 'Профиль' : 'Profile'}: ${profileVisibilityLabel(profileSnapshot.visibility_status, language)}`);
+    lines.push(russian ? 'LinkedIn: подключён' : 'LinkedIn: Connected');
     if (!activation.isReady) {
-      lines.push(`Setup: ${activation.completedCount}/${activation.totalCount} complete`);
-      lines.push(`Next: ${getProfileActivationNextAction(profileSnapshot || {}).label}`);
+      lines.push(russian
+        ? `Настройка: выполнено ${activation.completedCount}/${activation.totalCount}`
+        : `Setup: ${activation.completedCount}/${activation.totalCount} complete`);
+      lines.push(`${russian ? 'Следующий шаг' : 'Next'}: ${activationNextLabel(profileSnapshot || {}, language)}`);
     } else if (!activation.isListed) {
-      lines.push('Next: Preview and publish your profile.');
+      lines.push(russian ? 'Следующий шаг: проверьте и опубликуйте профиль.' : 'Next: Preview and publish your profile.');
     }
   }
 
   if (directoryStats) {
     const total = Number(directoryStats.totalCount || 0) || 0;
-    lines.push(profileSnapshot?.visibility_status === 'listed'
-      ? `Other listed profiles: ${total}`
-      : `Listed profiles: ${total}`);
+    if (russian) {
+      lines.push(profileSnapshot?.visibility_status === 'listed'
+        ? `Другие опубликованные профили: ${total}`
+        : `Опубликованные профили: ${total}`);
+    } else {
+      lines.push(profileSnapshot?.visibility_status === 'listed'
+        ? `Other listed profiles: ${total}`
+        : `Listed profiles: ${total}`);
+    }
   }
 
   if (introInboxStats) {
     const received = Number(introInboxStats.receivedPending || 0) || 0;
     const sent = Number(introInboxStats.sentPending || 0) || 0;
-    lines.push(`Requests: ${received} received · ${sent} sent`);
+    lines.push(russian
+      ? `Запросы: ${received} входящих · ${sent} отправленных`
+      : `Requests: ${received} received · ${sent} sent`);
   }
 
   if (notice) {
-    lines.push('', sanitizeMemberNotice(notice));
+    lines.push('', sanitizeMemberNotice(
+      notice,
+      russian ? 'Не удалось выполнить действие. Попробуйте позже.' : 'This action could not be completed. Try again later.',
+      language
+    ));
   }
 
   return lines.join('\n');
 }
 
-export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot = null, persistenceEnabled = false, isOperator = false, aiNewsVisible = false }) {
+export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot = null, persistenceEnabled = false, isOperator = false, aiNewsVisible = false, interfaceLanguage = 'en' }) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const buttons = getMemberButtons(language);
+  const russian = language === 'ru';
   const rows = [];
   const isLinkedInConnected = Boolean(profileSnapshot?.linkedin_sub);
 
   if (!isLinkedInConnected) {
-    rows.push([{ text: '🔐 Connect LinkedIn', url: buildLinkedInStartUrl({ appBaseUrl, telegramUserId }) }]);
+    rows.push([{ text: russian ? '🔐 Подключить LinkedIn' : '🔐 Connect LinkedIn', url: buildLinkedInStartUrl({ appBaseUrl, telegramUserId }) }]);
   } else if (persistenceEnabled) {
     const activation = getProfileActivationState(profileSnapshot || {});
     rows.push([
-      { text: activation.isReady ? MEMBER_BUTTONS.editProfile : MEMBER_BUTTONS.continueSetup, callback_data: activation.isReady ? 'p:menu' : 'p:next' },
-      { text: MEMBER_BUTTONS.browseDirectory, callback_data: 'dir:list:0' }
+      { text: activation.isReady ? buttons.editProfile : buttons.continueSetup, callback_data: activation.isReady ? 'p:menu' : 'p:next' },
+      { text: buttons.browseDirectory, callback_data: 'dir:list:0' }
     ]);
   }
 
   if (persistenceEnabled && !isLinkedInConnected) {
     rows.push([
-      { text: MEMBER_BUTTONS.browseDirectory, callback_data: 'dir:list:0' },
-      { text: MEMBER_BUTTONS.pro, callback_data: 'plans:root' }
+      { text: buttons.browseDirectory, callback_data: 'dir:list:0' },
+      { text: buttons.pro, callback_data: 'plans:root' }
     ]);
   }
 
   if (persistenceEnabled && isLinkedInConnected) {
     rows.push([
-      { text: MEMBER_BUTTONS.requests, callback_data: 'contact:inbox' },
-      { text: MEMBER_BUTTONS.pro, callback_data: 'plans:root' }
+      { text: buttons.requests, callback_data: 'contact:inbox' },
+      { text: buttons.pro, callback_data: 'plans:root' }
     ]);
     if (aiNewsVisible) {
       rows.push([
-        { text: MEMBER_BUTTONS.storyFinder, callback_data: 'news:home' },
-        { text: MEMBER_BUTTONS.invitePeople, callback_data: 'invite:root' }
+        { text: buttons.storyFinder, callback_data: 'news:home' },
+        { text: buttons.invitePeople, callback_data: 'invite:root' }
       ]);
     } else {
-      rows.push([{ text: MEMBER_BUTTONS.invitePeople, callback_data: 'invite:root' }]);
+      rows.push([{ text: buttons.invitePeople, callback_data: 'invite:root' }]);
     }
   }
 
-  rows.push([{ text: MEMBER_BUTTONS.help, callback_data: 'help:root' }]);
+  rows.push([
+    { text: buttons.help, callback_data: 'help:root' },
+    { text: buttons.language, callback_data: 'lang:root' }
+  ]);
   if (isOperator) rows.push([{ text: '👑 Админка', callback_data: 'adm:home' }]);
   return buildInlineKeyboard(rows);
 }
 
-export function renderHelpText({ aiNewsVisible = false } = {}) {
-  const lines = [
-    MEMBER_SURFACES.help,
+export function renderHelpText({ aiNewsVisible = false, interfaceLanguage = 'en' } = {}) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const russian = language === 'ru';
+  const surfaces = getMemberSurfaces(language);
+  const lines = russian ? [
+    surfaces.help,
+    '',
+    'Intro Deck помогает находить профессионалов и связываться с ними только по взаимному согласию.',
+    '',
+    'Как начать',
+    '• Подключите LinkedIn.',
+    '• Заполните и опубликуйте профиль.',
+    '• Откройте каталог.',
+    '• Отправьте запрос. Другой человек сам решает, принять его или нет.',
+    '',
+    'Приватность',
+    '• Личные контактные данные скрыты до одобрения.',
+    '• LinkedIn подтверждает подключённый аккаунт. Роль, компанию, навыки и описание указываете вы.',
+    '• Перед публикацией в LinkedIn всегда показывается точный текст и требуется отдельное подтверждение.'
+  ] : [
+    surfaces.help,
     '',
     'Intro Deck helps you find professionals and connect by permission.',
     '',
@@ -772,27 +886,85 @@ export function renderHelpText({ aiNewsVisible = false } = {}) {
     '• LinkedIn posts always show an exact preview and need separate approval.'
   ];
   if (aiNewsVisible) {
-    lines.push('', 'Story finder', '• Find sources for your professional audience.', '• Save searches to reuse your topic, audience, angle, and tone.', '• Nothing is generated or published automatically in browse-only mode.');
+    if (russian) {
+      lines.push('', 'Поиск инфоповодов', '• Находите источники для своей профессиональной аудитории.', '• Сохраняйте тему, аудиторию, угол и тон для повторного использования.', '• В browse-only режиме ничего не генерируется и не публикуется автоматически.');
+    } else {
+      lines.push('', 'Story finder', '• Find sources for your professional audience.', '• Save searches to reuse your topic, audience, angle, and tone.', '• Nothing is generated or published automatically in browse-only mode.');
+    }
   }
   return lines.join('\n');
 }
 
-export function renderHelpKeyboard({ aiNewsVisible = false } = {}) {
+export function renderHelpKeyboard({ aiNewsVisible = false, interfaceLanguage = 'en' } = {}) {
+  const buttons = getMemberButtons(interfaceLanguage);
   const rows = [
     [
-      { text: MEMBER_BUTTONS.editProfile, callback_data: 'p:menu' },
-      { text: MEMBER_BUTTONS.browseDirectory, callback_data: 'dir:list:0' }
+      { text: buttons.editProfile, callback_data: 'p:menu' },
+      { text: buttons.browseDirectory, callback_data: 'dir:list:0' }
     ],
-    [{ text: MEMBER_BUTTONS.requests, callback_data: 'contact:inbox' }]
+    [{ text: buttons.requests, callback_data: 'contact:inbox' }]
   ];
-  if (aiNewsVisible) rows.push([{ text: MEMBER_BUTTONS.storyFinder, callback_data: 'news:home' }]);
+  if (aiNewsVisible) rows.push([{ text: buttons.storyFinder, callback_data: 'news:home' }]);
   rows.push(
     [
-      { text: MEMBER_BUTTONS.pro, callback_data: 'plans:root' },
-      { text: MEMBER_BUTTONS.invitePeople, callback_data: 'invite:root' }
+      { text: buttons.pro, callback_data: 'plans:root' },
+      { text: buttons.invitePeople, callback_data: 'invite:root' }
     ],
-    [{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]
+    [{ text: buttons.language, callback_data: 'lang:root' }],
+    [{ text: buttons.home, callback_data: 'home:root' }]
   );
+  return buildInlineKeyboard(rows);
+}
+
+export function renderLanguageSettingsText({ preferences = null, persistenceEnabled = false, schemaReady = false, notice = null } = {}) {
+  const resolved = resolveLanguagePreferences(preferences);
+  const language = resolved.interfaceLanguage;
+  const russian = language === 'ru';
+  const surfaces = getMemberSurfaces(language);
+  const lines = [
+    surfaces.language,
+    '',
+    russian
+      ? 'Язык интерфейса и язык публикаций сохраняются независимо.'
+      : 'Interface language and post language are saved independently.',
+    '',
+    `${russian ? 'Язык интерфейса' : 'Interface language'}: ${languageDisplayName(resolved.interfaceLanguage, language)}`,
+    `${russian ? 'Язык публикаций' : 'Default post language'}: ${languageDisplayName(resolved.defaultPostLanguage, language)}`,
+    '',
+    russian
+      ? 'Изменение языка интерфейса не меняет язык публикаций и сохранённых поисков.'
+      : 'Changing the interface language does not change post language or saved searches.',
+    '',
+    russian
+      ? 'Предпочтительный язык публикаций уже сохраняется. Обычная публикация профиля пока использует текущий English-шаблон; сохранённые поиски используют собственный язык.'
+      : 'The preferred post language is saved now. Ordinary profile sharing still uses the current English template; saved searches keep their own language.'
+  ];
+
+  if (!persistenceEnabled) {
+    lines.push('', russian ? '⚠️ Настройки временно недоступны.' : '⚠️ Settings are temporarily unavailable.');
+  } else if (!schemaReady) {
+    lines.push('', russian ? '⚠️ Требуется миграция 037. До неё используется English.' : '⚠️ Migration 037 is required. English remains the safe fallback until then.');
+  }
+  if (notice) lines.push('', sanitizeMemberNotice(notice, russian ? 'Не удалось сохранить настройку.' : 'Could not save the preference.', language));
+  return lines.join('\n');
+}
+
+export function renderLanguageSettingsKeyboard({ preferences = null, persistenceEnabled = false, schemaReady = false } = {}) {
+  const resolved = resolveLanguagePreferences(preferences);
+  const language = resolved.interfaceLanguage;
+  const buttons = getMemberButtons(language);
+  const rows = [];
+  if (persistenceEnabled && schemaReady) {
+    rows.push([
+      { text: `${resolved.interfaceLanguage === 'en' ? '✅' : '▫️'} UI: English`, callback_data: 'lang:interface:en' },
+      { text: `${resolved.interfaceLanguage === 'ru' ? '✅' : '▫️'} UI: Русский`, callback_data: 'lang:interface:ru' }
+    ]);
+    rows.push([
+      { text: `${resolved.defaultPostLanguage === 'en' ? '✅' : '▫️'} Post: English`, callback_data: 'lang:post:en' },
+      { text: `${resolved.defaultPostLanguage === 'ru' ? '✅' : '▫️'} Post: Русский`, callback_data: 'lang:post:ru' }
+    ]);
+  }
+  rows.push([{ text: buttons.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -858,65 +1030,88 @@ export function renderPricingKeyboard({ pricingState = null } = {}) {
   return buildInlineKeyboard(rows);
 }
 
-export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabled = false, linkedinVerificationAccess = null, notice = null } = {}) {
-  const lines = [MEMBER_SURFACES.profile];
+export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabled = false, linkedinVerificationAccess = null, notice = null, interfaceLanguage = 'en' } = {}) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const russian = language === 'ru';
+  const surfaces = getMemberSurfaces(language);
+  const lines = [surfaces.profile];
   if (!persistenceEnabled) {
-    lines.push('', memberUnavailable('Profile editing'));
+    lines.push('', memberUnavailable(russian ? 'Редактирование профиля' : 'Profile editing', language));
   } else if (!profileSnapshot?.linkedin_sub) {
-    lines.push('', 'Connect LinkedIn to create your profile.', 'LinkedIn confirms the connected account. You provide your professional details.');
+    lines.push(
+      '',
+      russian ? 'Подключите LinkedIn, чтобы создать профиль.' : 'Connect LinkedIn to create your profile.',
+      russian ? 'LinkedIn подтверждает подключённый аккаунт. Профессиональные данные указываете вы.' : 'LinkedIn confirms the connected account. You provide your professional details.'
+    );
   } else {
     const activation = getProfileActivationState(profileSnapshot);
-    lines.push('', profileSnapshot.linkedin_name || profileSnapshot.display_name || 'LinkedIn member');
-    lines.push(`Status: ${profileVisibilityLabel(profileSnapshot.visibility_status)}`);
-    lines.push(`Setup: ${activation.completedCount}/${activation.totalCount} complete`);
-    if (!activation.isReady) lines.push(`Next: ${getProfileActivationNextAction(profileSnapshot || {}).label}`);
-    else if (!activation.isListed) lines.push('Next: Preview and publish your profile.');
-    lines.push('', 'LinkedIn confirms the connected account. You provide your role, company, skills, and bio.');
-    lines.push('', 'Required for listing', ...buildActivationStepLines(profileSnapshot));
-    lines.push(...buildLinkedInVerificationPrivateLines(profileSnapshot, linkedinVerificationAccess));
+    lines.push('', profileSnapshot.linkedin_name || profileSnapshot.display_name || (russian ? 'Участник LinkedIn' : 'LinkedIn member'));
+    lines.push(`${russian ? 'Статус' : 'Status'}: ${profileVisibilityLabel(profileSnapshot.visibility_status, language)}`);
+    lines.push(russian
+      ? `Настройка: выполнено ${activation.completedCount}/${activation.totalCount}`
+      : `Setup: ${activation.completedCount}/${activation.totalCount} complete`);
+    if (!activation.isReady) lines.push(`${russian ? 'Следующий шаг' : 'Next'}: ${activationNextLabel(profileSnapshot || {}, language)}`);
+    else if (!activation.isListed) lines.push(russian ? 'Следующий шаг: проверьте и опубликуйте профиль.' : 'Next: Preview and publish your profile.');
+    lines.push('', russian ? 'LinkedIn подтверждает подключённый аккаунт. Роль, компанию, навыки и описание указываете вы.' : 'LinkedIn confirms the connected account. You provide your role, company, skills, and bio.');
+    lines.push('', russian ? 'Нужно для публикации' : 'Required for listing', ...buildActivationStepLines(profileSnapshot, language));
+    lines.push(...buildLinkedInVerificationPrivateLines(profileSnapshot, linkedinVerificationAccess, language));
   }
-  if (notice) lines.push('', sanitizeMemberNotice(notice));
+  if (notice) lines.push('', sanitizeMemberNotice(
+    notice,
+    russian ? 'Не удалось выполнить действие. Попробуйте позже.' : 'This action could not be completed. Try again later.',
+    language
+  ));
   return lines.join('\n');
 }
 
-export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = null, profileSnapshot = null, persistenceEnabled = false, linkedinVerificationAccess = null, linkedinVerificationLaunchTicket = null } = {}) {
+export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = null, profileSnapshot = null, persistenceEnabled = false, linkedinVerificationAccess = null, linkedinVerificationLaunchTicket = null, interfaceLanguage = 'en' } = {}) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const russian = language === 'ru';
+  const buttons = getMemberButtons(language);
   if (!persistenceEnabled) {
     return buildInlineKeyboard([
-      [{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]
+      [{ text: buttons.language, callback_data: 'lang:root' }],
+      [{ text: buttons.home, callback_data: 'home:root' }]
     ]);
   }
 
   if (!profileSnapshot?.linkedin_sub) {
     const rows = [];
     if (appBaseUrl && telegramUserId) {
-      rows.push([{ text: '🔐 Connect LinkedIn', url: buildLinkedInStartUrl({ appBaseUrl, telegramUserId }) }]);
+      rows.push([{ text: russian ? '🔐 Подключить LinkedIn' : '🔐 Connect LinkedIn', url: buildLinkedInStartUrl({ appBaseUrl, telegramUserId }) }]);
     }
-    rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
+    rows.push([{ text: buttons.language, callback_data: 'lang:root' }]);
+    rows.push([{ text: buttons.home, callback_data: 'home:root' }]);
     return buildInlineKeyboard(rows);
   }
 
   const activation = getProfileActivationState(profileSnapshot);
   const primaryButton = activation.isReady
-    ? { text: activation.isListed ? '👁 Review listed profile' : '👁 Preview & publish', callback_data: 'p:prev' }
-    : { text: '➡️ Continue setup', callback_data: 'p:next' };
+    ? {
+        text: activation.isListed
+          ? (russian ? '👁 Проверить опубликованный профиль' : '👁 Review listed profile')
+          : (russian ? '👁 Проверить и опубликовать' : '👁 Preview & publish'),
+        callback_data: 'p:prev'
+      }
+    : { text: buttons.continueSetup, callback_data: 'p:next' };
 
   const rows = [
     [primaryButton],
     [
-      { text: '✏️ Display name', callback_data: 'p:ed:dn' },
-      { text: '✏️ Headline', callback_data: 'p:ed:hl' }
+      { text: russian ? '✏️ Имя' : '✏️ Display name', callback_data: 'p:ed:dn' },
+      { text: russian ? '✏️ Заголовок' : '✏️ Headline', callback_data: 'p:ed:hl' }
     ],
     [
-      { text: '🏷 Industry', callback_data: 'p:ed:in' },
-      { text: '📝 About', callback_data: 'p:ed:ab' }
+      { text: russian ? '🏷 Индустрия' : '🏷 Industry', callback_data: 'p:ed:in' },
+      { text: russian ? '📝 О себе' : '📝 About', callback_data: 'p:ed:ab' }
     ],
-    [{ text: '🧠 Skills', callback_data: 'p:sk' }],
-    [{ text: '⚙️ Optional details & contact', callback_data: 'p:opt' }]
+    [{ text: russian ? '🧠 Навыки' : '🧠 Skills', callback_data: 'p:sk' }],
+    [{ text: russian ? '⚙️ Дополнительные данные и контакты' : '⚙️ Optional details & contact', callback_data: 'p:opt' }]
   ];
 
   if (linkedinVerificationAccess?.enabled && linkedinVerificationLaunchTicket && appBaseUrl && telegramUserId) {
     rows.push([{
-      text: '🛡 Refresh LinkedIn verification',
+      text: russian ? '🛡 Обновить проверку LinkedIn' : '🛡 Refresh LinkedIn verification',
       url: buildLinkedInStartUrl({
         appBaseUrl,
         telegramUserId,
@@ -927,55 +1122,77 @@ export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = 
     }]);
   }
 
-  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
+  rows.push([{ text: buttons.language, callback_data: 'lang:root' }]);
+  rows.push([{ text: buttons.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
-export function renderProfilePreviewText({ profileSnapshot = null, persistenceEnabled = false, linkedinVerificationConfig = null, notice = null } = {}) {
-  const lines = [MEMBER_SURFACES.profilePreview];
+export function renderProfilePreviewText({ profileSnapshot = null, persistenceEnabled = false, linkedinVerificationConfig = null, notice = null, interfaceLanguage = 'en' } = {}) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const russian = language === 'ru';
+  const surfaces = getMemberSurfaces(language);
+  const lines = [surfaces.profilePreview];
   if (!persistenceEnabled) {
-    lines.push('', memberUnavailable('Profile preview'));
+    lines.push('', memberUnavailable(russian ? 'Предпросмотр профиля' : 'Profile preview', language));
   } else if (!profileSnapshot?.linkedin_sub) {
-    lines.push('', 'Connect LinkedIn before previewing your profile.');
+    lines.push('', russian ? 'Подключите LinkedIn перед предпросмотром профиля.' : 'Connect LinkedIn before previewing your profile.');
   } else {
     const activation = getProfileActivationState(profileSnapshot);
-    lines.push('', toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'Unnamed profile'));
+    lines.push('', toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || (russian ? 'Профиль без имени' : 'Unnamed profile')));
     lines.push(toDisplayValue(profileSnapshot.headline_user));
-    lines.push('', `Company: ${toDisplayValue(profileSnapshot.company_user)}`, `City: ${toDisplayValue(profileSnapshot.city_user)}`, `Industry: ${toDisplayValue(profileSnapshot.industry_user)}`, `Skills: ${formatSkillSummary(profileSnapshot)}`);
+    lines.push(
+      '',
+      `${russian ? 'Компания' : 'Company'}: ${toDisplayValue(profileSnapshot.company_user)}`,
+      `${russian ? 'Город' : 'City'}: ${toDisplayValue(profileSnapshot.city_user)}`,
+      `${russian ? 'Индустрия' : 'Industry'}: ${toDisplayValue(profileSnapshot.industry_user)}`,
+      `${russian ? 'Навыки' : 'Skills'}: ${formatSkillSummary(profileSnapshot)}`
+    );
     if (profileSnapshot.linkedin_public_url) lines.push(`LinkedIn: ${profileSnapshot.linkedin_public_url}`);
-    lines.push('', 'About', truncate(profileSnapshot.about_user, 320));
-    lines.push(...buildLinkedInTrustPreviewLines(profileSnapshot, linkedinVerificationConfig));
-    lines.push('', 'Private settings', `• Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`, `• Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
-    lines.push('', `Profile: ${profileVisibilityLabel(profileSnapshot.visibility_status)}`);
-    if (!activation.isReady) lines.push(`Next: ${getProfileActivationNextAction(profileSnapshot || {}).label}`);
-    else if (activation.isListed) lines.push('Your profile is live in the directory.');
-    else lines.push('Ready to publish. Private contact details stay hidden.');
+    lines.push('', russian ? 'О себе' : 'About', truncate(profileSnapshot.about_user, 320));
+    lines.push(...buildLinkedInTrustPreviewLines(profileSnapshot, linkedinVerificationConfig, language));
+    lines.push(
+      '',
+      russian ? 'Приватные настройки' : 'Private settings',
+      `• ${russian ? 'Username Telegram' : 'Telegram username'}: ${hiddenTelegramUsernameSummary(profileSnapshot)}`,
+      `• ${russian ? 'Режим контакта' : 'Contact mode'}: ${profileContactModeSummary(profileSnapshot)}`
+    );
+    lines.push('', `${russian ? 'Профиль' : 'Profile'}: ${profileVisibilityLabel(profileSnapshot.visibility_status, language)}`);
+    if (!activation.isReady) lines.push(`${russian ? 'Следующий шаг' : 'Next'}: ${activationNextLabel(profileSnapshot || {}, language)}`);
+    else if (activation.isListed) lines.push(russian ? 'Профиль опубликован в каталоге.' : 'Your profile is live in the directory.');
+    else lines.push(russian ? 'Профиль готов к публикации. Приватные контакты останутся скрыты.' : 'Ready to publish. Private contact details stay hidden.');
   }
-  if (notice) lines.push('', sanitizeMemberNotice(notice));
+  if (notice) lines.push('', sanitizeMemberNotice(
+    notice,
+    russian ? 'Не удалось выполнить действие. Попробуйте позже.' : 'This action could not be completed. Try again later.',
+    language
+  ));
   return lines.join('\n');
 }
 
-export function renderProfilePreviewKeyboard({ profileSnapshot = null, persistenceEnabled = true, linkedinShareConfig = null } = {}) {
+export function renderProfilePreviewKeyboard({ profileSnapshot = null, persistenceEnabled = true, linkedinShareConfig = null, interfaceLanguage = 'en' } = {}) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const russian = language === 'ru';
+  const buttons = getMemberButtons(language);
   const rows = [];
   const activation = getProfileActivationState(profileSnapshot || {});
 
   if (persistenceEnabled && profileSnapshot?.linkedin_sub) {
     if (!activation.isReady) {
-      rows.push([{ text: '➡️ Continue setup', callback_data: 'p:next' }]);
+      rows.push([{ text: buttons.continueSetup, callback_data: 'p:next' }]);
     } else if (activation.isListed) {
       if (linkedinShareConfig?.enabled) {
-        rows.push([{ text: '📣 Share profile on LinkedIn', callback_data: 'li:share:start' }]);
+        rows.push([{ text: russian ? '📣 Поделиться профилем в LinkedIn' : '📣 Share profile on LinkedIn', callback_data: 'li:share:start' }]);
       }
-      rows.push([{ text: '🙈 Hide from directory', callback_data: 'p:vis' }]);
+      rows.push([{ text: russian ? '🙈 Скрыть из каталога' : '🙈 Hide from directory', callback_data: 'p:vis' }]);
     } else {
-      rows.push([{ text: '🌐 Publish in directory', callback_data: 'p:pub' }]);
+      rows.push([{ text: russian ? '🌐 Опубликовать в каталоге' : '🌐 Publish in directory', callback_data: 'p:pub' }]);
     }
-    rows.push([{ text: '⚙️ Optional details & contact', callback_data: 'p:opt' }]);
+    rows.push([{ text: russian ? '⚙️ Дополнительные данные и контакты' : '⚙️ Optional details & contact', callback_data: 'p:opt' }]);
   }
 
   rows.push([
-    { text: '← Back to profile', callback_data: 'p:menu' },
-    { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
+    { text: russian ? '← Назад к профилю' : '← Back to profile', callback_data: 'p:menu' },
+    { text: buttons.home, callback_data: 'home:root' }
   ]);
 
   return buildInlineKeyboard(rows);

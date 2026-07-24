@@ -1,3 +1,20 @@
+# Current canonical source step — STEP064B4A
+
+- Package: `0.64.4`
+- Baseline: STEP064B3 FULL SHA-256 `92ab03586a7f216a79c7ae2bb80abd0cf194bdbb1b60ad520c9bee1cc28a1b60`
+- Migration `037_interface_language_boundary.sql` is required; no new ENV.
+- Persistent `users.interface_language` and `users.default_post_language` are independent EN/RU preferences.
+- Existing users retain English defaults; new users are seeded once from Telegram locale.
+- Missing migration blocks preference writes and preserves a deterministic English read fallback.
+- `/language` and bounded `lang:*` callbacks are added; existing callback IDs are unchanged.
+- Initial localized slice: Home, Profile root, Profile preview, Help, and Language settings.
+- Existing AI/news preset/draft `post_language` remains unchanged.
+- LinkedIn publisher, OAuth state machines, payments, rewards, admin mutations, and ordinary profile-share rendering are unchanged.
+- Source QA: candidate 100/105 PASS versus baseline 99/104; baseline PASS regressions 0; five inherited NON_PASS remain.
+- Production migration/deployment/Telegram acceptance: not verified.
+
+---
+
 # Current canonical step — STEP064B3
 
 - Package: `0.64.3`
