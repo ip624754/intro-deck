@@ -1,0 +1,28 @@
+{
+  "step": "STEP064A",
+  "status": "source_implemented_qa_passed_production_not_verified",
+  "baseline": {
+    "artifact": "IntroDeck_STEP063B_H2_FULL_2026-07-24.zip",
+    "sha256": "0465e70c63f5bbcaaf58feb81087d2defc0d467afd3b8e0ba0fa5ad598e6d59d"
+  },
+  "release": {
+    "package": "0.64.0",
+    "sourceStep": "STEP064A"
+  },
+  "verified": {
+    "syntaxCheck": true,
+    "focusedSmoke": true,
+    "baselinePassRegressions": 0,
+    "migrationRequired": false,
+    "newEnvRequired": false,
+    "rewardAccountingChanged": false,
+    "activationRulesChanged": false,
+    "linkedinPublishingChanged": false
+  },
+  "notVerified": [
+    "vercel_deployment",
+    "production_inline_photo_share",
+    "production_forwarding_photo_card",
+    "production_source_attribution"
+  ]
+}

@@ -8,6 +8,7 @@ import { buildSourceEvidence } from '../src/lib/ai/newsDraftContract.js';
 import { generateTemplateNewsDraft } from '../src/lib/ai/templateNewsDraft.js';
 import { generateGroqNewsDraft, GroqDraftError } from '../src/lib/ai/groqNewsDraft.js';
 import healthHandler from '../api/health.js';
+import { CURRENT_SOURCE_STEP } from '../src/config/release.js';
 import {
   renderAiNewsHubKeyboard,
   renderAiNewsHubText,
@@ -48,7 +49,7 @@ try {
   const healthResponse = { statusCode: null, body: null, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } };
   await healthHandler({}, healthResponse);
   assert.equal(healthResponse.statusCode, 200);
-  assert.equal(healthResponse.body.step, 'STEP063B-H1R1');
+  assert.equal(healthResponse.body.step, CURRENT_SOURCE_STEP);
   assert.equal(healthResponse.body.aiNewsDraft.generatorMode, 'off');
   assert.equal(healthResponse.body.aiNewsDraft.browseOnly, true);
   assert.equal(healthResponse.body.aiNewsDraft.schedule.mode, 'off');

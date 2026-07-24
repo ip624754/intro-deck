@@ -38,7 +38,7 @@ import {
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-assert.equal(CURRENT_SOURCE_STEP, 'STEP063B-H1R1');
+assert.equal(['STEP063B-H2', 'STEP064A'].includes(CURRENT_SOURCE_STEP), true);
 assert.equal(normalizePresetKey('business_growth'), 'business_markets');
 assert.equal(normalizePresetKey('unknown'), 'for_you');
 for (const key of ['for_you', 'ai_technology', 'startups_product', 'business_markets', 'career_leadership', 'crypto_web3', 'custom']) {
@@ -289,7 +289,7 @@ try {
   const response = { statusCode: null, body: null, status(code) { this.statusCode = code; return this; }, json(body) { this.body = body; return this; } };
   await healthHandler({}, response);
   assert.equal(response.statusCode, 200);
-  assert.equal(response.body.step, 'STEP063B-H1R1');
+  assert.equal(response.body.step, CURRENT_SOURCE_STEP);
   assert.equal(response.body.aiNewsDraft.audienceDiscoveryPolicy.personalizedTopic, 'for_you');
   assert.equal(response.body.aiNewsDraft.automaticPublishing, false);
 } finally {

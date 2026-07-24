@@ -100,8 +100,9 @@ const required = {
   'Telegram profile editor': ['LinkedIn does not verify the professional fields you enter on your card.'],
   'Telegram directory card': ['Profile details: member-provided'],
   'Telegram invite caption': [
-    'Professional discovery and contact by permission in Telegram.',
-    'LinkedIn-connected accounts. Private contact after approval.'
+    'Discover professionals and connect by permission in Telegram.',
+    'LinkedIn-connected identity',
+    'request private contact only after approval.'
   ],
   'BotFather copy': [
     'LinkedIn connects account identity',

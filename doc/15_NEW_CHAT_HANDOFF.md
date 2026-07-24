@@ -1,3 +1,57 @@
+# STEP064A CURRENT HANDOFF
+
+## Executive summary
+
+- Project: Intro Deck / LinkedIn Telegram Directory Bot.
+- Current source step: `STEP064A`; package `0.64.0`.
+- Exact baseline: STEP063B-H2 FULL SHA-256 `0465e70c63f5bbcaaf58feb81087d2defc0d467afd3b8e0ba0fa5ad598e6d59d`.
+- Current focus: production acceptance of the single-CTA invite card, canonical inline/forwarding photo renderer, simplified invite menu, Activity surface, and rewards-mode-aware Points entry.
+- Migration: none. New ENV: none.
+- Must not break: `ii_/ic_/il_` attribution, invite/reward accounting, activation rules, STEP059 explicit publication, browse-only AI/news state.
+
+## Source-confirmed
+
+- Public cards have only `Open Intro Deck` and no owner-navigation callbacks.
+- Caption no longer duplicates the CTA with `Join Intro Deck`.
+- Inline share and forwarding card use one caption/image/keyboard renderer; only the attributed link differs.
+- Forwarding delivery uses `replyWithPhoto` with a bounded text fallback.
+- Invite root no longer exposes Refresh or separate History; full history is reached through Activity.
+- Points is hidden when off and labeled for earn-only/live/paused modes.
+- Full smoke comparison has zero baseline PASS regressions.
+
+## Not verified
+
+- Vercel deployment and `/api/health` STEP064A marker.
+- Real inline/forwarding photo card in Telegram production.
+- Production invite attribution rows after both share paths.
+- Conversion impact.
+
+---
+
+# STEP063B-H2 CURRENT HANDOFF
+
+## Executive summary
+
+- Project: Intro Deck / LinkedIn Telegram Directory Bot.
+- Current source step: `STEP063B-H2`; package `0.63.6`.
+- Exact baseline: STEP063B-H1R1 FULL SHA-256 `926c71fb8c5a2717bf77ab8833520119c9348e58069d1c24fe8653450baa3e0a`.
+- Current focus: production acceptance of phrase-based `For you` query precision and final-fit rejection.
+- Migration: none. New ENV: none.
+- Must not break: migration 036 readiness, exact claim recovery, persistent search UX, browse-only no-draft invariant, STEP059 explicit publication.
+
+## Source-confirmed
+
+- `For you` provider queries use bounded professional phrases rather than standalone generic OR terms.
+- Required anchors are separated from ranking-only profile/audience/angle boosts.
+- RSS and Hacker News match complete clauses.
+- Primary RSS/GitHub sources may prove fit through bounded personalized registry groups.
+- Weak fallback content is rejected with bounded reasons; `no_result` is preferred.
+- Telemetry includes a sanitized query plan and final-fit evidence.
+- Source/focused QA and full smoke comparison passed with no baseline PASS regressions.
+- Production deployment and live relevance evidence are not verified.
+
+---
+
 # 15_NEW_CHAT_HANDOFF
 
 ## Executive summary

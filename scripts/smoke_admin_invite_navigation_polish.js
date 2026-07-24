@@ -78,12 +78,12 @@ const inviteText = renderInviteText({
     rewardsSummary: { mode: 'live', pendingPoints: 10, availablePoints: 20 }
   }
 });
-if (!inviteText.includes('How to use this screen') || !inviteText.includes('Points preview')) {
-  throw new Error('Invite root must explain the three share actions and preview points');
+if (!inviteText.includes('Share your personal Intro Deck invite') || !inviteText.includes('Available points: 20')) {
+  throw new Error('Invite root must explain simplified share actions and bounded points state');
 }
 
-const inviteKeyboard = JSON.stringify(renderInviteKeyboard({ inviteState: { persistenceEnabled: true, inviteLink: 'https://t.me/example?start=ii_demo', shareInlineQuery: 'invite' } }).inline_keyboard);
-for (const token of ['invite:send_card', 'invite:show_link', 'invite:perf', 'invite:hist:1', 'invite:points']) {
+const inviteKeyboard = JSON.stringify(renderInviteKeyboard({ inviteState: { persistenceEnabled: true, inviteLink: 'https://t.me/example?start=ii_demo', shareInlineQuery: 'invite', rewardsSummary: { mode: 'live' } } }).inline_keyboard);
+for (const token of ['invite:send_card', 'invite:show_link', 'invite:activity', 'invite:points']) {
   if (!inviteKeyboard.includes(token)) {
     throw new Error(`Invite root keyboard missing ${token}`);
   }
@@ -95,14 +95,12 @@ if (!linkKeyboard.includes('invite:root') || !linkKeyboard.includes('home:root')
 }
 
 const cardKeyboard = JSON.stringify(renderInviteCardKeyboard({ inviteState: { inviteCardLink: 'https://t.me/example?start=ic_demo' } }).inline_keyboard);
-for (const token of ['Open Intro Deck', 'invite:root', 'invite:points', 'home:root']) {
-  if (!cardKeyboard.includes(token)) {
-    throw new Error(`Invite card screen missing ${token}`);
-  }
+if (!cardKeyboard.includes('Open Intro Deck') || cardKeyboard.includes('callback_data')) {
+  throw new Error('Public invite card must expose one URL CTA and no owner navigation callbacks');
 }
 
 const pointsKeyboard = JSON.stringify(renderInviteRewardsKeyboard({ rewardsState: { rewardsSummary: { mode: 'live' } } }).inline_keyboard);
-for (const token of ['invite:redeem', 'invite:root', 'invite:hist:1', 'invite:perf']) {
+for (const token of ['invite:redeem', 'invite:root', 'invite:hist:1', 'invite:activity']) {
   if (!pointsKeyboard.includes(token)) {
     throw new Error(`Points screen missing ${token}`);
   }

@@ -70,6 +70,20 @@ function getInviteActivationRate(invitedCount = 0, activatedCount = 0) {
   return `${Math.round((activated / invited) * 1000) / 10}%`;
 }
 
+function getInvitePointsEntry(rewardsSummary = null) {
+  const mode = String(rewardsSummary?.mode || 'off').trim().toLowerCase();
+  if (mode === 'earn_only') {
+    return { text: '🎯 Points preview', callback_data: 'invite:points' };
+  }
+  if (mode === 'live') {
+    return { text: '🎯 Points', callback_data: 'invite:points' };
+  }
+  if (mode === 'paused') {
+    return { text: '⏸ Points paused', callback_data: 'invite:points' };
+  }
+  return null;
+}
+
 function renderAdminInviteTopLine(item, index) {
   return `${index + 1}. ${toDisplayValue(item?.displayName, 'Member')} — ${Number(item?.invitedCount || 0)} invited • ${Number(item?.activatedCount || 0)} activated • ${Number(item?.activationRate || 0)}%`;
 }
@@ -77,10 +91,6 @@ function renderAdminInviteTopLine(item, index) {
 function renderAdminInviteRecentLine(item, index) {
   const status = item?.status === 'activated' ? 'activated' : 'joined';
   return `${index + 1}. ${toDisplayValue(item?.referrerDisplayName, 'Member')} → ${toDisplayValue(item?.displayName, 'Member')} • ${status} via ${inviteSourceLabel(item?.source)} • ${formatDateShort(item?.joinedAt)}`;
-}
-
-function buildJoinIntroDeckAnchor(inviteUrl) {
-  return inviteUrl ? `<a href="${escapeHtml(inviteUrl)}">Join Intro Deck</a>` : 'Join Intro Deck';
 }
 
 function toDisplayValue(value, fallback = '—') {
@@ -2020,14 +2030,14 @@ export function renderDirectoryFiltersKeyboard({ filterSummary = summarizeDirect
 
 export function renderInviteText({ inviteState = null, notice = null } = {}) {
   const lines = [
-    '📨 Invite & rewards',
+    '📨 Invite people',
     '',
-    'Use this screen to share your personal invite in the format that fits the chat best.',
+    'Share your personal Intro Deck invite. Invite activity and rewards are tracked automatically.',
     '',
-    '<b>Share options</b>',
-    '• Share invite — opens Telegram share with your personal invite already attached.',
-    '• Invite card — sends a ready-made card you can forward as-is.',
-    '• Link + copy — shows the raw invite link for manual sharing.'
+    '<b>Share</b>',
+    '• Share to a chat — choose a Telegram chat and send the full photo card.',
+    '• Forwarding card — receive the same photo card here for manual forwarding.',
+    '• Copy invite link — use the attributed link outside the share flow.'
   ];
 
   if (!inviteState?.persistenceEnabled) {
@@ -2035,27 +2045,17 @@ export function renderInviteText({ inviteState = null, notice = null } = {}) {
   } else {
     const invitedCount = Number(inviteState.invitedCount || 0) || 0;
     const activatedCount = Number(inviteState.activatedCount || 0) || 0;
-    lines.push('', '<b>Your snapshot</b>');
+    const rewardsSummary = inviteState?.rewardsSummary || null;
+    lines.push('', '<b>Your activity</b>');
     lines.push(`• Invited: ${invitedCount}`);
     lines.push(`• Activated: ${activatedCount}`);
     lines.push(`• Activation rate: ${getInviteActivationRate(invitedCount, activatedCount)}`);
-    lines.push(`• Invite code: <code>${escapeHtml(inviteState.inviteCode || '—')}</code>`);
+    if (rewardsSummary && String(rewardsSummary.mode || 'off') !== 'off') {
+      lines.push(`• Available points: ${Number(rewardsSummary.availablePoints || 0) || 0}`);
+    }
     if (inviteState.invitedBy?.displayName) {
       lines.push(`• Joined from: ${escapeHtml(inviteState.invitedBy.displayName)}`);
     }
-
-    const rewardsSummary = inviteState?.rewardsSummary || null;
-    if (rewardsSummary) {
-      lines.push('', '<b>Points preview</b>');
-      lines.push(`• Mode: ${escapeHtml(formatInviteRewardsModeLabel(rewardsSummary.mode))}`);
-      lines.push(`• Pending: ${Number(rewardsSummary.pendingPoints || 0) || 0}`);
-      lines.push(`• Available: ${Number(rewardsSummary.availablePoints || 0) || 0}`);
-    }
-
-    lines.push('', '<b>Open next</b>');
-    lines.push('• Performance — totals, sources, and the last 7 days.');
-    lines.push('• Invite history — everyone who actually joined from your invite.');
-    lines.push('• Points — pending, available, redeemed, and redeem status.');
   }
 
   if (notice) {
@@ -2068,19 +2068,15 @@ export function renderInviteText({ inviteState = null, notice = null } = {}) {
 export function renderInviteKeyboard({ inviteState = null } = {}) {
   const rows = [];
   if (inviteState?.persistenceEnabled && inviteState?.inviteLink) {
-    rows.push([{ text: '📨 Share invite', switch_inline_query: inviteState.shareInlineQuery || 'invite' }]);
+    rows.push([{ text: '📨 Share to a chat', switch_inline_query: inviteState.shareInlineQuery || 'invite' }]);
     rows.push([
-      { text: '🧾 Invite card', callback_data: 'invite:send_card' },
-      { text: '🔗 Link + copy', callback_data: 'invite:show_link' }
+      { text: '🖼 Forwarding card', callback_data: 'invite:send_card' },
+      { text: '🔗 Copy invite link', callback_data: 'invite:show_link' }
     ]);
-    rows.push([
-      { text: '📊 Performance', callback_data: 'invite:perf' },
-      { text: '📋 Invite history', callback_data: 'invite:hist:1' }
-    ]);
-    rows.push([
-      { text: '🎯 Points', callback_data: 'invite:points' },
-      { text: '🔄 Refresh', callback_data: 'invite:root' }
-    ]);
+    const activityRow = [{ text: '📊 Activity', callback_data: 'invite:activity' }];
+    const pointsEntry = getInvitePointsEntry(inviteState?.rewardsSummary);
+    if (pointsEntry) activityRow.push(pointsEntry);
+    rows.push(activityRow);
   }
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
@@ -2089,10 +2085,11 @@ export function renderInviteKeyboard({ inviteState = null } = {}) {
 export function renderInvitePerformanceText({ inviteState = null, notice = null } = {}) {
   const invitedCount = Number(inviteState?.invitedCount || 0) || 0;
   const activatedCount = Number(inviteState?.activatedCount || 0) || 0;
+  const recentInvites = Array.isArray(inviteState?.invited) ? inviteState.invited.slice(0, 3) : [];
   const lines = [
-    '📊 Invite performance',
+    '📊 Invite activity',
     '',
-    'This screen shows how your invite is performing: totals, sources, and recent 7-day movement.',
+    'See invite totals, attribution sources, recent movement, and the latest joined contacts.',
     '',
     '<b>All-time</b>',
     `• Invited: ${invitedCount}`,
@@ -2100,9 +2097,9 @@ export function renderInvitePerformanceText({ inviteState = null, notice = null 
     `• Activation rate: ${getInviteActivationRate(invitedCount, activatedCount)}`,
     '',
     '<b>By source</b>',
-    `• Inline share: ${Number(inviteState?.inlineShareCount || 0) || 0}`,
-    `• Link + copy: ${Number(inviteState?.rawLinkCount || 0) || 0}`,
-    `• Invite card: ${Number(inviteState?.inviteCardCount || 0) || 0}`,
+    `• Share to a chat: ${Number(inviteState?.inlineShareCount || 0) || 0}`,
+    `• Copy invite link: ${Number(inviteState?.rawLinkCount || 0) || 0}`,
+    `• Forwarding card: ${Number(inviteState?.inviteCardCount || 0) || 0}`,
     '',
     '<b>Last 7 days</b>',
     `• Invited: ${Number(inviteState?.joined7d || 0) || 0}`,
@@ -2114,9 +2111,12 @@ export function renderInvitePerformanceText({ inviteState = null, notice = null 
     lines.push(`• Current signal: ${escapeHtml(inviteState.activationHint)}.`);
   }
 
-  if (!(invitedCount > 0)) {
-    lines.push('', '<b>No invite activity yet</b>');
-    lines.push('• Start with Share invite, Invite card, or Link + copy. Your performance data will fill in automatically.');
+  lines.push('', '<b>Recent activity</b>');
+  if (recentInvites.length > 0) {
+    recentInvites.forEach((item, index) => lines.push(escapeHtml(renderInviteFriendLine(item, index))));
+  } else {
+    lines.push('• No invite activity yet.');
+    lines.push('• Share your card or attributed link to start tracking activity.');
   }
 
   if (notice) {
@@ -2127,16 +2127,15 @@ export function renderInvitePerformanceText({ inviteState = null, notice = null 
 }
 
 export function renderInvitePerformanceKeyboard({ inviteState = null } = {}) {
-  const rows = [
-    [
-      { text: '📨 Invite & rewards', callback_data: 'invite:root' },
-      { text: '📋 Invite history', callback_data: 'invite:hist:1' }
-    ],
-    [
-      { text: '🎯 Points', callback_data: 'invite:points' },
-      { text: '🏠 Home', callback_data: 'home:root' }
-    ]
-  ];
+  const rows = [[
+    { text: '📨 Invite people', callback_data: 'invite:root' },
+    { text: '📋 Full history', callback_data: 'invite:hist:1' }
+  ]];
+  const bottomRow = [];
+  const pointsEntry = getInvitePointsEntry(inviteState?.rewardsSummary);
+  if (pointsEntry) bottomRow.push(pointsEntry);
+  bottomRow.push({ text: '🏠 Home', callback_data: 'home:root' });
+  rows.push(bottomRow);
   return buildInlineKeyboard(rows);
 }
 
@@ -2149,7 +2148,7 @@ export function renderInviteHistoryText({ inviteState = null, historyState = nul
   const lines = [
     '📋 Invite history',
     '',
-    'Everyone who joined from your invite appears here. Use this screen to confirm who actually came in and when.',
+    'Everyone who joined from your invite appears here.',
     '',
     '<b>Summary</b>',
     `• Invited: ${Number(inviteState?.invitedCount || 0) || 0}`,
@@ -2185,21 +2184,20 @@ export function renderInviteHistoryKeyboard({ inviteState = null, historyState =
   if (historyState?.hasNext) {
     navRow.push({ text: 'Next ➡️', callback_data: `invite:hist:${Math.max(1, Number(historyState?.page || 1) + 1)}` });
   }
-  if (navRow.length) {
-    rows.push(navRow);
-  }
+  if (navRow.length) rows.push(navRow);
   rows.push([
-    { text: '📨 Invite & rewards', callback_data: 'invite:root' },
-    { text: '📊 Performance', callback_data: 'invite:perf' }
+    { text: '📨 Invite people', callback_data: 'invite:root' },
+    { text: '📊 Activity', callback_data: 'invite:activity' }
   ]);
-  rows.push([
-    { text: '🎯 Points', callback_data: 'invite:points' },
-    { text: '🏠 Home', callback_data: 'home:root' }
-  ]);
+  const bottomRow = [];
+  const pointsEntry = getInvitePointsEntry(inviteState?.rewardsSummary);
+  if (pointsEntry) bottomRow.push(pointsEntry);
+  bottomRow.push({ text: '🏠 Home', callback_data: 'home:root' });
+  rows.push(bottomRow);
   if (!(Number(inviteState?.invitedCount || 0) > 0)) {
     rows.push([
-      { text: '📨 Share invite', switch_inline_query: inviteState?.shareInlineQuery || 'invite' },
-      { text: '🔗 Link + copy', callback_data: 'invite:show_link' }
+      { text: '📨 Share to a chat', switch_inline_query: inviteState?.shareInlineQuery || 'invite' },
+      { text: '🔗 Copy invite link', callback_data: 'invite:show_link' }
     ]);
   }
   return buildInlineKeyboard(rows);
@@ -2290,11 +2288,11 @@ export function renderInviteRewardsKeyboard({ rewardsState = null } = {}) {
   return buildInlineKeyboard([
     [{ text: redeemLabel, callback_data: 'invite:redeem' }],
     [
-      { text: '📨 Invite & rewards', callback_data: 'invite:root' },
-      { text: '📋 Invite history', callback_data: 'invite:hist:1' }
+      { text: '📨 Invite people', callback_data: 'invite:root' },
+      { text: '📋 Full history', callback_data: 'invite:hist:1' }
     ],
     [
-      { text: '📊 Performance', callback_data: 'invite:perf' },
+      { text: '📊 Activity', callback_data: 'invite:activity' },
       { text: '🏠 Home', callback_data: 'home:root' }
     ]
   ]);
@@ -2357,7 +2355,7 @@ export function renderInviteRedeemKeyboard({ redeemState = null } = {}) {
 
   rows.push([
     { text: '🎯 Points', callback_data: 'invite:points' },
-    { text: '📨 Invite & rewards', callback_data: 'invite:root' }
+    { text: '📨 Invite people', callback_data: 'invite:root' }
   ]);
   rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
@@ -2394,7 +2392,7 @@ export function renderInviteLinkText({ inviteState = null } = {}) {
   return [
     '🔗 <b>Your invite link</b>',
     '',
-    'Copy this link into any chat when you want to share manually instead of using the Telegram share flow.',
+    'Copy this attributed link when you want to share outside the Telegram card flow.',
     '',
     `<code>${escapeHtml(inviteState?.inviteLink || '—')}</code>`
   ].join('\n');
@@ -2402,78 +2400,84 @@ export function renderInviteLinkText({ inviteState = null } = {}) {
 
 export function renderInviteLinkKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '📨 Invite & rewards', callback_data: 'invite:root' }],
+    [{ text: '↩️ Invite people', callback_data: 'invite:root' }],
     [{ text: '🏠 Home', callback_data: 'home:root' }]
   ]);
 }
 
-export function renderInviteCardText({ inviteState = null } = {}) {
+export function renderInvitePublicCaption() {
   return [
-    '🤝 <b>Join me on Intro Deck</b>',
+    'Discover professionals and connect by permission in Telegram.',
     '',
-    'Forward this card as-is or open Intro Deck directly from the button below.',
-    '',
-    buildJoinIntroDeckAnchor(inviteState?.inviteCardLink || inviteState?.inlineInviteLink || inviteState?.inviteLink)
+    'Browse listed profiles, view LinkedIn-connected identity, and request private contact only after approval.'
   ].join('\n');
 }
 
-export function renderInviteCardKeyboard({ inviteState = null } = {}) {
-  const inviteUrl = inviteState?.inviteCardLink || inviteState?.inlineInviteLink || inviteState?.inviteLink;
-  const rows = inviteUrl ? [[{ text: 'Open Intro Deck', url: inviteUrl }]] : [];
-  rows.push([
-    { text: '📨 Invite & rewards', callback_data: 'invite:root' },
-    { text: '🎯 Points', callback_data: 'invite:points' }
-  ]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
-  return buildInlineKeyboard(rows);
+function resolveInvitePublicUrl(inviteState = null, shareMode = 'inline') {
+  if (shareMode === 'forwarding') {
+    return inviteState?.inviteCardLink || inviteState?.inlineInviteLink || inviteState?.inviteLink || null;
+  }
+  return inviteState?.inlineInviteLink || inviteState?.inviteCardLink || inviteState?.inviteLink || null;
 }
 
-export function renderInlineInviteShareText({ inviteState = null } = {}) {
-  return [
-    'I found a Telegram directory for browsing listed profiles and requesting permission to connect.',
-    '',
-    buildJoinIntroDeckAnchor(inviteState?.inlineInviteLink || inviteState?.inviteLink)
-  ].join('\n');
+export function renderInviteCardText() {
+  return renderInvitePublicCaption();
 }
 
-export function renderInlineInviteCaption({ inviteState = null } = {}) {
-  return [
-    'Professional discovery and contact by permission in Telegram.',
-    'Listed profiles. LinkedIn-connected accounts. Private contact after approval.',
-    '',
-    buildJoinIntroDeckAnchor(inviteState?.inlineInviteLink || inviteState?.inviteLink)
-  ].join('\n');
+export function renderInviteCardKeyboard({ inviteState = null, inviteUrl = null } = {}) {
+  const targetUrl = inviteUrl || inviteState?.inviteCardLink || inviteState?.inlineInviteLink || inviteState?.inviteLink;
+  return buildInlineKeyboard(targetUrl ? [[{ text: 'Open Intro Deck', url: targetUrl }]] : []);
+}
+
+export function renderInlineInviteShareText() {
+  return renderInvitePublicCaption();
+}
+
+export function renderInlineInviteCaption() {
+  return renderInvitePublicCaption();
+}
+
+export function buildInviteMediaCard({ inviteState = null, shareMode = 'inline' } = {}) {
+  const inviteUrl = resolveInvitePublicUrl(inviteState, shareMode);
+  return {
+    inviteUrl,
+    caption: renderInvitePublicCaption(),
+    parseMode: 'HTML',
+    replyMarkup: renderInviteCardKeyboard({ inviteUrl }),
+    photoFileId: inviteState?.invitePhotoFileId || null,
+    photoUrl: inviteState?.invitePhotoUrl || null
+  };
 }
 
 export function buildInlineInviteResult({ inviteState = null } = {}) {
-  const replyMarkup = renderInviteCardKeyboard({ inviteState });
+  const media = buildInviteMediaCard({ inviteState, shareMode: 'inline' });
 
-  if (inviteState?.invitePhotoFileId) {
+  if (media.photoFileId) {
     return {
       type: 'photo',
       id: 'invite-photo-cached',
-      photo_file_id: inviteState.invitePhotoFileId,
+      photo_file_id: media.photoFileId,
       title: 'Share Intro Deck invite',
       description: 'Share a photo invite card for Intro Deck',
-      caption: renderInlineInviteCaption({ inviteState }),
-      parse_mode: 'HTML',
-      reply_markup: replyMarkup
+      caption: media.caption,
+      parse_mode: media.parseMode,
+      reply_markup: media.replyMarkup
     };
   }
 
-  if (inviteState?.invitePhotoUrl) {
+  if (media.photoUrl) {
     return {
       type: 'photo',
       id: 'invite-photo-url',
-      photo_url: inviteState.invitePhotoUrl,
-      thumbnail_url: inviteState.invitePhotoUrl,
+      photo_url: media.photoUrl,
+      thumbnail_url: media.photoUrl,
       photo_width: 1200,
       photo_height: 630,
       title: 'Share Intro Deck invite',
       description: 'Share a photo invite card for Intro Deck',
-      caption: renderInlineInviteCaption({ inviteState }),
-      parse_mode: 'HTML',
-      reply_markup: replyMarkup
+      caption: media.caption,
+      parse_mode: media.parseMode,
+      reply_markup: media.replyMarkup
     };
   }
 
@@ -2483,11 +2487,11 @@ export function buildInlineInviteResult({ inviteState = null } = {}) {
     title: 'Share Intro Deck invite',
     description: 'Share your personal Intro Deck invite into any chat',
     input_message_content: {
-      message_text: renderInlineInviteShareText({ inviteState }),
-      parse_mode: 'HTML',
+      message_text: media.caption,
+      parse_mode: media.parseMode,
       disable_web_page_preview: true
     },
-    reply_markup: replyMarkup
+    reply_markup: media.replyMarkup
   };
 }
 

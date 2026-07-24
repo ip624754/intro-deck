@@ -1,3 +1,33 @@
+# STEP064A current source delta
+
+- Current source step: `STEP064A`; package `0.64.0`.
+- Canonical baseline: STEP063B-H2 FULL SHA-256 `0465e70c63f5bbcaaf58feb81087d2defc0d467afd3b8e0ba0fa5ad598e6d59d`.
+- Public invite cards expose exactly one attributed `Open Intro Deck` URL button.
+- Inline and forwarding flows use one canonical photo-card renderer with a text fallback.
+- Invite root is simplified; Activity combines performance and recent joined contacts.
+- Points navigation is hidden/off or labeled for earn-only/live/paused modes.
+- Migration: none. New ENV: none.
+- Reward accounting, activation rules, LinkedIn OAuth, and publishing are unchanged.
+- Source QA passed; production Telegram and attribution evidence are not verified.
+
+---
+
+# 00_CURRENT_STATE
+
+## Current source baseline
+STEP063B-H2 — Personalized Query Precision & Final-Fit Gate
+
+## STEP063B-H2 source delta
+
+- Exact input: STEP063B-H1R1 FULL SHA-256 `926c71fb8c5a2717bf77ab8833520119c9348e58069d1c24fe8653450baa3e0a`.
+- `For you` no longer sends broad standalone terms such as `product`, `systems`, `builder`, or `development` as OR clauses.
+- Required professional phrase anchors are separated from bounded ranking boosts.
+- Weak profile/audience/angle fits are rejected and a truthful `no_result` is preferred.
+- No migration or new ENV is required.
+- STEP059 publishing remains explicit and unchanged.
+
+## Historical state
+
 # STEP063B current source delta
 
 - Current source step: `STEP063B`; package `0.63.3`.

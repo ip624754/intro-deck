@@ -225,6 +225,6 @@ assert.equal(privacy.includes('category-level verification result'), true);
 assert.equal(privacy.includes('access tokens, refresh tokens, and ID tokens are not retained'), true);
 assert.equal(terms.includes('not a background check'), true);
 assert.equal(terms.includes('employment screening tool'), true);
-assert.equal(['STEP058A', 'STEP058B', 'STEP058B1', 'STEP059', 'STEP060', 'STEP061', 'STEP061H1', 'STEP061A', 'STEP063A', 'STEP063A-H1', 'STEP063A-H1A', 'STEP063B', 'STEP063B-H1', 'STEP063B-H1R1'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP058A', 'STEP058B', 'STEP058B1', 'STEP059', 'STEP060', 'STEP061', 'STEP061H1', 'STEP061A', 'STEP063A', 'STEP063A-H1', 'STEP063A-H1A', 'STEP063B', 'STEP063B-H1', 'STEP063B-H1R1', 'STEP063B-H2', 'STEP064A'].includes(CURRENT_SOURCE_STEP), true);
 
 console.log('OK: STEP058A Verified on LinkedIn Development integration contract');

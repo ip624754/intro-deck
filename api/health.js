@@ -76,6 +76,17 @@ export default async function handler(req, res) {
       enabled: flags.operatorDiagnosticsSurfaceConfigured,
       operatorCount: operatorConfig.operatorTelegramUserIds.length
     },
+    inviteSharePolicy: {
+      publicCardCta: 'single_open_intro_deck',
+      publicCardOwnerNavigation: false,
+      publicCaptionLinkDuplication: false,
+      attribution: 'source_specific_telegram_deep_links',
+      forwardingCard: 'canonical_photo_card_with_text_fallback',
+      inviteMenu: 'share_card_link_activity_points_by_mode',
+      activitySurface: 'performance_plus_recent_joined_contacts',
+      rewardAccountingChanged: false,
+      activationRulesChanged: false
+    },
     aiNewsDraft: {
       enabled: aiNewsDraft.enabled,
       mode: aiNewsDraft.mode,

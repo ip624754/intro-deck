@@ -94,6 +94,7 @@ const renderInviteLinkText = render.renderInviteLinkText;
 const renderInviteLinkKeyboard = render.renderInviteLinkKeyboard;
 const renderInviteCardText = render.renderInviteCardText;
 const renderInviteCardKeyboard = render.renderInviteCardKeyboard;
+const buildInviteMediaCard = render.buildInviteMediaCard;
 const renderInvitePerformanceText = render.renderInvitePerformanceText;
 const renderInvitePerformanceKeyboard = render.renderInvitePerformanceKeyboard;
 const renderInviteHistoryText = render.renderInviteHistoryText;
@@ -746,18 +747,22 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
       reason: String(error?.message || error)
     }));
 
+    const snapshot = {
+      ...state,
+      invitePhotoUrl: buildInvitePhotoUrl(appBaseUrl),
+      invitePhotoFileId,
+      inlineInviteCaption: renderInlineInviteCaption({ inviteState: state }),
+      inlineShareText: renderInlineInviteShareText({ inviteState: state })
+    };
+    const media = buildInviteMediaCard({ inviteState: snapshot, shareMode: 'forwarding' });
+
     return {
-      text: renderInviteCardText({ inviteState: state }),
-      reply_markup: renderInviteCardKeyboard({ inviteState: state }),
-      parse_mode: 'HTML',
+      text: renderInviteCardText({ inviteState: snapshot }),
+      reply_markup: renderInviteCardKeyboard({ inviteUrl: media.inviteUrl }),
+      parse_mode: media.parseMode,
       disable_web_page_preview: true,
-      snapshot: {
-        ...state,
-        invitePhotoUrl: buildInvitePhotoUrl(appBaseUrl),
-        invitePhotoFileId,
-        inlineInviteCaption: renderInlineInviteCaption({ inviteState: state }),
-        inlineShareText: renderInlineInviteShareText({ inviteState: state })
-      }
+      media,
+      snapshot
     };
   }
 

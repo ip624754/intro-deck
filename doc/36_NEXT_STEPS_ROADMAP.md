@@ -1,3 +1,31 @@
+# STEP064A rollout corridor
+
+1. Deploy STEP064A over the exact STEP063B-H2 baseline.
+2. Verify `/api/health` reports `STEP064A` and the invite share policy markers.
+3. Open `/invite` and confirm the simplified owner menu.
+4. Send one inline share card and one forwarding card.
+5. Confirm both public cards have one CTA and matching caption/image.
+6. Open both links and confirm `ii_` versus `ic_` source attribution.
+7. Verify Activity and full history navigation.
+8. Verify Points visibility/label for the active rewards mode.
+9. Inspect invite attribution/performance evidence; confirm reward accounting and activation rules are unchanged.
+10. Roll back to exact STEP063B-H2 FULL on attribution, media, navigation, or callback regression.
+
+Do not route Telegram invite CTA through the website until a web join route preserves personal attribution end-to-end.
+
+---
+
+# STEP063B-H2 relevance hardening corridor
+
+1. Deploy STEP063B-H2 over exact H1R1 baseline.
+2. Verify health policy markers.
+3. Run one bounded `For you` search and accept either strong candidates or a truthful no-result.
+4. Confirm telemetry query plan and rejection counters.
+5. Confirm browse-only `new_drafts=0`.
+6. Do not expand providers or generator rollout until production relevance evidence passes.
+
+---
+
 # STEP063B-H1R1 remediation corridor
 
 1. Apply migration 036 and deploy the exact H1R1 artifact.

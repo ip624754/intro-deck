@@ -199,7 +199,7 @@ export function createInviteComposer({
   });
 
 
-  composer.callbackQuery('invite:perf', async (ctx) => {
+  composer.callbackQuery(/^invite:(?:perf|activity)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     await renderInvitePerformance(ctx, 'edit');
   });
@@ -302,9 +302,29 @@ export function createInviteComposer({
   });
 
   composer.callbackQuery('invite:send_card', async (ctx) => {
-    await ctx.answerCallbackQuery('Invite card sent below. Forward it to a contact if you prefer a card.');
+    await ctx.answerCallbackQuery('Forwarding card sent below.');
     const card = await buildInviteCardMessage(ctx);
-    await ctx.reply(card.text, { reply_markup: card.reply_markup, parse_mode: 'HTML', disable_web_page_preview: true });
+    const media = card.media || null;
+    const photo = media?.photoFileId || media?.photoUrl || null;
+
+    if (photo && typeof ctx.replyWithPhoto === 'function') {
+      try {
+        await ctx.replyWithPhoto(photo, {
+          caption: media.caption,
+          parse_mode: media.parseMode || 'HTML',
+          reply_markup: media.replyMarkup
+        });
+        return;
+      } catch (error) {
+        console.warn('[invite] forwarding photo card failed; using text fallback', error?.message || error);
+      }
+    }
+
+    await ctx.reply(card.text, {
+      reply_markup: card.reply_markup,
+      parse_mode: card.parse_mode || 'HTML',
+      disable_web_page_preview: true
+    });
   });
 
   composer.inlineQuery(/^invite(?:\s+.*)?$/i, async (ctx) => {

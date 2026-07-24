@@ -75,13 +75,13 @@ if (!inviteKeyboard.includes('invite:points')) {
   throw new Error('Invite root keyboard must expose Points entry');
 }
 
-const perfKeyboard = JSON.stringify(renderInvitePerformanceKeyboard({}).inline_keyboard);
+const perfKeyboard = JSON.stringify(renderInvitePerformanceKeyboard({ inviteState: { rewardsSummary: { mode: 'earn_only' } } }).inline_keyboard);
 if (!perfKeyboard.includes('invite:points')) {
   throw new Error('Invite performance keyboard must expose Points entry');
 }
 
 const historyKeyboard = JSON.stringify(renderInviteHistoryKeyboard({
-  inviteState: { invitedCount: 0, shareInlineQuery: 'invite' },
+  inviteState: { invitedCount: 0, shareInlineQuery: 'invite', rewardsSummary: { mode: 'earn_only' } },
   historyState: { page: 1, hasPrev: false, hasNext: false }
 }).inline_keyboard);
 if (!historyKeyboard.includes('invite:points')) {
@@ -89,7 +89,7 @@ if (!historyKeyboard.includes('invite:points')) {
 }
 
 const rewardsKeyboard = JSON.stringify(renderInviteRewardsKeyboard().inline_keyboard);
-for (const token of ['invite:root', 'invite:perf', 'invite:hist:1']) {
+for (const token of ['invite:root', 'invite:activity', 'invite:hist:1']) {
   if (!rewardsKeyboard.includes(token)) {
     throw new Error(`Points keyboard missing ${token}`);
   }
@@ -124,8 +124,8 @@ const inviteText = renderInviteText({
     rewardsSummary: { mode: 'earn_only', pendingPoints: 10, availablePoints: 0 }
   }
 });
-if (!inviteText.includes('<b>Points preview</b>') || !inviteText.includes('Points — pending, available, redeemed')) {
-  throw new Error('Invite root text must preview points and link users to the read surface');
+if (!inviteText.includes('Available points: 0') || !inviteText.includes('Invite activity and rewards are tracked automatically')) {
+  throw new Error('Invite root text must show bounded rewards context without dense navigation copy');
 }
 
 const currentState = readFileSync(currentStatePath, 'utf8');
