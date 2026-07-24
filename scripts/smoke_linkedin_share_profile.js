@@ -130,7 +130,7 @@ assert.equal(statePayload.shareIntentToken, shareToken);
 const previewText = renderLinkedInSharePreviewText({
   intent: { post_text: postText, visibility: 'PUBLIC' }
 });
-assert.match(previewText, /Nothing is published until/);
+assert.match(previewText, /Nothing is published (?:until|yet)/);
 assert.match(previewText, /One approval can create at most one provider post/);
 assert.match(previewText, /does not store the OAuth access token/);
 const previewKeyboard = renderLinkedInSharePreviewKeyboard({

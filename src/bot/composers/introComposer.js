@@ -123,7 +123,7 @@ export function createIntroComposer({
         reason: String(error?.message || error)
       }));
 
-      notice = `✅ Accepted intro request from ${result.introRequest?.display_name || 'this member'}. If you set a public LinkedIn URL, the requester can now open it from their accepted intro row.`;
+      notice = `✅ Accepted the intro from ${result.introRequest?.display_name || 'this member'}. If you added a public LinkedIn URL, it is now shared with this requester. Your Telegram contact remains hidden.`;
       if (receiptResult?.sent) {
         notice += ' The requester received a Telegram notice.';
       } else if (receiptResult?.duplicate) {
@@ -145,7 +145,7 @@ export function createIntroComposer({
         reason: String(error?.message || error)
       }));
 
-      notice = `✅ Declined intro request from ${result.introRequest?.display_name || 'this member'}.`;
+      notice = `✅ Declined the intro from ${result.introRequest?.display_name || 'this member'}. No contact details were shared.`;
       if (receiptResult?.sent) {
         notice += ' The requester received a Telegram notice.';
       } else if (receiptResult?.duplicate) {

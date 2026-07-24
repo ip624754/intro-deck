@@ -15,6 +15,7 @@ import {
   sourceMatchLabel,
   sourceQualityLabel
 } from './memberCopy.js';
+import { TRANSACTION_BUTTONS, TRANSACTION_DISCLOSURES } from './transactionCopy.js';
 
 function value(value, fallback = '—') {
   const text = String(value ?? '').trim();
@@ -324,7 +325,8 @@ export function renderAiNewsDraftText({ draft, notice = null }) {
     `Status: ${value(draft.status)}`,
     `Edited by member: ${draft.edited_by_user ? 'yes' : 'no'}`,
     '',
-    'Review every claim. Publishing still requires a separate explicit LinkedIn authorization.'
+    'Review every claim.',
+    TRANSACTION_DISCLOSURES.draftApproval
   ];
   if (notice) lines.push('', notice);
   return lines.join('\n');
@@ -335,11 +337,11 @@ export function renderAiNewsDraftKeyboard({ draft }) {
   if (draft?.status === 'draft') {
     rows.push([
       { text: '✏️ Edit text', callback_data: `news:edit:${draft.public_token}` },
-      { text: '✅ Approve', callback_data: `news:approve:${draft.public_token}` }
+      { text: TRANSACTION_BUTTONS.approveDraftForLinkedIn, callback_data: `news:approve:${draft.public_token}` }
     ]);
-    rows.push([{ text: '🗑 Cancel draft', callback_data: `news:cancel:${draft.public_token}` }]);
+    rows.push([{ text: TRANSACTION_BUTTONS.cancelDraft, callback_data: `news:cancel:${draft.public_token}` }]);
   }
-  if (draft?.status === 'share_ready') rows.push([{ text: 'Continue LinkedIn authorization', callback_data: `news:approve:${draft.public_token}` }]);
+  if (draft?.status === 'share_ready') rows.push([{ text: 'Continue to LinkedIn authorization', callback_data: `news:approve:${draft.public_token}` }]);
   rows.push([{ text: '← Back to story finder', callback_data: 'news:home' }]);
   return { inline_keyboard: rows };
 }
@@ -349,7 +351,7 @@ export function renderAiNewsPublishAuthorizationText({ draft, shareIntent }) {
     '✅ Draft approved for LinkedIn authorization',
     '',
     'This is still not published.',
-    'Open LinkedIn, review the permission request, and explicitly authorize this one post.',
+    TRANSACTION_DISCLOSURES.linkedinAuthorization,
     '',
     `Source: ${value(draft?.source_title)}`,
     `Visibility: ${value(shareIntent?.visibility, 'PUBLIC')}`,
@@ -361,7 +363,7 @@ export function renderAiNewsPublishAuthorizationText({ draft, shareIntent }) {
 export function renderAiNewsPublishAuthorizationKeyboard({ publishUrl, draftToken }) {
   return {
     inline_keyboard: [
-      [{ text: '↗ Authorize one LinkedIn post', url: publishUrl }],
+      [{ text: TRANSACTION_BUTTONS.authorizeAndPublishPost, url: publishUrl }],
       [{ text: '← Back to draft', callback_data: `news:draft:${draftToken}` }]
     ]
   };

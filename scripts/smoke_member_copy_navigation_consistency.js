@@ -20,7 +20,7 @@ import { renderAiNewsHubText, renderAiNewsSourcesText } from '../src/lib/telegra
 import { formatUserFacingError } from '../src/bot/utils/notices.js';
 import { buildPersistenceSummary } from '../src/lib/linkedin/profile.js';
 
-assert.equal(CURRENT_SOURCE_STEP, 'STEP064B1');
+assert.ok(['STEP064B1', 'STEP064B2'].includes(CURRENT_SOURCE_STEP));
 
 const profile = {
   linkedin_sub: 'sub', linkedin_name: 'Rustam', display_name: 'Rustam Lukmanov',

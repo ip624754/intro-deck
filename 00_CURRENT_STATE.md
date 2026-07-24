@@ -1,3 +1,15 @@
+# Current canonical step — STEP064B2
+
+- Package: `0.64.2`
+- Baseline: STEP064B1 FULL SHA-256 `7552952ba134444dbfa6ed6205bf7b9d4cef9c508750b36f39ed73dd6d245dd3`
+- Critical consent, payment, contact-reveal, and LinkedIn publication CTA copy is now object-specific and consequence-explicit.
+- Callback IDs, money logic, consent state machines, and the LinkedIn publisher are unchanged.
+- No migration or new ENV.
+- Source QA: 101/119 PASS versus baseline 100/118; inherited NON_PASS 18; new regressions 0.
+- Production deployment: not verified.
+
+---
+
 # Current canonical step — STEP064B1
 
 - Package: `0.64.1`

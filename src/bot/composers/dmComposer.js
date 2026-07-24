@@ -11,6 +11,7 @@ import {
   parseDmInvoicePayload
 } from '../../lib/storage/dmStore.js';
 import { formatDmDecisionReason, formatDmRequestReason, formatUserFacingError } from '../utils/notices.js';
+import { TRANSACTION_DISCLOSURES, paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
 
 async function sendDmInvoice(ctx, invoice) {
   return ctx.api.raw.sendInvoice({
@@ -81,9 +82,9 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       `💬 Private-chat request to ${result.target?.display_name || 'this member'}`,
       '',
       'Reply with the first message now.',
-      'Recipient approval is required before the conversation becomes active.',
+      'The conversation opens only if the recipient accepts.',
       'After you send the message, you can pay to deliver this permission request.',
-      'Payment does not guarantee approval or reply, and decline alone does not trigger an automatic refund.'
+      TRANSACTION_DISCLOSURES.requestDeliveryPayment
     ].join('\n'));
   });
 
@@ -157,7 +158,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
 
     try {
       await sendDmInvoice(ctx, result.invoice);
-      await ctx.answerCallbackQuery({ text: `Invoice sent • ${result.invoice.amountStars}⭐` });
+      await ctx.answerCallbackQuery({ text: paymentSheetOpenedNotice(result.invoice.amountStars) });
     } catch (error) {
       await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, 'Could not open the DM payment sheet right now.') });
     }
@@ -187,13 +188,13 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     if (!result.persistenceEnabled) {
       notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.changed && result.reason === 'dm_thread_accepted') {
-      notice = `✅ Accepted private-chat request from ${result.thread?.display_name || 'this member'}. The conversation is now active.`;
+      notice = `✅ Accepted the chat request from ${result.thread?.display_name || 'this member'}. The private conversation is now active.`;
     } else if (result.changed && result.reason === 'dm_thread_declined') {
-      notice = `✅ Declined private-chat request from ${result.thread?.display_name || 'this member'}.`;
+      notice = `✅ Declined the chat request from ${result.thread?.display_name || 'this member'}. No conversation was opened.`;
     } else if (result.changed && result.reason === 'dm_thread_reported') {
-      notice = '✅ Reported and blocked this private-chat request.';
+      notice = '✅ Reported the request and blocked this member from this chat path.';
     } else if (result.changed && result.reason === 'dm_thread_blocked') {
-      notice = '✅ Blocked this private-chat request.';
+      notice = '✅ Blocked this member from this chat path.';
     } else if (result.duplicate) {
       notice = `ℹ️ ${formatDmDecisionReason(result.reason)}`;
     } else if (result.blocked) {
@@ -255,7 +256,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (result.changed) {
-      await ctx.reply('✅ Request-delivery fee confirmed. The recipient now decides whether to accept the private-chat request. Approval or reply is not guaranteed, and decline alone does not trigger an automatic refund.', {
+      await ctx.reply(`✅ Payment confirmed. Your private-chat request was delivered. ${TRANSACTION_DISCLOSURES.requestDeliveryPayment}`, {
         reply_markup: {
           inline_keyboard: [
             [{ text: '💬 Private chats', callback_data: 'dm:inbox' }],
@@ -271,7 +272,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       return;
     }
 
-    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'Could not finalize this DM payment right now.')}`);
+    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'The private-chat payment was received, but the request could not be finalized. Do not pay again. Contact support.')}`);
   });
 
   return composer;

@@ -28,6 +28,11 @@ import {
   profileVisibilityLabel,
   sanitizeMemberNotice
 } from './memberCopy.js';
+import {
+  TRANSACTION_BUTTONS,
+  TRANSACTION_DISCLOSURES,
+  payPrivateChatDeliveryButton
+} from './transactionCopy.js';
 
 function buildInlineKeyboard(rows) {
   return {
@@ -498,7 +503,7 @@ export function renderIntroNotificationText({ eventType = null, introRequest = n
       `${member} wants to connect.`,
       headline,
       '',
-      'Open the intro inbox or review this request directly.'
+      TRANSACTION_DISCLOSURES.introAcceptance
     ].join('\n');
   }
 
@@ -509,7 +514,7 @@ export function renderIntroNotificationText({ eventType = null, introRequest = n
       `${member} accepted your intro request.`,
       headline,
       '',
-      'Open the intro detail to review the current contact outcome.'
+      'Open the intro detail to see whether a public LinkedIn URL was shared.'
     ].join('\n');
   }
 
@@ -520,7 +525,7 @@ export function renderIntroNotificationText({ eventType = null, introRequest = n
       `${member} declined your intro request.`,
       headline,
       '',
-      'Open the intro detail to review the final state.'
+      'No contact details were shared through this intro.'
     ].join('\n');
   }
 
@@ -549,7 +554,7 @@ export function renderIntroNotificationKeyboard({ eventType = null, introRequest
 
 function introStatusNote(item) {
   if (item?.role === 'received' && item?.status === 'pending') {
-    return 'You can accept or decline this intro request.';
+    return TRANSACTION_DISCLOSURES.introAcceptance;
   }
 
   if (item?.role === 'received' && item?.status === 'accepted') {
@@ -847,7 +852,7 @@ export function renderPricingKeyboard({ pricingState = null } = {}) {
   const rows = [];
   if (state.persistenceEnabled) {
     if (subscription?.isActive) rows.push([{ text: `✅ Pro active until ${formatDateShort(subscription.expiresAt)}`, callback_data: 'plans:root' }]);
-    else rows.push([{ text: `⭐ Get Pro · ${pricing.proMonthlyPriceStars || 0}⭐`, callback_data: 'plans:buy:pro' }]);
+    else rows.push([{ text: `⭐ Buy 30 days of Pro · ${pricing.proMonthlyPriceStars || 0}⭐`, callback_data: 'plans:buy:pro' }]);
   }
   rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
@@ -980,13 +985,14 @@ export function renderLinkedInSharePreviewText({ intent = null, notice = null } 
   const lines = [
     '📣 Share profile on LinkedIn',
     '',
-    'Review the exact post below. Nothing is published until you open LinkedIn and explicitly approve this one share.',
+    'Review the exact post below. Nothing is published yet.',
     '',
     '——— LinkedIn post preview ———',
     intent?.post_text || 'Share draft is unavailable.',
     '——— End preview ———',
     '',
     `Visibility: ${intent?.visibility || 'PUBLIC'}`,
+    TRANSACTION_DISCLOSURES.linkedinAuthorization,
     '• One approval can create at most one provider post.',
     '• Intro Deck does not store the OAuth access token used for publishing.',
     '• If LinkedIn returns an uncertain result, automatic retry is blocked to prevent duplicates.'
@@ -1000,10 +1006,10 @@ export function renderLinkedInSharePreviewText({ intent = null, notice = null } 
 export function renderLinkedInSharePreviewKeyboard({ publishUrl = null, publicToken = null } = {}) {
   const rows = [];
   if (publishUrl) {
-    rows.push([{ text: '✅ Approve and publish on LinkedIn', url: publishUrl }]);
+    rows.push([{ text: TRANSACTION_BUTTONS.authorizeAndPublishPost, url: publishUrl }]);
   }
   if (publicToken) {
-    rows.push([{ text: '✖️ Cancel this share', callback_data: `li:share:cancel:${publicToken}` }]);
+    rows.push([{ text: TRANSACTION_BUTTONS.cancelLinkedInShare, callback_data: `li:share:cancel:${publicToken}` }]);
   }
   rows.push([
     { text: '↩️ Profile preview', callback_data: 'p:prev' },
@@ -1450,8 +1456,8 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
 
     if (item?.status === 'pending') {
       rows.push([
-        { text: '✅ Accept', callback_data: `intro:acc:${item?.intro_request_id || 0}` },
-        { text: '❌ Decline', callback_data: `intro:dec:${item?.intro_request_id || 0}` }
+        { text: TRANSACTION_BUTTONS.acceptIntro, callback_data: `intro:acc:${item?.intro_request_id || 0}` },
+        { text: TRANSACTION_BUTTONS.declineIntro, callback_data: `intro:dec:${item?.intro_request_id || 0}` }
       ]);
     }
   }
@@ -1464,7 +1470,7 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
     ]);
 
     if (canOpenAcceptedTargetLinkedIn(item)) {
-      rows.push([{ text: '🔓 Open contact', url: item.linkedin_public_url.trim() }]);
+      rows.push([{ text: TRANSACTION_BUTTONS.openSharedLinkedIn, url: item.linkedin_public_url.trim() }]);
     }
   }
 
@@ -1474,8 +1480,8 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
     rows.push([{ text: `🔐 ${index + 1}. ${label}`, callback_data: `cu:view:${item?.contact_unlock_request_id || 0}` }]);
     if (item?.status === 'paid_pending_approval') {
       rows.push([
-        { text: '✅ Approve', callback_data: `cu:acc:${item?.contact_unlock_request_id || 0}` },
-        { text: '❌ Decline', callback_data: `cu:dec:${item?.contact_unlock_request_id || 0}` }
+        { text: TRANSACTION_BUTTONS.shareTelegramContact, callback_data: `cu:acc:${item?.contact_unlock_request_id || 0}` },
+        { text: TRANSACTION_BUTTONS.declineTelegramContact, callback_data: `cu:dec:${item?.contact_unlock_request_id || 0}` }
       ]);
     }
   }
@@ -1485,7 +1491,7 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
     rows.push([{ text: `⭐ ${index + 1}. ${label}`, callback_data: `cu:view:${item?.contact_unlock_request_id || 0}` }]);
     if (item?.status === 'revealed' && item?.revealed_contact_value) {
       const clean = String(item.revealed_contact_value).replace(/^@+/, '');
-      rows.push([{ text: '🔓 Open contact', url: `https://t.me/${clean}` }]);
+      rows.push([{ text: TRANSACTION_BUTTONS.openTelegramContact, url: `https://t.me/${clean}` }]);
     }
   }
 
@@ -1501,7 +1507,7 @@ export function renderIntroDetailText({ persistenceEnabled = false, introRequest
   const lines = [
     '🧾 Intro request',
     '',
-    'Review the current state of this intro and any unlocked contact details.'
+    'Review this intro and the exact contact outcome.'
   ];
 
   if (!persistenceEnabled) {
@@ -1540,6 +1546,9 @@ export function renderIntroDetailText({ persistenceEnabled = false, introRequest
 
     lines.push('');
     lines.push(introStatusNote(introRequest));
+    if (introRequest.role === 'received' && introRequest.status === 'pending') {
+      lines.push('Choose Accept intro only if you want to share the contact outcome described above.');
+    }
   }
 
   if (notice) {
@@ -1562,13 +1571,13 @@ export function renderIntroDetailKeyboard({ introRequest = null } = {}) {
   }
 
   if (canOpenAcceptedTargetLinkedIn(introRequest)) {
-    rows.push([{ text: '🔓 Open contact', url: introRequest.linkedin_public_url.trim() }]);
+    rows.push([{ text: TRANSACTION_BUTTONS.openSharedLinkedIn, url: introRequest.linkedin_public_url.trim() }]);
   }
 
   if (introRequest?.role === 'received' && introRequest?.status === 'pending') {
     rows.push([
-      { text: '✅ Accept', callback_data: `intro:acc:${introRequest.intro_request_id}` },
-      { text: '❌ Decline', callback_data: `intro:dec:${introRequest.intro_request_id}` }
+      { text: TRANSACTION_BUTTONS.acceptIntro, callback_data: `intro:acc:${introRequest.intro_request_id}` },
+      { text: TRANSACTION_BUTTONS.declineIntro, callback_data: `intro:dec:${introRequest.intro_request_id}` }
     ]);
   }
 
@@ -1582,7 +1591,7 @@ export function renderContactUnlockDetailText({ persistenceEnabled = false, requ
   const lines = [
     '🔐 Telegram contact request',
     '',
-    'Review the current state of this direct Telegram contact request.'
+    'Review whether to reveal your hidden Telegram username to this requester.'
   ];
 
   if (!persistenceEnabled) {
@@ -1601,7 +1610,7 @@ export function renderContactUnlockDetailText({ persistenceEnabled = false, requ
     lines.push(request.pro_covered
       ? `Reference per-request price: ${Number.isFinite(Number(request.price_stars_snapshot)) ? `${request.price_stars_snapshot}⭐ • not charged` : '—'}`
       : `Request-delivery fee: ${Number.isFinite(Number(request.price_stars_snapshot)) ? `${request.price_stars_snapshot}⭐` : '—'}`);
-    lines.push('Contract: delivery of a permission request only • recipient approval is required • approval is not guaranteed.');
+    lines.push(TRANSACTION_DISCLOSURES.requestDeliveryPayment);
     lines.push(`Requested: ${formatDateShort(request.requested_at)}`);
     if (request.role === 'sent') {
       if (request.status === 'revealed' && request.revealed_contact_value) {
@@ -1613,7 +1622,7 @@ export function renderContactUnlockDetailText({ persistenceEnabled = false, requ
       }
     } else {
       lines.push(request.status === 'paid_pending_approval'
-        ? 'You can approve or decline this Telegram contact request.'
+        ? TRANSACTION_DISCLOSURES.telegramContactAcceptance
         : request.status === 'revealed'
           ? 'You approved this request and your hidden Telegram username was revealed to the requester.'
           : 'This Telegram contact request is no longer actionable.');
@@ -1636,14 +1645,14 @@ export function renderContactUnlockDetailKeyboard({ request = null } = {}) {
 
   if (request?.role === 'received' && request?.status === 'paid_pending_approval') {
     rows.push([
-      { text: '✅ Approve', callback_data: `cu:acc:${request.contact_unlock_request_id}` },
-      { text: '❌ Decline', callback_data: `cu:dec:${request.contact_unlock_request_id}` }
+      { text: TRANSACTION_BUTTONS.shareTelegramContact, callback_data: `cu:acc:${request.contact_unlock_request_id}` },
+      { text: TRANSACTION_BUTTONS.declineTelegramContact, callback_data: `cu:dec:${request.contact_unlock_request_id}` }
     ]);
   }
 
   if (request?.role === 'sent' && request?.status === 'revealed' && request?.revealed_contact_value) {
     const clean = String(request.revealed_contact_value).replace(/^@+/, '');
-    rows.push([{ text: '🔓 Open contact', url: `https://t.me/${clean}` }]);
+    rows.push([{ text: TRANSACTION_BUTTONS.openTelegramContact, url: `https://t.me/${clean}` }]);
   }
 
   rows.push([{ text: '↩️ Back to inbox', callback_data: 'intro:inbox' }]);
@@ -1702,8 +1711,8 @@ export function renderDmInboxKeyboard({ inboxState = null } = {}) {
     rows.push([{ text: `📨 ${index + 1}. ${label}`, callback_data: `dm:view:${item?.dm_thread_id || 0}` }]);
     if (item?.status === 'pending_recipient') {
       rows.push([
-        { text: '✅ Accept', callback_data: `dm:acc:${item?.dm_thread_id || 0}` },
-        { text: '❌ Decline', callback_data: `dm:dec:${item?.dm_thread_id || 0}` }
+        { text: TRANSACTION_BUTTONS.acceptPrivateChat, callback_data: `dm:acc:${item?.dm_thread_id || 0}` },
+        { text: TRANSACTION_BUTTONS.declinePrivateChat, callback_data: `dm:dec:${item?.dm_thread_id || 0}` }
       ]);
     }
   }
@@ -1723,7 +1732,7 @@ export function renderDmThreadText({ persistenceEnabled = false, thread = null, 
   const lines = [
     '🧾 Private chat',
     '',
-    'Review the current private-chat request state and continue the conversation when active.'
+    'Review whether to open a private conversation with this member.'
   ];
 
   if (!persistenceEnabled) {
@@ -1743,9 +1752,12 @@ export function renderDmThreadText({ persistenceEnabled = false, thread = null, 
       ? `Reference per-request price: ${Number.isFinite(Number(thread.price_stars_snapshot)) ? `${thread.price_stars_snapshot}⭐ • not charged` : '—'}`
       : `Request-delivery fee: ${Number.isFinite(Number(thread.price_stars_snapshot)) ? `${thread.price_stars_snapshot}⭐` : '—'}`);
     if (thread.status !== 'active') {
-      lines.push('Contract: delivery of a DM permission request only • recipient approval is required • approval or reply is not guaranteed.');
+      lines.push(TRANSACTION_DISCLOSURES.requestDeliveryPayment);
     }
     lines.push(`Created: ${formatDateShort(thread.created_at)}`);
+    if (thread.status === 'pending_recipient' && thread.role === 'received') {
+      lines.push(TRANSACTION_DISCLOSURES.privateChatAcceptance);
+    }
     if (thread.first_message_text) {
       lines.push('', `First message: ${truncate(thread.first_message_text, 280)}`);
     }
@@ -1768,17 +1780,17 @@ export function renderDmThreadKeyboard({ thread = null } = {}) {
 
   if (thread?.role === 'received' && thread?.status === 'pending_recipient') {
     rows.push([
-      { text: '✅ Accept', callback_data: `dm:acc:${thread.dm_thread_id}` },
-      { text: '❌ Decline', callback_data: `dm:dec:${thread.dm_thread_id}` }
+      { text: TRANSACTION_BUTTONS.acceptPrivateChat, callback_data: `dm:acc:${thread.dm_thread_id}` },
+      { text: TRANSACTION_BUTTONS.declinePrivateChat, callback_data: `dm:dec:${thread.dm_thread_id}` }
     ]);
     rows.push([
-      { text: '⛔ Block', callback_data: `dm:blk:${thread.dm_thread_id}` },
-      { text: '🚩 Report', callback_data: `dm:rpt:${thread.dm_thread_id}` }
+      { text: TRANSACTION_BUTTONS.blockRequester, callback_data: `dm:blk:${thread.dm_thread_id}` },
+      { text: TRANSACTION_BUTTONS.reportAndBlock, callback_data: `dm:rpt:${thread.dm_thread_id}` }
     ]);
   }
 
   if (thread?.role === 'sent' && thread?.status === 'payment_pending') {
-    rows.push([{ text: '⭐ Pay and deliver request', callback_data: `dm:pay:${thread.dm_thread_id}` }]);
+    rows.push([{ text: payPrivateChatDeliveryButton(thread.price_stars_snapshot), callback_data: `dm:pay:${thread.dm_thread_id}` }]);
   }
 
   if (thread?.status === 'active') {

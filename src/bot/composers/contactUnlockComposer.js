@@ -9,6 +9,7 @@ import {
   decideContactUnlockRequestForTelegramUser
 } from '../../lib/storage/contactUnlockStore.js';
 import { formatContactUnlockDecisionReason, formatContactUnlockRequestReason, formatUserFacingError } from '../utils/notices.js';
+import { TRANSACTION_DISCLOSURES, paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
 
 async function sendContactUnlockInvoice(ctx, invoice) {
   return ctx.api.raw.sendInvoice({
@@ -56,7 +57,7 @@ export function createContactUnlockComposer({
 
     if (result.autoCovered && result.request?.contact_unlock_request_id) {
       await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason) });
-      const surface = await buildContactUnlockDetailSurface(ctx, result.request.contact_unlock_request_id, '✅ Included in Pro. This request is now waiting for recipient approval.');
+      const surface = await buildContactUnlockDetailSurface(ctx, result.request.contact_unlock_request_id, '✅ Request sent with Pro. The recipient now decides whether to share their Telegram contact.');
       await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
       return;
     }
@@ -79,7 +80,7 @@ export function createContactUnlockComposer({
 
     try {
       await sendContactUnlockInvoice(ctx, result.invoice);
-      await ctx.answerCallbackQuery({ text: `Invoice sent • ${result.invoice.amountStars}⭐` });
+      await ctx.answerCallbackQuery({ text: paymentSheetOpenedNotice(result.invoice.amountStars) });
     } catch (error) {
       await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, 'Could not open the payment sheet right now.') });
     }
@@ -117,9 +118,9 @@ export function createContactUnlockComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.changed && result.reason === 'contact_unlock_revealed') {
-      notice = `✅ Approved Telegram contact request from ${result.request?.display_name || 'this member'}. Your hidden Telegram username is now revealed to the requester.`;
+      notice = `✅ Shared your Telegram contact with ${result.request?.display_name || 'this member'}. Your hidden username is now visible to this requester.`;
     } else if (result.changed && result.reason === 'contact_unlock_declined') {
-      notice = `✅ Declined Telegram contact request from ${result.request?.display_name || 'this member'}.`;
+      notice = `✅ Declined the Telegram contact request from ${result.request?.display_name || 'this member'}. Your username was not shared.`;
     } else if (result.duplicate) {
       notice = `ℹ️ ${formatContactUnlockDecisionReason(result.reason)}`;
     } else if (result.blocked) {
@@ -181,7 +182,7 @@ export function createContactUnlockComposer({
     }));
 
     if (result.changed) {
-      await ctx.reply('✅ Request-delivery fee confirmed. The recipient now decides whether to reveal contact. Approval is not guaranteed, and decline alone does not trigger an automatic refund.', {
+      await ctx.reply(`✅ Payment confirmed. Your Telegram contact request was delivered. ${TRANSACTION_DISCLOSURES.requestDeliveryPayment}`, {
         reply_markup: {
           inline_keyboard: [
             [{ text: '📥 Inbox', callback_data: 'intro:inbox' }],
@@ -197,7 +198,7 @@ export function createContactUnlockComposer({
       return;
     }
 
-    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'Could not finalize this Telegram contact payment right now.')}`);
+    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'The Telegram contact payment was received, but the request could not be finalized. Do not pay again. Contact support.')}`);
   });
 
   return composer;

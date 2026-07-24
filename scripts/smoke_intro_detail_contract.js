@@ -52,7 +52,7 @@ const receivedText = renderIntroDetailText({ persistenceEnabled: true, introRequ
 if (!receivedText.includes('Perspective: Received intro')) {
   throw new Error('Received detail must identify perspective');
 }
-if (!receivedText.includes('You can accept or decline this intro request.')) {
+if (!receivedText.includes('lets the requester open your public LinkedIn URL')) {
   throw new Error('Received pending detail must describe available decision path');
 }
 

@@ -15,6 +15,7 @@ import { upsertTelegramUser } from '../../db/usersRepo.js';
 import { sendTelegramMessage } from '../telegram/botApi.js';
 import { acquirePaymentChargeLock, createConfirmedPurchaseReceipt, findPurchaseReceiptByPaymentCharge, getProOutreachAllowance, getUserEntitlements } from '../../db/monetizationRepo.js';
 import { buildRequestFeeDisclosure, REQUEST_DELIVERY_FEE_POLICY } from '../contact/contract.js';
+import { TRANSACTION_BUTTONS, TRANSACTION_DISCLOSURES } from '../telegram/transactionCopy.js';
 
 export function buildContactUnlockInvoicePayload(requestId) {
   return `cu:${requestId}`;
@@ -40,13 +41,13 @@ function buildOwnerNotification(request) {
         : `${request.requester_display_name || 'A member'} paid to deliver a direct Telegram contact request.`,
       request.requester_headline_user ? `Headline: ${request.requester_headline_user}` : null,
       '',
-      'Review the request and approve or decline it.'
+      TRANSACTION_DISCLOSURES.telegramContactAcceptance
     ].filter(Boolean).join('\n'),
     replyMarkup: {
       inline_keyboard: [
         [
-          { text: '✅ Approve', callback_data: `cu:acc:${request.contact_unlock_request_id}` },
-          { text: '❌ Decline', callback_data: `cu:dec:${request.contact_unlock_request_id}` }
+          { text: TRANSACTION_BUTTONS.shareTelegramContact, callback_data: `cu:acc:${request.contact_unlock_request_id}` },
+          { text: TRANSACTION_BUTTONS.declineTelegramContact, callback_data: `cu:dec:${request.contact_unlock_request_id}` }
         ],
         [{ text: '🧾 Open request', callback_data: `cu:view:${request.contact_unlock_request_id}` }]
       ]
@@ -81,11 +82,11 @@ function buildRequesterRevealNotification(request) {
       '✅ Telegram contact approved',
       '',
       `Telegram username: @${clean}`,
-      'You can now open the direct contact in Telegram.'
+      'Open Telegram contact below. This approval does not open a chat inside Intro Deck.'
     ].join('\n'),
     replyMarkup: {
       inline_keyboard: [
-        [{ text: '🔓 Open contact', url: `https://t.me/${clean}` }],
+        [{ text: TRANSACTION_BUTTONS.openTelegramContact, url: `https://t.me/${clean}` }],
         [{ text: '🧾 View request', callback_data: `cu:view:${request.contact_unlock_request_id}` }]
       ]
     }
@@ -297,10 +298,10 @@ export async function beginContactUnlockPaymentForTelegramUser({ telegramUserId,
       ? {
         payload: buildContactUnlockInvoicePayload(request.contact_unlock_request_id),
         amountStars: request.price_stars_snapshot,
-        title: 'Telegram contact request',
+        title: 'Telegram contact permission request',
         description: buildRequestFeeDisclosure({
           amountStars: request.price_stars_snapshot,
-          actionLabel: 'direct-contact permission request',
+          actionLabel: 'Telegram contact request',
           recipientName: target?.display_name || 'this member'
         })
       }

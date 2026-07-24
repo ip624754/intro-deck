@@ -170,7 +170,7 @@ const hubText = renderAiNewsHubText({
 assert.match(hubText, /Nothing is published automatically/);
 const draftText = renderAiNewsDraftText({ draft: { ...source, post_text: postText, status: 'draft', model_name: 'gpt-5.6-luna', edited_by_user: false } });
 assert.match(draftText, /Review every claim/);
-assert.match(draftText, /explicit LinkedIn authorization/);
+assert.match(draftText, /(?:explicit|separate) LinkedIn authorization/);
 
 assert.doesNotMatch(renderHelpText(), /Story finder/);
 assert.doesNotMatch(JSON.stringify(renderHelpKeyboard()), /news:home/);

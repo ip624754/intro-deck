@@ -22,6 +22,7 @@ import { sendTelegramMessage } from '../telegram/botApi.js';
 import { acquirePaymentChargeLock, createConfirmedPurchaseReceipt, findPurchaseReceiptByPaymentCharge, getProOutreachAllowance, getUserEntitlements } from '../../db/monetizationRepo.js';
 import { buildRequestFeeDisclosure, CONTACT_POLICY_SNAPSHOT, PAID_CONTACT_MODE, REQUEST_DELIVERY_FEE_POLICY } from '../contact/contract.js';
 import { normalizeProfileFieldValue } from '../profile/contract.js';
+import { TRANSACTION_BUTTONS, TRANSACTION_DISCLOSURES } from '../telegram/transactionCopy.js';
 
 const DM_COMPOSE_TTL_MINUTES = 20;
 
@@ -57,17 +58,17 @@ function buildDmRequestNotification(envelope) {
       '',
       `Message: ${envelope.first_message_text}`,
       '',
-      'Recipient approval is required before this becomes an active conversation.'
+      TRANSACTION_DISCLOSURES.privateChatAcceptance
     ].filter(Boolean).join('\n'),
     replyMarkup: {
       inline_keyboard: [
         [
-          { text: '✅ Accept', callback_data: `dm:acc:${envelope.dm_thread_id}` },
-          { text: '❌ Decline', callback_data: `dm:dec:${envelope.dm_thread_id}` }
+          { text: TRANSACTION_BUTTONS.acceptPrivateChat, callback_data: `dm:acc:${envelope.dm_thread_id}` },
+          { text: TRANSACTION_BUTTONS.declinePrivateChat, callback_data: `dm:dec:${envelope.dm_thread_id}` }
         ],
         [
-          { text: '⛔ Block', callback_data: `dm:blk:${envelope.dm_thread_id}` },
-          { text: '🚩 Report', callback_data: `dm:rpt:${envelope.dm_thread_id}` }
+          { text: TRANSACTION_BUTTONS.blockRequester, callback_data: `dm:blk:${envelope.dm_thread_id}` },
+          { text: TRANSACTION_BUTTONS.reportAndBlock, callback_data: `dm:rpt:${envelope.dm_thread_id}` }
         ],
         [{ text: '🧾 Open request', callback_data: `dm:view:${envelope.dm_thread_id}` }]
       ]
@@ -78,10 +79,10 @@ function buildDmRequestNotification(envelope) {
 function buildDmDecisionNotification(thread, reason) {
   const lines = ['💬 Private-chat request update', ''];
   if (reason === 'dm_thread_accepted') {
-    lines.push(`${thread.display_name || 'This member'} accepted your private-chat request.`);
+    lines.push(`${thread.display_name || 'This member'} accepted your chat request.`);
     lines.push('The conversation is now active inside the bot.');
   } else if (reason === 'dm_thread_declined') {
-    lines.push(`${thread.display_name || 'This member'} declined your private-chat request.`);
+    lines.push(`${thread.display_name || 'This member'} declined your chat request.`);
     lines.push('No active conversation was opened. A decline does not trigger an automatic refund of the request-delivery fee.');
   } else if (reason === 'dm_thread_reported') {
     lines.push('Your private-chat request was reported and blocked.');
@@ -564,10 +565,10 @@ export async function getDmThreadInvoiceForTelegramUser({ telegramUserId, telegr
     const invoice = {
       payload: buildDmInvoicePayload(threadId),
       amountStars: envelope.price_stars_snapshot,
-      title: 'DM permission request',
+      title: 'Private-chat permission request',
       description: buildRequestFeeDisclosure({
         amountStars: envelope.price_stars_snapshot,
-        actionLabel: 'DM permission request',
+        actionLabel: 'private-chat request',
         recipientName: envelope.recipient_display_name || 'this member'
       })
     };

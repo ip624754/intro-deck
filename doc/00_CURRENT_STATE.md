@@ -1,3 +1,15 @@
+# Current canonical step — STEP064B2
+
+- Source step `STEP064B2`, package `0.64.2`.
+- Critical consent, payment, contact-reveal, draft-approval, and LinkedIn-publication actions use object-specific consequence-explicit copy.
+- Payment copy names the request-delivery fee, preserves recipient discretion, and states that decline or no reply does not create an automatic refund.
+- Draft approval is separate from the final one-shot LinkedIn authorization.
+- Callback IDs, money logic, consent state machines, and the STEP059 publisher are unchanged.
+- No migration or new ENV.
+- Source QA passed; production acceptance remains pending.
+
+---
+
 # Current canonical step — STEP064B1
 
 - Source step `STEP064B1`, package `0.64.1`.

@@ -1,3 +1,15 @@
+# Latest handoff — STEP064B2
+
+Canonical candidate: STEP064B2 over exact STEP064B1 baseline SHA-256 `7552952ba134444dbfa6ed6205bf7b9d4cef9c508750b36f39ed73dd6d245dd3`.
+
+Implemented: one canonical transaction-copy contract; object-specific intro/contact/chat/draft/publication CTAs; exact request-delivery payment disclosures; clear stale/replay outcomes. No migration or ENV change. Callback IDs, payment amounts, refund policy, consent transitions, and the LinkedIn publisher are unchanged.
+
+QA: `npm run check` PASS; full smoke 101 PASS / 18 inherited NON_PASS / 119 total; baseline PASS → candidate NON_PASS = 0. Production not verified.
+
+Next action: deploy and run `doc/99_STEP064B2_OPERATOR_ROLLOUT.md`. After acceptance, proceed to STEP064B3.
+
+---
+
 # Latest handoff — STEP064B1
 
 Canonical candidate: STEP064B1 over exact STEP064A baseline SHA-256 `4ce8b99159022dd8209ced89c3719cd894dbec478687b09b09ee08b7c81d7d0b`.

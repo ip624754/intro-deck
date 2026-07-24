@@ -1,9 +1,8 @@
-# Current roadmap position — after STEP064B1
+# Current roadmap position — after STEP064B2
 
-1. Deploy STEP064B1 and complete the member-surface copy/navigation acceptance.
-2. STEP064B2: critical transaction copy and exact CTA semantics for payments, consent, and LinkedIn publication.
-3. STEP064B3: admin language and diagnostic consistency.
-4. STEP064B4: separate interface language from post language.
+1. Deploy STEP064B2 and complete critical consent/payment/publication copy acceptance.
+2. STEP064B3: admin language and diagnostic consistency.
+3. STEP064B4: separate interface language from post language.
 
 Do not combine these into one broad rewrite.
 

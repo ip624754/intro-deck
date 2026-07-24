@@ -21,7 +21,7 @@ export function formatDmRequestReason(reason) {
     case 'dm_request_throttled':
       return 'Please wait a moment before opening the same private-chat request again.';
     case 'dm_payment_already_confirmed':
-      return 'This private-chat request was already paid.';
+      return 'This private-chat request was already paid. Open the latest request state; do not pay again.';
     case 'dm_thread_not_ready_for_payment':
       return 'Save your first message before paying for this private-chat request.';
     case 'dm_thread_not_owned_by_user':
@@ -39,11 +39,11 @@ export function formatDmRequestReason(reason) {
     case 'pro_outreach_daily_limit_reached':
       return 'Your Pro fair-use allowance for the rolling 24-hour window is used. Try again later or pay per request.';
     case 'contact_contract_requires_migration':
-      return 'Contact requests are temporarily unavailable until the contact-contract migration is applied.';
+      return 'Contact requests are temporarily unavailable. Try again later.';
     case 'dm_checkout_already_in_progress':
       return 'Another checkout for this private-chat request is already in progress. Wait briefly before retrying.';
     case 'dm_checkout_authorization_missing_or_expired':
-      return 'This checkout is no longer authorized. Reopen the request and try again.';
+      return 'This payment request expired. Open the latest request and start payment again.';
     case 'payment_charge_replay_detected':
       return 'This payment charge is already linked to another purchase. Contact support before retrying.';
     case 'payment_currency_mismatch':
@@ -64,9 +64,9 @@ export function formatDmDecisionReason(reason) {
     case 'dm_invalid_decision':
       return 'That private-chat decision is not supported.';
     case 'dm_thread_already_active':
-      return 'This private chat is already active.';
+      return 'This button is no longer active. The private chat is already open.';
     case 'dm_thread_already_declined':
-      return 'This private-chat request was already declined.';
+      return 'This button is no longer active. The chat request was already declined.';
     case 'dm_thread_blocked':
       return 'This private-chat path is blocked.';
     case 'dm_thread_not_ready_for_decision':
@@ -99,7 +99,7 @@ export function formatContactUnlockRequestReason(reason) {
     case 'contact_unlock_request_throttled':
       return 'Please wait a moment before sending the same Telegram contact request again.';
     case 'contact_unlock_payment_already_confirmed':
-      return 'This Telegram contact request was already paid.';
+      return 'This Telegram contact request was already paid. Open the latest request state; do not pay again.';
     case 'contact_unlock_request_not_ready_for_payment':
       return 'This Telegram contact request is not ready for payment.';
     case 'contact_unlock_request_not_owned_by_user':
@@ -115,11 +115,11 @@ export function formatContactUnlockRequestReason(reason) {
     case 'pro_outreach_daily_limit_reached':
       return 'Your Pro fair-use allowance for the rolling 24-hour window is used. Try again later or pay per request.';
     case 'contact_contract_requires_migration':
-      return 'Contact requests are temporarily unavailable until the contact-contract migration is applied.';
+      return 'Contact requests are temporarily unavailable. Try again later.';
     case 'contact_checkout_already_in_progress':
       return 'Another checkout for this Telegram-contact request is already in progress. Wait briefly before retrying.';
     case 'contact_checkout_authorization_missing_or_expired':
-      return 'This checkout is no longer authorized. Reopen the request and try again.';
+      return 'This payment request expired. Open the latest request and start payment again.';
     case 'payment_charge_replay_detected':
       return 'This payment charge is already linked to another purchase. Contact support before retrying.';
     case 'payment_currency_mismatch':
@@ -140,9 +140,9 @@ export function formatContactUnlockDecisionReason(reason) {
     case 'contact_unlock_invalid_decision':
       return 'That Telegram contact decision is not supported.';
     case 'contact_unlock_already_revealed':
-      return 'This Telegram contact request was already approved and revealed.';
+      return 'This button is no longer active. The Telegram contact was already shared.';
     case 'contact_unlock_already_declined':
-      return 'This Telegram contact request was already declined.';
+      return 'This button is no longer active. The Telegram contact request was already declined.';
     case 'contact_unlock_request_not_ready_for_decision':
       return 'This Telegram contact request is not ready for approval yet.';
     case 'target_profile_not_paid_unlock_mode':
@@ -186,11 +186,11 @@ export function formatIntroDecisionReason(reason) {
     case 'intro_request_invalid_decision':
       return 'That intro decision is not supported.';
     case 'intro_request_already_accepted':
-      return 'This intro request was already accepted.';
+      return 'This button is no longer active. The intro was already accepted.';
     case 'intro_request_already_declined':
-      return 'This intro request was already declined.';
+      return 'This button is no longer active. The intro was already declined.';
     case 'intro_request_already_cancelled':
-      return 'This intro request was already cancelled.';
+      return 'This button is no longer active. The intro request was already cancelled.';
     case 'intro_decision_throttled':
       return 'Please wait a moment before repeating the same intro action.';
     case 'intro_request_decision_failed':

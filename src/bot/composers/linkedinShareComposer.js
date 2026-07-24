@@ -116,8 +116,8 @@ export function createLinkedInShareComposer({
     }));
 
     const notice = result.changed
-      ? '✅ LinkedIn share cancelled. Nothing was published.'
-      : `ℹ️ ${memberReasonText(result.reason, 'The share could not be cancelled. Open the latest profile preview and try again.')}`;
+      ? '✅ Share cancelled. No LinkedIn post was published.'
+      : `ℹ️ ${memberReasonText(result.reason, 'This share is no longer cancellable. Open the latest profile preview to see its current state.')}`;
     await renderProfilePreview(ctx, notice);
   });
 

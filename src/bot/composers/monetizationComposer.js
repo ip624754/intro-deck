@@ -70,7 +70,7 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
 
     try {
       await sendSubscriptionInvoice(ctx, result.invoice);
-      await ctx.answerCallbackQuery({ text: `Invoice sent • ${result.invoice.amountStars}⭐` });
+      await ctx.answerCallbackQuery({ text: `Payment sheet opened · ${result.invoice.amountStars}⭐` });
     } catch (error) {
       await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, 'Could not open the Pro payment sheet right now.') });
     }
@@ -93,7 +93,7 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
     await ctx.api.raw.answerPreCheckoutQuery({
       pre_checkout_query_id: ctx.preCheckoutQuery.id,
       ok,
-      ...(ok ? {} : { error_message: formatUserFacingError(authorization.reason, 'Could not authorize this Pro checkout. Reopen Plans and try again.') })
+      ...(ok ? {} : { error_message: formatUserFacingError(authorization.reason, 'This Pro payment request expired or changed. Reopen Pro and start a new payment.') })
     });
   });
 
@@ -122,10 +122,10 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
     }));
 
     if (result.changed) {
-      await ctx.reply('✅ Intro Deck Pro is active. It includes a bounded rolling 24-hour fair-use allowance for delivering contact permission requests. Recipient approval is still required.', {
+      await ctx.reply('✅ Payment confirmed. Intro Deck Pro is active. Pro covers a bounded fair-use allowance for delivering contact permission requests; each recipient still decides whether to accept.', {
         reply_markup: {
           inline_keyboard: [
-            [{ text: '⭐ Open plans', callback_data: 'plans:root' }],
+            [{ text: '⭐ View Pro status', callback_data: 'plans:root' }],
             [{ text: '🏠 Home', callback_data: 'home:root' }]
           ]
         }
@@ -134,16 +134,16 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
     }
 
     if (result.duplicate) {
-      await ctx.reply('ℹ️ This Pro payment was already confirmed.');
+      await ctx.reply('ℹ️ This Pro purchase was already confirmed. No second subscription was created.');
       return;
     }
 
     if (result.reason === 'payment_charge_replay_detected') {
-      await ctx.reply('⚠️ This payment charge is already linked to another purchase. Contact support before retrying.');
+      await ctx.reply('⚠️ This payment is already linked to another purchase. Do not pay again. Contact support.');
       return;
     }
 
-    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'Could not finalize this Pro payment right now.')}`);
+    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'The Pro payment was received, but activation could not be finalized. Do not pay again. Contact support.')}`);
   });
 
   return composer;

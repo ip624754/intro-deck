@@ -1,6 +1,6 @@
-# Current release: STEP064B1 / 0.64.1
+# Current release: STEP064B2 / 0.64.2
 
-The current candidate unifies member-facing Telegram copy and primary navigation without changing business logic. See `doc/spec/STEP064B1_MEMBER_COPY_SYSTEM_PRIMARY_NAVIGATION.md` and `doc/98_STEP064B1_OPERATOR_ROLLOUT.md`.
+The current candidate makes critical consent, payment, contact-reveal, draft-approval, and LinkedIn-publication actions consequence-explicit without changing their mechanics. See `doc/spec/STEP064B2_CRITICAL_TRANSACTION_COPY_AND_CTA_SEMANTICS.md` and `doc/99_STEP064B2_OPERATOR_ROLLOUT.md`.
 
 ---
 
@@ -22,6 +22,15 @@ A Telegram-first professional directory:
 - operator shell with communications, delivery, audit, quality, and search
 - analytics drilldowns and guarded operator bulk-prep
 - runbook/freeze launch discipline
+
+## STEP064B2 critical transaction copy and CTA semantics
+
+- Intro, Telegram-contact, private-chat, AI-draft, and LinkedIn-publication actions use distinct verb-plus-object labels.
+- Payment copy states the exact request-delivery fee, preserves recipient discretion, and does not imply an automatic refund.
+- Draft approval prepares a separate LinkedIn authorization; it does not publish by itself.
+- Stale, expired, and replayed actions tell members not to repeat a payment or publication side effect.
+- Callback IDs, payment amounts, consent state machines, refund policy, and the STEP059 publisher are unchanged.
+- No migration or new ENV is required.
 
 ## STEP064A invite card conversion and share menu simplification
 

@@ -84,6 +84,16 @@ export default async function handler(req, res) {
       callbackIdsChanged: false,
       businessLogicChanged: false
     },
+    transactionCopyPolicy: {
+      consentButtons: 'verb_plus_object_plus_consequence',
+      paymentCopy: 'request_delivery_fee_no_approval_guarantee_no_auto_refund',
+      linkedinPublishCta: 'authorize_and_publish_exactly_one_post',
+      staleActionCopy: 'latest_state_no_repeat_side_effect',
+      callbackIdsChanged: false,
+      moneyLogicChanged: false,
+      consentStateMachinesChanged: false,
+      publisherChanged: false
+    },
     inviteSharePolicy: {
       publicCardCta: 'single_open_intro_deck',
       publicCardOwnerNavigation: false,
