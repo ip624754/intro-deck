@@ -146,6 +146,6 @@ assert.equal(verified.includes("strategy: 'no_criteria_fallback'"), true);
 assert.equal(verified.includes('compatibilityFallbackAttempted'), true);
 assert.equal(inviteStore.includes('node-postgres does not support concurrent queries on the same checked-out client'), true);
 assert.equal(inviteStore.includes('const [mode, config, activationState] = await Promise.all(['), false);
-assert.equal(['STEP058B1', 'STEP059', 'STEP060', 'STEP061', 'STEP061H1', 'STEP061A', 'STEP063A', 'STEP063A-H1', 'STEP063A-H1A', 'STEP063B', 'STEP063B-H1', 'STEP063B-H1R1', 'STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP058B1', 'STEP059', 'STEP060', 'STEP061', 'STEP061H1', 'STEP061A', 'STEP063A', 'STEP063A-H1', 'STEP063A-H1A', 'STEP063B', 'STEP063B-H1', 'STEP063B-H1R1', 'STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C', 'STEP064B4C1'].includes(CURRENT_SOURCE_STEP), true);
 
 console.log('OK: STEP058B1 LinkedIn verification compatibility and fail-safe contract');

@@ -1,0 +1,25 @@
+{
+  "step": "STEP064B4C1",
+  "baseline": {
+    "step": "STEP064B4C",
+    "full_sha256": "e2323189f64cb8d876835a19cdd834bc20fe18aec93823def123adf4214cf2fa"
+  },
+  "verification": {
+    "zip_integrity": "PASS",
+    "unsafe_paths": 0,
+    "full_extract_check": "PASS",
+    "full_extract_focused_smoke": "PASS",
+    "patch_overlay_check": "PASS",
+    "patch_overlay_focused_smoke": "PASS",
+    "overlay_equals_full": true,
+    "missing_files": 0,
+    "extra_files": 0,
+    "hash_mismatches": 0
+  },
+  "truth_boundary": {
+    "production_deployment": "NOT_VERIFIED",
+    "production_acceptance": "NOT_VERIFIED",
+    "local_node": "v22.16.0",
+    "canonical_runtime": "Node 20.x"
+  }
+}

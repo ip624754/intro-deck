@@ -1,67 +1,59 @@
-# STEP064B4C Handoff
+# STEP064B4C1 Handoff
 
 ## Executive summary
 
 - Project: Intro Deck / LinkedIn Telegram Directory Bot
-- Current source step: `STEP064B4C`
-- Package: `0.64.6`
-- Exact baseline: STEP064B4B FULL SHA-256 `8839d3fd224c9bf52761f0869a05889306ad5b72b8a6e3d8abe157969111fec7`
-- Mode: HEAVY
-- Risk score: 12/12
+- Current source step: `STEP064B4C1`
+- Package: `0.64.7`
+- Exact baseline: STEP064B4C FULL SHA-256 `e2323189f64cb8d876835a19cdd834bc20fe18aec93823def123adf4214cf2fa`
+- Mode: FAST
+- Risk score: 5/12
 - Migration: none
 - New ENV: none
 
 ## Source-confirmed
 
-- Transaction-adjacent Telegram copy uses stored `interface_language`.
-- Contact, private-chat, Pro, and payment receipts preserve existing money/state contracts.
-- Recipient notifications use recipient preference; retry paths persist a language snapshot in existing JSON evidence.
-- LinkedIn launch ticket, OAuth state, and transfer token carry HMAC-signed language snapshots.
-- Unsigned query parameters cannot select share/verification language.
-- OAuth HTML and Telegram receipts use the signed interface snapshot.
-- Ordinary profile-share post text uses independent `default_post_language`.
-- AI/news preset/draft `post_language` remains unchanged.
-- Callback IDs, payment payloads/amounts, scopes, publisher authority, replay/idempotency, rewards, and automatic-publishing policy are unchanged.
-- No schema or ENV delta.
+- Russian language-settings buttons no longer use mixed `UI:` / `Post:` labels.
+- Russian profile preview localizes Telegram username and contact-mode system labels/values.
+- Russian LinkedIn success/review receipts use `ID публикации` while keeping raw provider URNs unchanged.
+- English rendering remains English.
+- Callback data, language persistence, payments, OAuth, publisher idempotency, rewards, AI/news language contracts, and user-authored content are unchanged.
+- `/api/health` exposes bounded member-copy-polish policy markers.
 
 ## QA-confirmed
 
-- Source check: PASS.
-- Focused B4C smoke: PASS.
-- Full comparison: candidate `102/107 PASS` versus baseline `101/106 PASS`.
+- `npm run check`: PASS.
+- `npm run smoke:member-copy-polish`: PASS.
+- B4A/B4B/B4C focused language contracts: PASS.
+- Full local comparison: baseline `100 PASS / 7 NON_PASS / 107`; candidate `101 PASS / 7 NON_PASS / 108`.
 - Baseline PASS regressions: 0.
-- Five inherited NON_PASS remain unchanged and documented.
-- Artifact-bound FULL/PATCH extraction, focused QA, unsafe-path scan, and overlay equivalence: PASS.
+- The same seven inherited/environmental NON_PASS remain on baseline and candidate.
 
 ## Production baseline evidence
 
-The operator supplied a complete STEP064B4B `/api/health` response reporting:
+Operator-provided STEP064B4C evidence confirmed:
 
-- `step=STEP064B4B`
-- `docsStep=STEP064B4B`
-- runtime Node `20.20.2`
-- artifact SHA `04f0eb7e6a4298ac47b62f44136d54ac99cb1560`
-- B4B language-boundary policy markers.
-
-This is operator-confirmed production evidence. An independent web fetch during B4C preparation returned a stale STEP064B4A response and therefore did not independently upgrade the B4B deployment claim.
+- health `step=STEP064B4C`, `docsStep=STEP064B4C`, Node `20.20.2`;
+- Russian member and Stars transaction surfaces;
+- Russian interface + English ordinary LinkedIn post;
+- Russian OAuth completion page and Telegram receipt;
+- provider Post ID `urn:li:share:7486455761007620096`;
+- explicit `PRODUCTION_ACCEPT_STEP064B4C`.
 
 ## Not verified
 
-- STEP064B4C deployment;
-- STEP064B4C production health;
-- live payment/notification/retry language matrix;
-- live OAuth connect/transfer/replay matrix;
-- live four-way interface/post-language profile-share matrix;
+- STEP064B4C1 deployment and production health;
+- post-deploy visual acceptance of all three polished label groups;
 - dependency-backed full suite on local Node 20.
 
 ## Rollout
 
-Follow `doc/103_STEP064B4C_OPERATOR_ROLLOUT.md`.
+Follow `doc/104_STEP064B4C1_OPERATOR_ROLLOUT.md`.
 
 ## Rollback
 
-Deploy exact STEP064B4B FULL. Keep migration 037 and stored preferences. No DB rollback is required.
+Deploy exact STEP064B4C FULL. No DB rollback is required.
 
 ## Next gate
 
-Production-accept STEP064B4C. Do not begin another product STEP automatically. After acceptance, perform a separate roadmap decision based on live language/payment/OAuth evidence.
+Production-accept STEP064B4C1. Do not start a new product corridor automatically.

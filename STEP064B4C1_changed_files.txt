@@ -1,0 +1,51 @@
+# STEP064B4C1 changed files
+
+Added: 14
+Modified: 25
+Deleted: 0
+Total: 39
+
+## Added
+- STEP064B4C1_ARTIFACT_VERIFICATION.json
+- STEP064B4C1_HANDOFF.md
+- STEP064B4C1_PATCH_README.md
+- STEP064B4C1_QA_REPORT.md
+- STEP064B4C1_QA_checklist.md
+- STEP064B4C1_changed_files.txt
+- doc/104_STEP064B4C1_OPERATOR_ROLLOUT.md
+- doc/qa/STEP064B4C1_QA_REPORT.md
+- doc/qa/evidence/STEP064B4C1_ARTIFACT_VERIFICATION.json
+- doc/qa/evidence/STEP064B4C1_CANDIDATE_SMOKE_INVENTORY.json
+- doc/qa/evidence/STEP064B4C1_CANDIDATE_SMOKE_INVENTORY_FINAL.json
+- doc/qa/evidence/STEP064B4C_BASELINE_SMOKE_INVENTORY_FOR_B4C1.json
+- doc/spec/STEP064B4C1_MEMBER_MIXED_LANGUAGE_COPY_POLISH.md
+- scripts/smoke_member_mixed_language_copy_polish.js
+
+## Modified
+- 00_CURRENT_STATE.md
+- README.md
+- api/health.js
+- api/oauth/callback/linkedin.js
+- doc/00_CURRENT_STATE.md
+- doc/02_HANDOFF_STANDARD.md
+- doc/15_NEW_CHAT_HANDOFF.md
+- doc/36_NEXT_STEPS_ROADMAP.md
+- package-lock.json
+- package.json
+- scripts/smoke_ai_news_audience_discovery_presets.js
+- scripts/smoke_ai_news_migration_claim_recovery.js
+- scripts/smoke_ai_news_personalized_query_final_fit.js
+- scripts/smoke_ai_news_presets_subscription.js
+- scripts/smoke_ai_news_search_progress_recovery.js
+- scripts/smoke_critical_transaction_copy_semantics.js
+- scripts/smoke_interface_language_boundary_foundation.js
+- scripts/smoke_linkedin_verification_compat_fail_safe.js
+- scripts/smoke_linkedin_verified_badges_trust_surfaces.js
+- scripts/smoke_linkedin_verified_development_integration.js
+- scripts/smoke_member_copy_navigation_consistency.js
+- scripts/smoke_member_interface_language_rendering.js
+- scripts/smoke_transaction_notification_oauth_language_boundary.js
+- src/config/release.js
+- src/lib/telegram/render.js
+
+## Deleted

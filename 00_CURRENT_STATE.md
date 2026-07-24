@@ -1,3 +1,15 @@
+# Current canonical source step — STEP064B4C1
+
+- Package: `0.64.7`
+- Baseline: STEP064B4C FULL SHA-256 `e2323189f64cb8d876835a19cdd834bc20fe18aec93823def123adf4214cf2fa`
+- Migration: none. New ENV: none.
+- Russian language-settings, profile system labels, and LinkedIn publication-ID labels are consistently localized.
+- Callback IDs, raw provider identifiers, user-authored content, payments, OAuth, publisher logic, and AI/news language contracts are unchanged.
+- Source QA: candidate 101/108 PASS versus baseline 100/107; baseline PASS regressions 0; seven matching inherited/environmental NON_PASS remain.
+- Production deployment: not verified.
+
+---
+
 # Current canonical source step — STEP064B4C
 
 - Package: `0.64.6`

@@ -1,3 +1,9 @@
+# Current release: STEP064B4C1 / 0.64.7
+
+This bounded polish release removes the remaining mixed-language system labels observed during STEP064B4C production acceptance: Russian language-setting buttons use full Russian labels, Russian profile system values no longer expose English fallbacks, and Russian LinkedIn receipts render `ID публикации` while preserving immutable raw provider URNs. Callback IDs, persistence, payments, OAuth, publisher behavior, user-authored content, migrations, and ENV are unchanged. See `doc/spec/STEP064B4C1_MEMBER_MIXED_LANGUAGE_COPY_POLISH.md` and `doc/104_STEP064B4C1_OPERATOR_ROLLOUT.md`.
+
+---
+
 # Current release: STEP064B4C / 0.64.6
 
 The current source candidate completes the EN/RU transaction, recipient-notification/retry, LinkedIn OAuth, and ordinary profile-share language boundary. Stored `interface_language` drives critical Telegram/OAuth presentation; signed launch/state/transfer snapshots make OAuth rendering replay-consistent; `default_post_language` drives ordinary profile-share text while AI/news retains per-preset/per-draft language. Payment payloads/amounts, callbacks, scopes, publisher authority/idempotency, rewards, and automatic-publishing policy are unchanged. No migration or new ENV. See `doc/spec/STEP064B4C_TRANSACTION_NOTIFICATION_OAUTH_LANGUAGE_BOUNDARY.md` and `doc/103_STEP064B4C_OPERATOR_ROLLOUT.md`.

@@ -95,6 +95,13 @@ export default async function handler(req, res) {
       callbackIdsChanged: false,
       businessLogicChanged: false
     },
+    memberCopyPolishPolicy: {
+      languageSettingsLabels: 'localized_full_words',
+      profileSystemLabels: 'localized_without_translating_user_content',
+      linkedinReceiptIdentifierLabel: 'localized_label_plus_immutable_raw_id',
+      callbackIdsChanged: false,
+      businessLogicChanged: false
+    },
     interfaceLanguagePolicy: {
       supportedLanguages: ['en', 'ru'],
       defaultLanguage: 'en',

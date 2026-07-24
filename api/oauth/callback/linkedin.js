@@ -50,7 +50,7 @@ function describeError(error) {
   return summary;
 }
 
-function buildLinkedInShareResultMessage(result, interfaceLanguage = 'en') {
+export function buildLinkedInShareResultMessage(result, interfaceLanguage = 'en') {
   const russian = interfaceLanguage === 'ru';
   const isNewsDraft = result?.intent?.source_kind === 'ai_news_draft';
   const lines = [russian
@@ -58,7 +58,7 @@ function buildLinkedInShareResultMessage(result, interfaceLanguage = 'en') {
     : (isNewsDraft ? '🧠 AI/news draft on LinkedIn' : '📣 Share profile on LinkedIn'), ''];
   if (result?.published) {
     lines.push(russian ? '✅ Опубликовано в вашем LinkedIn ровно один раз.' : '✅ Published once to your LinkedIn account.');
-    lines.push(`• Post ID: ${result.provider?.postId || result.intent?.provider_post_id || (russian ? 'сохранён' : 'recorded')}`);
+    lines.push(`• ${russian ? 'ID публикации' : 'Post ID'}: ${result.provider?.postId || result.intent?.provider_post_id || (russian ? 'сохранён' : 'recorded')}`);
     lines.push(russian
       ? '• OAuth access token использован только для этого запроса и не сохранён Intro Deck.'
       : '• The OAuth access token was used for this request and was not stored by Intro Deck.');
@@ -68,7 +68,7 @@ function buildLinkedInShareResultMessage(result, interfaceLanguage = 'en') {
     lines.push(russian
       ? 'ℹ️ Эта подтверждённая публикация уже выполнена. Дубликат не создавался.'
       : 'ℹ️ This approved share was already published. No duplicate post was created.');
-    if (result.intent?.provider_post_id) lines.push(`• Post ID: ${result.intent.provider_post_id}`);
+    if (result.intent?.provider_post_id) lines.push(`• ${russian ? 'ID публикации' : 'Post ID'}: ${result.intent.provider_post_id}`);
     return lines.join('\n');
   }
   if (result?.inProgress) {
@@ -80,9 +80,9 @@ function buildLinkedInShareResultMessage(result, interfaceLanguage = 'en') {
   if (result?.outcomeUnknown || result?.reason === 'share_outcome_unknown') {
     if (result?.provider?.postId) {
       lines.push(russian
-        ? '⚠️ LinkedIn вернул Post ID, но Intro Deck не смог завершить локальную фиксацию результата.'
+        ? '⚠️ LinkedIn вернул ID публикации, но Intro Deck не смог завершить локальную фиксацию результата.'
         : '⚠️ LinkedIn returned a post ID, but Intro Deck could not finalize the local publication receipt.');
-      lines.push(`• Provider post ID: ${result.provider.postId}`);
+      lines.push(`• ${russian ? 'ID публикации провайдера' : 'Provider post ID'}: ${result.provider.postId}`);
     } else {
       lines.push(russian
         ? '⚠️ LinkedIn не вернул однозначный результат публикации.'
@@ -124,7 +124,7 @@ async function notifyLinkedInShareResult({ telegramUserId, result, interfaceLang
   });
 }
 
-function renderLinkedInShareResultPage(result, interfaceLanguage = 'en') {
+export function renderLinkedInShareResultPage(result, interfaceLanguage = 'en') {
   const russian = interfaceLanguage === 'ru';
   const isNewsDraft = result?.intent?.source_kind === 'ai_news_draft';
   if (result?.published || result?.alreadyPublished) {
@@ -132,7 +132,7 @@ function renderLinkedInShareResultPage(result, interfaceLanguage = 'en') {
     return renderHtml({
       interfaceLanguage,
       title: oauthText(interfaceLanguage, 'LinkedIn post published', 'Пост LinkedIn опубликован'),
-      body: `<h1>${oauthText(interfaceLanguage, 'LinkedIn post published', 'Пост LinkedIn опубликован')}</h1><p>${russian ? (isNewsDraft ? 'Подтверждённый AI/news-черновик с источниками' : 'Подтверждённая публикация профиля Intro Deck') : (isNewsDraft ? 'Your approved evidence-bound news draft' : 'Your approved Intro Deck profile share')} ${russian ? 'опубликован ровно один раз.' : 'was published once.'}</p>${postId ? `<p class="meta">Post ID: <code>${escapeHtml(postId)}</code></p>` : ''}<p>${oauthText(interfaceLanguage, 'Return to Telegram to continue.', 'Вернитесь в Telegram, чтобы продолжить.')}</p>`
+      body: `<h1>${oauthText(interfaceLanguage, 'LinkedIn post published', 'Пост LinkedIn опубликован')}</h1><p>${russian ? (isNewsDraft ? 'Подтверждённый AI/news-черновик с источниками' : 'Подтверждённая публикация профиля Intro Deck') : (isNewsDraft ? 'Your approved evidence-bound news draft' : 'Your approved Intro Deck profile share')} ${russian ? 'опубликован ровно один раз.' : 'was published once.'}</p>${postId ? `<p class="meta">${oauthText(interfaceLanguage, 'Post ID', 'ID публикации')}: <code>${escapeHtml(postId)}</code></p>` : ''}<p>${oauthText(interfaceLanguage, 'Return to Telegram to continue.', 'Вернитесь в Telegram, чтобы продолжить.')}</p>`
     });
   }
   if (result?.inProgress) {
@@ -149,7 +149,7 @@ function renderLinkedInShareResultPage(result, interfaceLanguage = 'en') {
     return renderHtml({
       interfaceLanguage,
       title: oauthText(interfaceLanguage, 'LinkedIn publication needs review', 'Публикацию LinkedIn нужно проверить'),
-      body: `<h1>${oauthText(interfaceLanguage, 'Publication needs review', 'Публикацию нужно проверить')}</h1>${providerPostId ? `<p>${oauthText(interfaceLanguage, 'LinkedIn returned post ID', 'LinkedIn вернул Post ID')} <code>${escapeHtml(providerPostId)}</code>, ${oauthText(interfaceLanguage, 'but Intro Deck could not finalize the local receipt.', 'но Intro Deck не смог завершить локальную фиксацию результата.')}</p>` : `<p>${oauthText(interfaceLanguage, 'LinkedIn did not return a conclusive publication result.', 'LinkedIn не вернул однозначный результат публикации.')}</p>`}<p>${oauthText(interfaceLanguage, 'Automatic retry is blocked to prevent a duplicate post. Check your LinkedIn feed before trying again.', 'Автоматический повтор заблокирован, чтобы не создать дубликат. Проверьте ленту LinkedIn перед новой попыткой.')}</p>`
+      body: `<h1>${oauthText(interfaceLanguage, 'Publication needs review', 'Публикацию нужно проверить')}</h1>${providerPostId ? `<p>${oauthText(interfaceLanguage, 'LinkedIn returned post ID', 'LinkedIn вернул ID публикации')} <code>${escapeHtml(providerPostId)}</code>, ${oauthText(interfaceLanguage, 'but Intro Deck could not finalize the local receipt.', 'но Intro Deck не смог завершить локальную фиксацию результата.')}</p>` : `<p>${oauthText(interfaceLanguage, 'LinkedIn did not return a conclusive publication result.', 'LinkedIn не вернул однозначный результат публикации.')}</p>`}<p>${oauthText(interfaceLanguage, 'Automatic retry is blocked to prevent a duplicate post. Check your LinkedIn feed before trying again.', 'Автоматический повтор заблокирован, чтобы не создать дубликат. Проверьте ленту LinkedIn перед новой попыткой.')}</p>`
     });
   }
   return renderHtml({

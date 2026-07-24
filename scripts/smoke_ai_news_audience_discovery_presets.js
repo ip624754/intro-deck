@@ -38,7 +38,7 @@ import {
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C', 'STEP064B4C1'].includes(CURRENT_SOURCE_STEP), true);
 assert.equal(normalizePresetKey('business_growth'), 'business_markets');
 assert.equal(normalizePresetKey('unknown'), 'for_you');
 for (const key of ['for_you', 'ai_technology', 'startups_product', 'business_markets', 'career_leadership', 'crypto_web3', 'custom']) {

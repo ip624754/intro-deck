@@ -309,7 +309,24 @@ function directoryProfileLabel(profileSnapshot) {
   return `${name} — ${truncate(headline, 28)}`;
 }
 
-function profileContactModeSummary(profileSnapshot) {
+function profileContactModeSummary(profileSnapshot, interfaceLanguage = 'en') {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  if (language === 'ru') {
+    if (profileSnapshot?.contact_mode === 'paid_unlock_requires_approval') {
+      return 'Платные варианты связи • требуется одобрение владельца';
+    }
+    if (profileSnapshot?.contact_mode === 'intro_request') {
+      return 'Только запросы через Intro Deck';
+    }
+    if (profileSnapshot?.contact_mode === 'telegram_only') {
+      return 'Только Telegram';
+    }
+    if (profileSnapshot?.contact_mode === 'external_link') {
+      return 'Внешняя ссылка';
+    }
+    return 'Неизвестно';
+  }
+
   const label = getContactModeLabel(profileSnapshot?.contact_mode);
   if (profileSnapshot?.contact_mode === 'paid_unlock_requires_approval') {
     return `${label} • owner approval required`;
@@ -317,9 +334,10 @@ function profileContactModeSummary(profileSnapshot) {
   return label;
 }
 
-function hiddenTelegramUsernameSummary(profileSnapshot) {
+function hiddenTelegramUsernameSummary(profileSnapshot, interfaceLanguage = 'en') {
   const value = typeof profileSnapshot?.telegram_username_hidden === 'string' ? profileSnapshot.telegram_username_hidden.trim() : '';
-  return value ? `@${value}` : 'not set';
+  if (value) return `@${value}`;
+  return normalizeInterfaceLanguage(interfaceLanguage) === 'ru' ? 'не указан' : 'not set';
 }
 
 function directContactAvailabilityLine(profileSnapshot) {
@@ -964,13 +982,17 @@ export function renderLanguageSettingsKeyboard({ preferences = null, persistence
   const buttons = getMemberButtons(language);
   const rows = [];
   if (persistenceEnabled && schemaReady) {
+    const interfaceEnglish = language === 'ru' ? 'Интерфейс: Английский' : 'UI: English';
+    const interfaceRussian = language === 'ru' ? 'Интерфейс: Русский' : 'UI: Russian';
+    const postEnglish = language === 'ru' ? 'Публикации: Английский' : 'Posts: English';
+    const postRussian = language === 'ru' ? 'Публикации: Русский' : 'Posts: Russian';
     rows.push([
-      { text: `${resolved.interfaceLanguage === 'en' ? '✅' : '▫️'} UI: English`, callback_data: 'lang:interface:en' },
-      { text: `${resolved.interfaceLanguage === 'ru' ? '✅' : '▫️'} UI: Русский`, callback_data: 'lang:interface:ru' }
+      { text: `${resolved.interfaceLanguage === 'en' ? '✅' : '▫️'} ${interfaceEnglish}`, callback_data: 'lang:interface:en' },
+      { text: `${resolved.interfaceLanguage === 'ru' ? '✅' : '▫️'} ${interfaceRussian}`, callback_data: 'lang:interface:ru' }
     ]);
     rows.push([
-      { text: `${resolved.defaultPostLanguage === 'en' ? '✅' : '▫️'} Post: English`, callback_data: 'lang:post:en' },
-      { text: `${resolved.defaultPostLanguage === 'ru' ? '✅' : '▫️'} Post: Русский`, callback_data: 'lang:post:ru' }
+      { text: `${resolved.defaultPostLanguage === 'en' ? '✅' : '▫️'} ${postEnglish}`, callback_data: 'lang:post:en' },
+      { text: `${resolved.defaultPostLanguage === 'ru' ? '✅' : '▫️'} ${postRussian}`, callback_data: 'lang:post:ru' }
     ]);
   }
   rows.push([{ text: buttons.home, callback_data: 'home:root' }]);
@@ -1162,8 +1184,8 @@ export function renderProfilePreviewText({ profileSnapshot = null, persistenceEn
     lines.push(
       '',
       russian ? 'Приватные настройки' : 'Private settings',
-      `• ${russian ? 'Username Telegram' : 'Telegram username'}: ${hiddenTelegramUsernameSummary(profileSnapshot)}`,
-      `• ${russian ? 'Режим контакта' : 'Contact mode'}: ${profileContactModeSummary(profileSnapshot)}`
+      `• ${russian ? 'Имя пользователя Telegram' : 'Telegram username'}: ${hiddenTelegramUsernameSummary(profileSnapshot, language)}`,
+      `• ${russian ? 'Режим контакта' : 'Contact mode'}: ${profileContactModeSummary(profileSnapshot, language)}`
     );
     lines.push('', `${russian ? 'Профиль' : 'Profile'}: ${profileVisibilityLabel(profileSnapshot.visibility_status, language)}`);
     if (!activation.isReady) lines.push(`${russian ? 'Следующий шаг' : 'Next'}: ${activationNextLabel(profileSnapshot || {}, language)}`);

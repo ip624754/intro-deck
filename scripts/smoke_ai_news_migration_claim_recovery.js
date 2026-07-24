@@ -8,7 +8,7 @@ import { renderAiNewsSearchFailureText } from '../src/lib/telegram/aiNewsRender.
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C', 'STEP064B4C1'].includes(CURRENT_SOURCE_STEP), true);
 
 const migration035 = read('migrations/035_ai_news_audience_aware_discovery.sql');
 const migration036 = read('migrations/036_ai_news_audience_contract_repair.sql');

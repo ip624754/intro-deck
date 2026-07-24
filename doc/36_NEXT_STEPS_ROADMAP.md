@@ -1,3 +1,13 @@
+# Current roadmap position — STEP064B4C1
+
+1. Deploy and production-accept STEP064B4C1 using `doc/104_STEP064B4C1_OPERATOR_ROLLOUT.md`.
+2. Confirm the three bounded polish groups in Russian mode: language settings, profile system labels, and LinkedIn publication-ID labels.
+3. Make the next product-roadmap decision separately; do not expand language scope or alter business logic as part of this polish release.
+
+Rollback target is the exact STEP064B4C FULL artifact. No DB rollback is required.
+
+---
+
 # Current roadmap position — STEP064B4C
 
 1. Deploy and production-accept STEP064B4C using `doc/103_STEP064B4C_OPERATOR_ROLLOUT.md`.
