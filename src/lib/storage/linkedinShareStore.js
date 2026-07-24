@@ -68,7 +68,8 @@ export async function createLinkedInTextShareIntentWithClient(client, {
   ttlSeconds,
   sourceKind = 'profile_share',
   sourceRefId = null,
-  sourceSnapshotHash = null
+  sourceSnapshotHash = null,
+  attributionToken = null
 }) {
     const compat = await getSchemaCompat(client);
     if (!compat.hasLinkedInShareIntentsTable || !compat.hasLinkedInShareEventsTable) {
@@ -76,6 +77,9 @@ export async function createLinkedInTextShareIntentWithClient(client, {
     }
     if (sourceKind === 'ai_news_draft' && (!compat.linkedInShareHasSourceKind || !compat.hasAiNewsDraftsTable)) {
       return { persistenceEnabled: true, created: false, reason: 'migration_030_required' };
+    }
+    if (sourceKind === 'profile_share' && !compat.linkedInShareAttributionReady) {
+      return { persistenceEnabled: true, created: false, reason: 'migration_038_required' };
     }
     const user = await upsertTelegramUser(client, { telegramUserId, telegramUsername });
     const profile = await getProfileSnapshotByTelegramUserId(client, telegramUserId);
@@ -128,7 +132,9 @@ export async function createLinkedInTextShareIntentWithClient(client, {
       expiresAt,
       sourceKind,
       sourceRefId,
-      sourceSnapshotHash
+      sourceSnapshotHash,
+      attributionToken,
+      attributionReady: compat.linkedInShareAttributionReady
     });
 
     await createAdminAuditEvent(client, {
@@ -162,14 +168,21 @@ export async function createProfileShareDraftForTelegramUser({
   if (unavailable) return unavailable;
   const profileResult = await withDbClient(async (client) => getProfileSnapshotByTelegramUserId(client, telegramUserId));
   if (!profileResult?.linkedin_sub) return { persistenceEnabled: true, created: false, reason: 'linkedin_not_connected' };
-  const postText = buildProfileSharePostText({ profileSnapshot: profileResult, botUsername, postLanguage });
+  const attributionToken = crypto.randomBytes(16).toString('base64url');
+  const postText = buildProfileSharePostText({
+    profileSnapshot: profileResult,
+    botUsername,
+    postLanguage,
+    shareAttributionToken: attributionToken
+  });
   return createLinkedInTextShareIntentForTelegramUser({
     telegramUserId,
     telegramUsername,
     postText,
     visibility,
     ttlSeconds,
-    sourceKind: 'profile_share'
+    sourceKind: 'profile_share',
+    attributionToken
   });
 }
 

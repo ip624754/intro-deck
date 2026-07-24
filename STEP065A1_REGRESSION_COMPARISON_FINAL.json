@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "total": 112,
+    "pass": 105,
+    "non_pass": 7
+  },
+  "candidate": {
+    "total": 113,
+    "pass": 106,
+    "non_pass": 7
+  },
+  "baseline_pass_to_candidate_non_pass": [],
+  "new_commands": [
+    "smoke:linkedin-share-attribution"
+  ],
+  "new_command_results": {
+    "smoke:linkedin-share-attribution": "PASS"
+  },
+  "resolved_baseline_non_pass": [],
+  "candidate_non_pass": [
+    "smoke:ai-news-productization",
+    "smoke:broadcast-idempotency",
+    "smoke:code-split",
+    "smoke:profile-session-schema",
+    "smoke:schema-compat",
+    "smoke:step053a-pack",
+    "smoke:step061-profile-preview-hotfix"
+  ],
+  "zero_baseline_pass_regressions": true
+}

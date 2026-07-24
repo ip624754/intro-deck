@@ -5,8 +5,8 @@ import { buildProfileSharePostText } from '../src/lib/linkedin/share.js';
 import { renderLanguageSettingsKeyboard } from '../src/lib/telegram/render.js';
 
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-assert.equal(CURRENT_SOURCE_STEP, 'STEP064B4D2A');
-assert.equal(packageJson.version, '0.65.1');
+assert.ok(['STEP064B4D2A', 'STEP065A1'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['0.65.1', '0.66.0'].includes(packageJson.version));
 
 const profile = {
   profile_id: 2,

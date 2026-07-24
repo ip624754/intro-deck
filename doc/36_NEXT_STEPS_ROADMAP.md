@@ -1,3 +1,18 @@
+# STEP065A1 rollout corridor
+
+1. Apply and verify migration 038 before deploying code.
+2. Deploy STEP065A1 and verify health attribution-policy markers.
+3. Publish one new profile-share post and confirm the CTA uses `ls_<opaque-token>`.
+4. Open the link from a second Telegram account and confirm the exact public profile.
+5. Submit and approve one request path.
+6. Verify immutable event evidence and unique/total open counts through SQL.
+7. Production-accept STEP065A1 before starting STEP065A2.
+
+Next planned corridor after acceptance: `STEP065A2 — Share Conversion Dashboard`.
+Do not expose visitor identities, add external tracking, or build dashboard claims before live event evidence exists.
+
+---
+
 # STEP064B4D2 rollout corridor
 
 1. Deploy STEP064B4D2 over the exact STEP064B4D1A baseline.

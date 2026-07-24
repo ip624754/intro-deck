@@ -1,3 +1,21 @@
+# Current canonical source step — STEP065A1
+
+- Package: `0.66.0`
+- Baseline: STEP064B4D2A FULL SHA-256 `b7c6a023facdcb99ba6d6665be573b5b8642cabd2549ed1b27e72ede60c808ed`
+- Migration `038_linkedin_profile_share_attribution_foundation.sql` is required; no new ENV.
+- New ordinary profile-share posts use an opaque `ls_<token>` Telegram deep link bound to the exact published share intent.
+- Valid tokens resolve only published `profile_share` intents whose target profile is active/listed and attribution is not revoked.
+- A 30-day target-bound session propagates attribution to intro, Telegram-contact, and private-chat request paths.
+- Immutable events cover profile opens, request starts, submissions, and approvals.
+- Total opens are event count; unique opens are distinct internal visitor references.
+- No cookies, tracking pixels, browser fingerprinting, LinkedIn scraping, or owner-visible visitor identity were added.
+- Attribution persistence failure does not block profile resolution or repeat product/payment side effects.
+- Legacy `profile_<id>` links remain supported and unattributed.
+- Source QA: candidate 106/113 PASS versus baseline 105/112; baseline PASS regressions 0; seven matching inherited/environmental NON_PASS remain.
+- Production migration/deployment/acceptance: not verified.
+
+---
+
 # Current canonical source step — STEP064B4D2
 
 - Package: `0.65.0`

@@ -13,6 +13,10 @@ import {
 import { formatDmDecisionReason, formatDmRequestReason, formatUserFacingError } from '../utils/notices.js';
 import { getTransactionDisclosures, paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
 import { localizeMemberText } from '../../lib/telegram/memberLocalization.js';
+import {
+  recordLinkedInShareAttributionApprovalByEntity,
+  recordLinkedInShareAttributionEventForTelegramUser
+} from '../../lib/storage/linkedinShareAttributionStore.js';
 
 async function sendDmInvoice(ctx, invoice) {
   return ctx.api.raw.sendInvoice({
@@ -45,6 +49,15 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
   composer.callbackQuery(/^dir:dm:(\d+):(\d+)$/, async (ctx) => {
     const profileId = Number.parseInt(ctx.match?.[1] || '0', 10);
     await clearAllPendingInputs(ctx.from.id);
+
+    await recordLinkedInShareAttributionEventForTelegramUser({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      targetProfileId: profileId,
+      eventType: 'private_chat_request_started',
+      telegramUpdateId: ctx.update?.update_id || null,
+      detail: { contactKind: 'private_chat' }
+    }).catch(() => null);
 
     const result = await beginDmRequestComposeForTelegramUser({
       telegramUserId: ctx.from.id,
@@ -190,6 +203,13 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     if (!result.persistenceEnabled) {
       notice = russian ? '⚠️ Функция временно недоступна. Попробуйте позже.' : '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.changed && result.reason === 'dm_thread_accepted') {
+      await recordLinkedInShareAttributionApprovalByEntity({
+        ownerTelegramUserId: ctx.from.id,
+        entityType: 'dm_thread',
+        entityId: result.thread?.dm_thread_id || threadId,
+        telegramUpdateId: ctx.update?.update_id || null,
+        detail: { decision: 'accepted' }
+      }).catch(() => null);
       notice = russian
         ? `✅ Вы приняли запрос в чат от ${result.thread?.display_name || 'этого участника'}. Приватный диалог открыт.`
         : `✅ Accepted the chat request from ${result.thread?.display_name || 'this member'}. The private conversation is now active.`;
@@ -262,6 +282,16 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (result.changed) {
+      await recordLinkedInShareAttributionEventForTelegramUser({
+        telegramUserId: ctx.from.id,
+        telegramUsername: ctx.from.username || null,
+        targetProfileId: result.thread?.target_profile_id,
+        eventType: 'request_submitted',
+        telegramUpdateId: ctx.update?.update_id || null,
+        entityType: 'dm_thread',
+        entityId: result.thread?.dm_thread_id || parsed.threadId,
+        detail: { contactKind: 'private_chat', paymentMode: 'telegram_stars' }
+      }).catch(() => null);
       const russian = ctx.interfaceLanguage === 'ru';
       const disclosure = getTransactionDisclosures(ctx.interfaceLanguage).requestDeliveryPayment;
       await ctx.reply(russian

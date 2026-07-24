@@ -1,0 +1,56 @@
+STEP065A1 changed files
+Added: 12
+Modified: 35
+Deleted: 0
+Total: 47
+
+[ADDED]
+STEP065A1_HANDOFF.md
+STEP065A1_PATCH_README.md
+STEP065A1_QA_REPORT.md
+STEP065A1_QA_checklist.md
+STEP065A1_REGRESSION_COMPARISON_FINAL.json
+STEP065A1_changed_files.txt
+doc/105_STEP065A1_OPERATOR_ROLLOUT.md
+doc/spec/STEP065A1_LINKEDIN_PROFILE_SHARE_ATTRIBUTION_FOUNDATION.md
+migrations/038_linkedin_profile_share_attribution_foundation.sql
+scripts/smoke_linkedin_share_attribution_foundation.js
+src/db/linkedinShareAttributionRepo.js
+src/lib/storage/linkedinShareAttributionStore.js
+
+[MODIFIED]
+00_CURRENT_STATE.md
+api/health.js
+doc/36_NEXT_STEPS_ROADMAP.md
+package-lock.json
+package.json
+scripts/smoke_ai_news_audience_discovery_presets.js
+scripts/smoke_ai_news_migration_claim_recovery.js
+scripts/smoke_ai_news_personalized_query_final_fit.js
+scripts/smoke_ai_news_presets_subscription.js
+scripts/smoke_ai_news_search_progress_recovery.js
+scripts/smoke_critical_transaction_copy_semantics.js
+scripts/smoke_interface_language_boundary_foundation.js
+scripts/smoke_linkedin_verification_compat_fail_safe.js
+scripts/smoke_linkedin_verified_badges_trust_surfaces.js
+scripts/smoke_linkedin_verified_development_integration.js
+scripts/smoke_member_copy_navigation_consistency.js
+scripts/smoke_member_interface_language_rendering.js
+scripts/smoke_member_mixed_language_copy_polish.js
+scripts/smoke_profile_share_compact_above_fold.js
+scripts/smoke_profile_share_cta_polish.js
+scripts/smoke_profile_share_editorial_upgrade.js
+scripts/smoke_profile_share_media_publication.js
+scripts/smoke_transaction_notification_oauth_language_boundary.js
+src/bot/composers/contactUnlockComposer.js
+src/bot/composers/directoryComposer.js
+src/bot/composers/dmComposer.js
+src/bot/composers/introComposer.js
+src/bot/composers/inviteComposer.js
+src/bot/composers/linkedinShareComposer.js
+src/bot/composers/textComposer.js
+src/config/release.js
+src/db/linkedinShareRepo.js
+src/db/schemaCompat.js
+src/lib/linkedin/share.js
+src/lib/storage/linkedinShareStore.js

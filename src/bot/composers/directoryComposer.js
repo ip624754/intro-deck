@@ -14,6 +14,7 @@ import { sendIntroRequestForTelegramUser } from '../../lib/storage/introRequestS
 import { deliverIntroNotificationReceipt } from '../../lib/storage/notificationStore.js';
 import { formatUserFacingError } from '../utils/notices.js';
 import { localizeMemberKeyboard, localizeMemberText } from '../../lib/telegram/memberLocalization.js';
+import { recordLinkedInShareAttributionEventForTelegramUser } from '../../lib/storage/linkedinShareAttributionStore.js';
 
 export function createDirectoryComposer({
   clearAllPendingInputs,
@@ -83,6 +84,15 @@ export function createDirectoryComposer({
     await clearAllPendingInputs(ctx.from.id);
     const profileId = Number.parseInt(ctx.match?.[1] || '0', 10);
 
+    await recordLinkedInShareAttributionEventForTelegramUser({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      targetProfileId: profileId,
+      eventType: 'contact_request_started',
+      telegramUpdateId: ctx.update?.update_id || null,
+      detail: { contactKind: 'intro_request' }
+    }).catch(() => null);
+
     const result = await sendIntroRequestForTelegramUser({
       telegramUserId: ctx.from.id,
       telegramUsername: ctx.from.username || null,
@@ -102,6 +112,16 @@ export function createDirectoryComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.created) {
+      await recordLinkedInShareAttributionEventForTelegramUser({
+        telegramUserId: ctx.from.id,
+        telegramUsername: ctx.from.username || null,
+        targetProfileId: profileId,
+        eventType: 'request_submitted',
+        telegramUpdateId: ctx.update?.update_id || null,
+        entityType: 'intro_request',
+        entityId: result.introRequest?.intro_request_id,
+        detail: { contactKind: 'intro_request' }
+      }).catch(() => null);
       receiptResult = await deliverIntroNotificationReceipt({
         eventType: 'intro_request_created',
         introRequestId: result.introRequest?.intro_request_id

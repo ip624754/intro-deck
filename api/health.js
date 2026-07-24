@@ -161,6 +161,28 @@ export default async function handler(req, res) {
       idempotencyChanged: false,
       aiNewsPublisherChanged: false
     },
+    linkedInShareAttributionPolicy: {
+      enabled: true,
+      schemaRequirement: 'migration_038',
+      deepLinkContract: 'ls_128bit_base64url_exact_match',
+      tokenExposure: 'opaque_128bit_attribution_token_only',
+      eligibleShareStatus: 'published_profile_share_only',
+      profileEligibility: 'active_and_listed',
+      sessionTtlDays: 30,
+      totalOpenMetric: 'profile_opened_event_count',
+      uniqueOpenMetric: 'distinct_visitor_user_id',
+      eventTypes: ['profile_opened', 'contact_request_started', 'private_chat_request_started', 'request_submitted', 'request_approved'],
+      eventLedger: 'immutable_append_only',
+      externalTracking: false,
+      browserFingerprinting: false,
+      visitorIdentityOwnerVisible: false,
+      legacyProfileLinksSupported: true,
+      attributionFailureBlocksProductAction: false,
+      dashboardIncluded: false,
+      callbackIdsChanged: false,
+      paymentLogicChanged: false,
+      publisherChanged: true
+    },
     transactionCopyPolicy: {
       consentButtons: 'verb_plus_object_plus_consequence',
       paymentCopy: 'request_delivery_fee_no_approval_guarantee_no_auto_refund',

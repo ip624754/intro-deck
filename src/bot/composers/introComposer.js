@@ -5,6 +5,7 @@ import { deliverIntroNotificationReceipt } from '../../lib/storage/notificationS
 import { renderIntroInboxKeyboard, renderIntroInboxText } from '../../lib/telegram/render.js';
 import { formatUserFacingError } from '../utils/notices.js';
 import { localizeMemberKeyboard, localizeMemberText } from '../../lib/telegram/memberLocalization.js';
+import { recordLinkedInShareAttributionApprovalByEntity } from '../../lib/storage/linkedinShareAttributionStore.js';
 
 function fitTelegramText(text, limit = 3900) {
   const value = String(text || '').trim();
@@ -113,6 +114,13 @@ export function createIntroComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.changed && result.reason === 'intro_request_accepted') {
+      await recordLinkedInShareAttributionApprovalByEntity({
+        ownerTelegramUserId: ctx.from.id,
+        entityType: 'intro_request',
+        entityId: result.introRequest?.intro_request_id || introRequestId,
+        telegramUpdateId: ctx.update?.update_id || null,
+        detail: { decision: 'accepted' }
+      }).catch(() => null);
       receiptResult = await deliverIntroNotificationReceipt({
         eventType: 'intro_request_accepted',
         introRequestId: result.introRequest?.intro_request_id

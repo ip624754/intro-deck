@@ -3,6 +3,7 @@ import { normalizeDefaultPostLanguage } from '../i18n/language.js';
 const DEFAULT_MAX_POST_LENGTH = 3000;
 const COMPACT_FOCUS_LIMIT = 3;
 const COMPACT_LABEL_CHARACTER_BUDGET = 72;
+const ATTRIBUTION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{22}$/;
 
 function text(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -42,7 +43,7 @@ function buildCompactMemberLine({ profileSnapshot, russian = false } = {}) {
     : 'Open to relevant professional introductions.';
 }
 
-export function buildProfileSharePostText({ profileSnapshot = null, botUsername = 'introdeckbot', postLanguage = 'en' } = {}) {
+export function buildProfileSharePostText({ profileSnapshot = null, botUsername = 'introdeckbot', postLanguage = 'en', shareAttributionToken = null } = {}) {
   if (!profileSnapshot) {
     throw new Error('profile_snapshot_required');
   }
@@ -51,9 +52,12 @@ export function buildProfileSharePostText({ profileSnapshot = null, botUsername 
   const russian = language === 'ru';
   const username = String(botUsername || 'introdeckbot').trim().replace(/^@+/, '') || 'introdeckbot';
   const profileId = profileSnapshot.profile_id != null ? String(profileSnapshot.profile_id).trim() : '';
-  const shareUrl = profileId && /^\d+$/.test(profileId)
-    ? `https://t.me/${username}?start=profile_${profileId}`
-    : `https://t.me/${username}`;
+  const normalizedAttributionToken = String(shareAttributionToken || '').trim();
+  const shareUrl = ATTRIBUTION_TOKEN_PATTERN.test(normalizedAttributionToken)
+    ? `https://t.me/${username}?start=ls_${normalizedAttributionToken}`
+    : profileId && /^\d+$/.test(profileId)
+      ? `https://t.me/${username}?start=profile_${profileId}`
+      : `https://t.me/${username}`;
   const memberLine = buildCompactMemberLine({ profileSnapshot, russian });
 
   const valueLine = russian

@@ -13,8 +13,8 @@ import {
 } from '../src/lib/linkedin/profileShareMedia.js';
 
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-assert.ok(['STEP064B4D2', 'STEP064B4D2A'].includes(CURRENT_SOURCE_STEP));
-assert.ok(['0.65.0', '0.65.1'].includes(packageJson.version));
+assert.ok(['STEP064B4D2', 'STEP064B4D2A', 'STEP065A1'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['0.65.0', '0.65.1', '0.66.0'].includes(packageJson.version));
 
 assert.equal(getMemberButtons('en').editProfile, '👤 Profile');
 assert.equal(getMemberButtons('ru').editProfile, '👤 Профиль');

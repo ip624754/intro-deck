@@ -4,6 +4,7 @@ import { applyDirectoryFilterInputForTelegramUser } from '../../lib/storage/dire
 import { applyAdminCommsPhotoInput, applyAdminCommsTextInput, applyAdminUserNoteInput, loadAdminBroadcastState, loadAdminDirectMessageState, loadAdminNoticeState, loadAdminSearchResults } from '../../lib/storage/adminStore.js';
 import { applyProfileFieldInput } from '../../lib/storage/profileEditStore.js';
 import { applyDmComposeInput } from '../../lib/storage/dmStore.js';
+import { recordLinkedInShareAttributionEventForTelegramUser } from '../../lib/storage/linkedinShareAttributionStore.js';
 import { applyAiNewsTextInput } from '../../lib/storage/aiNewsStore.js';
 import { formatDmRequestReason, formatUserFacingError } from '../utils/notices.js';
 
@@ -159,6 +160,18 @@ export function createTextComposer({ buildDirectoryFiltersSurface, buildAdminUse
     }));
 
     if (dmResult.consumed) {
+      if (dmResult.composeMode === 'request' && dmResult.autoCovered && dmResult.thread?.dm_thread_id) {
+        await recordLinkedInShareAttributionEventForTelegramUser({
+          telegramUserId: ctx.from.id,
+          telegramUsername: ctx.from.username || null,
+          targetProfileId: dmResult.thread.target_profile_id,
+          eventType: 'request_submitted',
+          telegramUpdateId: ctx.update?.update_id || null,
+          entityType: 'dm_thread',
+          entityId: dmResult.thread.dm_thread_id,
+          detail: { contactKind: 'private_chat', paymentMode: 'pro_covered' }
+        }).catch(() => null);
+      }
       const notice = dmResult.blocked
         ? `⚠️ ${formatDmRequestReason(dmResult.reason)}`
         : dmResult.composeMode === 'request'

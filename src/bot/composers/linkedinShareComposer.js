@@ -22,7 +22,8 @@ function shareStartFailureNotice(reason) {
     case 'linkedin_share_publish_in_progress':
       return '⏳ A LinkedIn share is already publishing. Wait for the receipt before creating another share.';
     case 'migration_029_required':
-      return '⚠️ LinkedIn sharing is temporarily unavailable.';
+    case 'migration_038_required':
+      return '⚠️ LinkedIn sharing is temporarily unavailable while attribution readiness is being completed.';
     case 'linkedin_not_connected':
     case 'linkedin_account_missing':
       return '⚠️ Connect LinkedIn before creating a profile share.';

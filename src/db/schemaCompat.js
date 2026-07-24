@@ -91,6 +91,36 @@ export async function getSchemaCompat(client) {
         where table_schema = current_schema()
           and table_name = 'linkedin_share_events'
       ) as has_linkedin_share_events_table,
+      exists (
+        select 1
+        from information_schema.columns
+        where table_schema = current_schema()
+          and table_name = 'linkedin_share_intents'
+          and column_name = 'attribution_token'
+      ) as linkedin_share_has_attribution_token,
+      exists (
+        select 1
+        from information_schema.tables
+        where table_schema = current_schema()
+          and table_name = 'linkedin_share_attribution_sessions'
+      ) as has_linkedin_share_attribution_sessions_table,
+      exists (
+        select 1
+        from information_schema.tables
+        where table_schema = current_schema()
+          and table_name = 'linkedin_share_attribution_events'
+      ) as has_linkedin_share_attribution_events_table,
+      exists (
+        select 1
+        from pg_trigger t
+        join pg_class c on c.oid = t.tgrelid
+        join pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = current_schema()
+          and c.relname = 'linkedin_share_attribution_events'
+          and t.tgname = 'trg_linkedin_share_attribution_events_immutable'
+          and not t.tgisinternal
+          and t.tgenabled <> 'D'
+      ) as linkedin_share_attribution_events_immutable,
       exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_preferences') as has_ai_news_preferences_table,
       exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_sources') as has_ai_news_sources_table,
       exists (select 1 from information_schema.tables where table_schema=current_schema() and table_name='ai_news_drafts') as has_ai_news_drafts_table,
@@ -193,6 +223,10 @@ export async function getSchemaCompat(client) {
     hasLinkedInVerificationSnapshotsTable: Boolean(result.rows[0]?.has_linkedin_verification_snapshots_table),
     hasLinkedInShareIntentsTable: Boolean(result.rows[0]?.has_linkedin_share_intents_table),
     hasLinkedInShareEventsTable: Boolean(result.rows[0]?.has_linkedin_share_events_table),
+    linkedInShareHasAttributionToken: Boolean(result.rows[0]?.linkedin_share_has_attribution_token),
+    hasLinkedInShareAttributionSessionsTable: Boolean(result.rows[0]?.has_linkedin_share_attribution_sessions_table),
+    hasLinkedInShareAttributionEventsTable: Boolean(result.rows[0]?.has_linkedin_share_attribution_events_table),
+    linkedInShareAttributionEventsImmutable: Boolean(result.rows[0]?.linkedin_share_attribution_events_immutable),
     hasAiNewsPreferencesTable: Boolean(result.rows[0]?.has_ai_news_preferences_table),
     hasAiNewsSourcesTable: Boolean(result.rows[0]?.has_ai_news_sources_table),
     hasAiNewsDraftsTable: Boolean(result.rows[0]?.has_ai_news_drafts_table),
@@ -224,6 +258,13 @@ export async function getSchemaCompat(client) {
       && result.rows[0]?.users_has_default_post_language_constraint
     )
   };
+
+  compat.linkedInShareAttributionReady = Boolean(
+    compat.linkedInShareHasAttributionToken
+    && compat.hasLinkedInShareAttributionSessionsTable
+    && compat.hasLinkedInShareAttributionEventsTable
+    && compat.linkedInShareAttributionEventsImmutable
+  );
 
   schemaCompatCache.set(client, compat);
   return compat;

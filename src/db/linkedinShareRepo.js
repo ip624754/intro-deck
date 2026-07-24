@@ -37,7 +37,9 @@ export async function createLinkedInShareIntent(client, {
   expiresAt,
   sourceKind = 'profile_share',
   sourceRefId = null,
-  sourceSnapshotHash = null
+  sourceSnapshotHash = null,
+  attributionToken = null,
+  attributionReady = false
 }) {
   await client.query(
     `update linkedin_share_intents
@@ -47,15 +49,25 @@ export async function createLinkedInShareIntent(client, {
     [userId]
   );
 
-  const result = await client.query(
-    `insert into linkedin_share_intents (
-       public_token, user_id, linkedin_account_id, profile_id,
-       post_text, visibility, status, expires_at,
-       source_kind, source_ref_id, source_snapshot_hash
-     ) values ($1::uuid, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10)
-     returning *`,
-    [publicToken, userId, linkedinAccountId, profileId, postText, visibility, expiresAt, sourceKind, sourceRefId, sourceSnapshotHash]
-  );
+  const result = attributionReady
+    ? await client.query(
+        `insert into linkedin_share_intents (
+           public_token, user_id, linkedin_account_id, profile_id,
+           post_text, visibility, status, expires_at,
+           source_kind, source_ref_id, source_snapshot_hash, attribution_token
+         ) values ($1::uuid, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10, $11)
+         returning *`,
+        [publicToken, userId, linkedinAccountId, profileId, postText, visibility, expiresAt, sourceKind, sourceRefId, sourceSnapshotHash, attributionToken]
+      )
+    : await client.query(
+        `insert into linkedin_share_intents (
+           public_token, user_id, linkedin_account_id, profile_id,
+           post_text, visibility, status, expires_at,
+           source_kind, source_ref_id, source_snapshot_hash
+         ) values ($1::uuid, $2, $3, $4, $5, $6, 'draft', $7, $8, $9, $10)
+         returning *`,
+        [publicToken, userId, linkedinAccountId, profileId, postText, visibility, expiresAt, sourceKind, sourceRefId, sourceSnapshotHash]
+      );
 
   const row = result.rows[0];
   await insertLinkedInShareEvent(client, {

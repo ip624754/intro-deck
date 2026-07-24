@@ -1,6 +1,7 @@
 import { Composer } from 'grammy';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
 import { loadUserLanguagePreferences } from '../../lib/storage/languagePreferenceStore.js';
+import { resolveLinkedInShareAttributionStartForTelegramUser } from '../../lib/storage/linkedinShareAttributionStore.js';
 import {
   attemptInviteAttributionForTelegramUser,
   beginInviteRewardRedemptionForTelegramUser,
@@ -174,6 +175,38 @@ export function createInviteComposer({
 
   composer.command('start', async (ctx, next) => {
     const startParam = parseStartParam(ctx);
+    const attributedShareMatch = /^ls_([A-Za-z0-9_-]{22})$/.exec(String(startParam || ''));
+    if (attributedShareMatch && typeof buildDirectoryCardSurface === 'function') {
+      await clearAllPendingInputs(ctx.from.id);
+      const attribution = await resolveLinkedInShareAttributionStartForTelegramUser({
+        attributionToken: attributedShareMatch[1],
+        telegramUserId: ctx.from.id,
+        telegramUsername: ctx.from.username || null,
+        telegramLanguageCode: ctx.from.language_code || null,
+        telegramUpdateId: ctx.update?.update_id || null
+      }).catch((error) => ({
+        persistenceEnabled: true,
+        resolved: false,
+        recorded: false,
+        reason: String(error?.message || error)
+      }));
+
+      if (attribution.resolved && attribution.profileId) {
+        const notice = ctx.interfaceLanguage === 'ru'
+          ? 'Открыто из опубликованной LinkedIn-карточки участника.'
+          : 'Opened from a published LinkedIn profile share.';
+        const surface = await buildDirectoryCardSurface(ctx, attribution.profileId, 0, notice);
+        await ctx.reply(surface.text, { reply_markup: surface.reply_markup });
+        return undefined;
+      }
+
+      const notice = ctx.interfaceLanguage === 'ru'
+        ? '⚠️ Эта LinkedIn-ссылка недействительна или профиль больше не опубликован.'
+        : '⚠️ This LinkedIn share link is invalid or the profile is no longer public.';
+      await renderHome(ctx, 'reply', notice);
+      return undefined;
+    }
+
     const sharedProfileMatch = /^profile_(\d+)$/.exec(String(startParam || ''));
     if (sharedProfileMatch && typeof buildDirectoryCardSurface === 'function') {
       await clearAllPendingInputs(ctx.from.id);

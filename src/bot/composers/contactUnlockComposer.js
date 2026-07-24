@@ -11,6 +11,10 @@ import {
 import { formatContactUnlockDecisionReason, formatContactUnlockRequestReason, formatUserFacingError } from '../utils/notices.js';
 import { getTransactionDisclosures, paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
 import { localizeMemberText } from '../../lib/telegram/memberLocalization.js';
+import {
+  recordLinkedInShareAttributionApprovalByEntity,
+  recordLinkedInShareAttributionEventForTelegramUser
+} from '../../lib/storage/linkedinShareAttributionStore.js';
 
 async function sendContactUnlockInvoice(ctx, invoice) {
   return ctx.api.raw.sendInvoice({
@@ -35,6 +39,15 @@ export function createContactUnlockComposer({
     const profileId = Number.parseInt(ctx.match?.[1] || '0', 10);
     await clearAllPendingInputs(ctx.from.id);
 
+    await recordLinkedInShareAttributionEventForTelegramUser({
+      telegramUserId: ctx.from.id,
+      telegramUsername: ctx.from.username || null,
+      targetProfileId: profileId,
+      eventType: 'contact_request_started',
+      telegramUpdateId: ctx.update?.update_id || null,
+      detail: { contactKind: 'telegram_contact' }
+    }).catch(() => null);
+
     const result = await beginContactUnlockPaymentForTelegramUser({
       telegramUserId: ctx.from.id,
       telegramUsername: ctx.from.username || null,
@@ -57,6 +70,16 @@ export function createContactUnlockComposer({
     }
 
     if (result.autoCovered && result.request?.contact_unlock_request_id) {
+      await recordLinkedInShareAttributionEventForTelegramUser({
+        telegramUserId: ctx.from.id,
+        telegramUsername: ctx.from.username || null,
+        targetProfileId: result.request.target_profile_id || profileId,
+        eventType: 'request_submitted',
+        telegramUpdateId: ctx.update?.update_id || null,
+        entityType: 'contact_unlock_request',
+        entityId: result.request.contact_unlock_request_id,
+        detail: { contactKind: 'telegram_contact', paymentMode: 'pro_covered' }
+      }).catch(() => null);
       await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason, ctx.interfaceLanguage) });
       const surface = await buildContactUnlockDetailSurface(ctx, result.request.contact_unlock_request_id, ctx.interfaceLanguage === 'ru' ? '✅ Запрос отправлен за счёт Pro. Получатель теперь решает, открыть ли Telegram-контакт.' : '✅ Request sent with Pro. The recipient now decides whether to share their Telegram contact.');
       await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
@@ -120,6 +143,13 @@ export function createContactUnlockComposer({
     if (!result.persistenceEnabled) {
       notice = russian ? '⚠️ Функция временно недоступна. Попробуйте позже.' : '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.changed && result.reason === 'contact_unlock_revealed') {
+      await recordLinkedInShareAttributionApprovalByEntity({
+        ownerTelegramUserId: ctx.from.id,
+        entityType: 'contact_unlock_request',
+        entityId: result.request?.contact_unlock_request_id || requestId,
+        telegramUpdateId: ctx.update?.update_id || null,
+        detail: { decision: 'approved' }
+      }).catch(() => null);
       notice = russian
         ? `✅ Вы открыли Telegram-контакт пользователю ${result.request?.display_name || 'этот участник'}. Скрытый username теперь доступен только этому отправителю.`
         : `✅ Shared your Telegram contact with ${result.request?.display_name || 'this member'}. Your hidden username is now visible to this requester.`;
@@ -188,6 +218,16 @@ export function createContactUnlockComposer({
     }));
 
     if (result.changed) {
+      await recordLinkedInShareAttributionEventForTelegramUser({
+        telegramUserId: ctx.from.id,
+        telegramUsername: ctx.from.username || null,
+        targetProfileId: result.request?.target_profile_id,
+        eventType: 'request_submitted',
+        telegramUpdateId: ctx.update?.update_id || null,
+        entityType: 'contact_unlock_request',
+        entityId: result.request?.contact_unlock_request_id || parsed.requestId,
+        detail: { contactKind: 'telegram_contact', paymentMode: 'telegram_stars' }
+      }).catch(() => null);
       const russian = ctx.interfaceLanguage === 'ru';
       const disclosure = getTransactionDisclosures(ctx.interfaceLanguage).requestDeliveryPayment;
       await ctx.reply(russian
