@@ -71,7 +71,7 @@ const inviteState = {
 };
 
 const inviteText = renderInviteText({ inviteState });
-for (const token of ['Invite people', 'Share to a chat', 'Forwarding card', 'Your activity']) {
+for (const token of ['Invite people', 'Share your personal Intro Deck invite', 'Activity and rewards are tracked automatically']) {
   if (!inviteText.includes(token)) throw new Error(`Invite root text missing ${token}`);
 }
 if (inviteText.includes('Open next') || inviteText.includes('Invite & rewards')) {

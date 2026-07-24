@@ -37,7 +37,7 @@ if (homeKeyboard.inline_keyboard.flat().some((button) => button.callback_data ==
 }
 
 const listText = renderDirectoryListText({ profiles: sampleProfiles, page: 0, totalCount: 1, persistenceEnabled: true });
-if (!listText.includes('🌐 Directory') || !listText.includes('Listed profile cards are visible to bot users') || !listText.includes('Rustam Lukmanov')) {
+if (!listText.includes('🌐 Directory') || !listText.includes('Browse published professional profiles') || !listText.includes('Rustam Lukmanov')) {
   throw new Error('Directory list text must render listed profiles');
 }
 
@@ -47,7 +47,7 @@ if (!JSON.stringify(listKeyboard).includes('dir:open:101:0') || !JSON.stringify(
 }
 
 const cardText = renderDirectoryCardText({ profileSnapshot: sampleProfiles[0], persistenceEnabled: true });
-if (!cardText.includes('Directory profile') || !cardText.includes('Growth')) {
+if (!cardText.includes('Professional profile') || !cardText.includes('Growth')) {
   throw new Error('Directory card text must render public card details');
 }
 

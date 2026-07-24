@@ -36,7 +36,7 @@ if (homeComposerSource.includes("composer.command('sent'")) {
 }
 
 const helpText = renderHelpText({ aiNewsVisible: true });
-if (!helpText.includes('Use Intro Deck to connect a LinkedIn account')) {
+if (!helpText.includes('Intro Deck helps you find professionals and connect by permission.')) {
   throw new Error('Help surface must explain the product clearly');
 }
 

@@ -56,7 +56,7 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
     }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'Persistence is disabled in this environment.' });
+      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
       return;
     }
 

@@ -8,6 +8,13 @@ import {
   normalizeAngleKey
 } from '../ai/newsDiscoveryContract.js';
 import { AI_NEWS_DELIVERY_HOURS_UTC, scheduleLabel } from '../ai/newsPresetSchedule.js';
+import {
+  MEMBER_BUTTONS,
+  MEMBER_SURFACES,
+  memberReasonText,
+  sourceMatchLabel,
+  sourceQualityLabel
+} from './memberCopy.js';
 
 function value(value, fallback = '—') {
   const text = String(value ?? '').trim();
@@ -38,48 +45,39 @@ function searchAvailable(usage) {
 
 function reasonText(reason) {
   const map = {
-    ai_news_disabled: 'AI/news drafts are disabled in this environment.',
-    ai_news_draft_config_invalid: 'AI/news draft configuration is invalid.',
-    operator_only: 'This foundation is currently limited to Intro Deck operators.',
-    pro_required: 'AI/news drafts require Pro.',
-    ai_news_operator_acceptance_in_progress: 'AI/news rollout is currently limited to operator acceptance testing.',
+    operator_only: 'Story finder is currently limited to operators.',
+    pro_required: 'Story finder requires Pro.',
+    ai_news_operator_acceptance_in_progress: 'Story finder is still in limited testing.',
     linkedin_not_connected: 'Connect LinkedIn first.',
     profile_not_listed: 'Complete and publish your profile first.',
-    migration_030_required: 'Migration 030 has not been applied yet.',
     ai_news_daily_limit_reached: 'Your rolling 24-hour draft allowance is used.',
-    ai_news_search_daily_limit_reached: 'Your rolling 24-hour news-search allowance is used.',
-    ai_news_search_cooldown: 'A search is already running or the short search cooldown is still active.',
-    ai_news_source_already_used: 'A draft already exists for this source. Choose another article.',
-    ai_news_no_fresh_sources: 'No fresh matching sources were found.',
+    ai_news_search_daily_limit_reached: 'Your rolling 24-hour search allowance is used.',
+    ai_news_search_cooldown: 'A search is already running. Try again shortly.',
+    ai_news_source_already_used: 'A draft already exists for this source. Choose another story.',
+    ai_news_no_fresh_sources: 'No sufficiently relevant stories were found.',
     ai_news_source_expired: 'This source selection expired. Search again.',
     ai_news_source_not_found: 'This source is no longer available.',
-    ai_news_generator_disabled: 'Draft generation is off. You can still browse and open configured sources.',
-    openai_generation_failed: 'OpenAI could not produce a valid evidence-bound draft. Try another source later.',
-    openai_internal_error: 'OpenAI draft generation is temporarily unavailable.',
-    groq_generation_failed: 'Groq could not produce a valid evidence-bound draft. Try another source later.',
-    groq_internal_error: 'Groq draft generation is temporarily unavailable.',
-    template_generation_failed: 'The deterministic template could not produce a valid draft from this source.',
-    template_internal_error: 'Template draft generation is temporarily unavailable.',
-    newsdata_request_failed: 'The news provider request failed. Try again later.',
-    linkedin_share_unavailable: 'LinkedIn publishing is not available right now.',
-    migration_031_required: 'Migration 031 has not been applied yet.',
-    migration_032_required: 'Migration 032 has not been applied yet.',
-    migration_033_required: 'Migration 033 has not been applied yet. Multi-source discovery remains unavailable.',
-    migration_034_required: 'Migration 034 has not been applied yet. Groq/template draft generation remains fail-closed.',
-    migration_035_required: 'Migration 035 has not been applied yet. Audience-aware discovery and personalized presets remain fail-closed.',
-    migration_036_required: 'Migration 036 has not repaired and verified the audience-aware schema contract yet. Discovery remains fail-closed.',
-    ai_news_all_providers_failed: 'All enabled source providers failed. Your allowance is restored when the claim can be safely released.',
+    ai_news_generator_disabled: 'Draft creation is off. You can still open original sources.',
+    openai_generation_failed: 'Draft creation failed for this source. Try another story later.',
+    openai_internal_error: 'Draft creation is temporarily unavailable.',
+    groq_generation_failed: 'Draft creation failed for this source. Try another story later.',
+    groq_internal_error: 'Draft creation is temporarily unavailable.',
+    template_generation_failed: 'The template could not create a valid draft from this source.',
+    template_internal_error: 'Draft creation is temporarily unavailable.',
+    newsdata_request_failed: 'The source search failed. Try again later.',
+    linkedin_share_unavailable: 'LinkedIn sharing is temporarily unavailable.',
+    ai_news_all_providers_failed: 'The source search could not be completed. Your allowance is restored when possible.',
     ai_news_search_internal_error: 'The source search ended unexpectedly. Try again later.',
-    ai_news_preset_limit_reached: 'Your saved-preset limit is used.',
-    ai_news_preset_duplicate: 'This preset is already saved.',
-    ai_news_preferences_not_found: 'Choose topic, audience, angle, language, and tone before saving a preset.',
-    ai_news_preset_not_found: 'This saved preset is no longer available.',
-    ai_news_schedule_disabled: 'Scheduled delivery is disabled in this environment.',
-    ai_news_preset_paused: 'This preset is paused.',
-    ai_news_preset_deleted: 'This preset was deleted.',
-    ai_news_preset_run_not_found: 'This preset run is no longer available.'
+    ai_news_preset_limit_reached: 'Your saved-search limit is used.',
+    ai_news_preset_duplicate: 'This search is already saved.',
+    ai_news_preferences_not_found: 'Choose a topic, audience, angle, language, and tone before saving.',
+    ai_news_preset_not_found: 'This saved search is no longer available.',
+    ai_news_schedule_disabled: 'Scheduled delivery is unavailable.',
+    ai_news_preset_paused: 'This saved search is paused.',
+    ai_news_preset_deleted: 'This saved search was deleted.',
+    ai_news_preset_run_not_found: 'This saved search run is no longer available.'
   };
-  return map[reason] || `Unavailable: ${reason || 'unknown_reason'}`;
+  return map[reason] || memberReasonText(reason);
 }
 
 export function renderAiNewsHubText({ state, notice = null }) {
@@ -90,45 +88,29 @@ export function renderAiNewsHubText({ state, notice = null }) {
   const browseOnly = generatorMode === 'off';
   const personalization = state?.personalization || {};
   const lines = [
-    browseOnly ? '🗞 LinkedIn source browser' : '🧠 LinkedIn news drafts',
+    MEMBER_SURFACES.storyFinder,
     '',
     browseOnly
-      ? 'Find professionally relevant stories for your network. Nothing is generated or published automatically.'
-      : 'Create an evidence-bound LinkedIn draft for a selected professional audience. Nothing is published automatically.',
+      ? 'Find stories worth sharing with your professional network. Nothing is generated or published automatically.'
+      : 'Find a source and create a reviewable LinkedIn draft. Nothing is published automatically.',
     '',
     `Topic: ${preset.label}${preferences.preset_key === 'custom' ? ` · ${value(preferences.custom_query)}` : ''}`,
     `Audience: ${audienceLabel(preferences)}`,
     `Angle: ${angleLabel(preferences)}`,
-    `Profile match: ${preferences.profile_affinity_enabled === false ? 'off' : personalization.available ? `${personalization.signalCount || 0} public profile signals` : 'on · no public signals yet'}`,
+    `Profile context: ${preferences.profile_affinity_enabled === false ? 'Off' : personalization.available ? 'On' : 'On · complete your profile for better matches'}`,
     `Post language: ${String(preferences.post_language || 'en').toUpperCase()}`,
     `Tone: ${tone}`,
-    browseOnly
-      ? 'Draft allowance: not used in browse-only mode'
-      : `Draft allowance: ${state?.dailyUsage?.remaining ?? 0}/${state?.dailyUsage?.limit ?? state?.config?.dailyLimit ?? 0} remaining in 24h`,
-    `Search allowance: ${state?.searchUsage?.remaining ?? state?.config?.searchDailyLimit ?? 0}/${state?.searchUsage?.limit ?? state?.config?.searchDailyLimit ?? 0} remaining in 24h`,
+    `Searches: ${state?.searchUsage?.remaining ?? state?.config?.searchDailyLimit ?? 0}/${state?.searchUsage?.limit ?? state?.config?.searchDailyLimit ?? 0}`,
     state?.searchUsage?.remaining === 0 && isoTime(state?.searchUsage?.resetsAt)
-      ? `Search resets at: ${isoTime(state.searchUsage.resetsAt)}`
+      ? `Available again: ${isoTime(state.searchUsage.resetsAt)}`
       : null,
-    `Saved presets: ${state?.presetUsage?.used ?? state?.presets?.length ?? 0}/${state?.presetUsage?.limit ?? state?.config?.presetLimit ?? 0}`,
-    `Generator: ${generatorMode}`,
-    `Scheduled delivery: ${state?.config?.schedule?.enabled ? 'drafts only · no auto-posting' : 'off'}`,
-    `Rollout stage: ${state?.config?.rolloutStage || 'operator_acceptance'}`,
-    `Source mode: ${state?.config?.source?.mode || 'newsdata_only'}`,
-    '',
-    browseOnly
-      ? 'Flow: professional context → source → evidence → open original.'
-      : 'Flow: professional context → source → evidence → draft → preview/edit → explicit LinkedIn approval.'
+    `Saved searches: ${state?.presetUsage?.used ?? state?.presets?.length ?? 0}/${state?.presetUsage?.limit ?? state?.config?.presetLimit ?? 0}`
   ];
-  const cleanedLines = lines.filter((line) => line !== null);
-  if (!state?.eligible) cleanedLines.push('', `⚠️ ${reasonText(state?.reason)}`);
-  if (state?.latestDraft && (!browseOnly || ['draft', 'editing', 'share_ready', 'unknown'].includes(state.latestDraft.status))) {
-    cleanedLines.push('', `Latest draft: ${state.latestDraft.status}`);
-  }
-  if (browseOnly && state?.searchUsage?.remaining === 0) {
-    cleanedLines.push('', '⚠️ News search is paused until the rolling allowance resets.');
-  }
-  if (notice) cleanedLines.push('', notice);
-  return cleanedLines.join('\n');
+  const cleaned = lines.filter((line) => line !== null);
+  if (!state?.eligible) cleaned.push('', `⚠️ ${reasonText(state?.reason)}`);
+  if (browseOnly && state?.searchUsage?.remaining === 0) cleaned.push('', '⚠️ Search is paused until the rolling allowance resets.');
+  if (notice) cleaned.push('', notice);
+  return cleaned.join('\n');
 }
 
 export function renderAiNewsHubKeyboard({ state }) {
@@ -156,43 +138,30 @@ export function renderAiNewsHubKeyboard({ state }) {
       { text: `Tone: ${AI_NEWS_TONES[p.tone] || 'Professional'}`, callback_data: `news:tone:${p.tone === 'professional' ? 'analytical' : p.tone === 'analytical' ? 'concise' : 'professional'}` }
     ]
   ];
-  if (state?.eligible && searchAvailable(state?.searchUsage)) {
-    rows.push([{ text: '🔎 Find relevant stories', callback_data: 'news:find' }]);
-  }
-  if (state?.latestDraft && ['draft', 'editing', 'share_ready', 'unknown'].includes(state.latestDraft.status)) {
-    rows.push([{ text: '📝 Open current draft', callback_data: `news:draft:${state.latestDraft.public_token}` }]);
-  }
-  if (state?.presetPersistenceReady) {
-    rows.push([
-      { text: `⚙️ Saved presets (${state?.presets?.length || 0})`, callback_data: 'news:presets' },
-      { text: '➕ Save current', callback_data: 'news:psave' }
-    ]);
-  }
-  if (!state?.eligible && state?.reason === 'pro_required') {
-    rows.push([{ text: '⭐ Get Pro', callback_data: 'plans:root' }]);
-  }
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  if (state?.eligible && searchAvailable(state?.searchUsage)) rows.push([{ text: '🔎 Find stories', callback_data: 'news:find' }]);
+  if (state?.latestDraft && ['draft', 'editing', 'share_ready', 'unknown'].includes(state.latestDraft.status)) rows.push([{ text: '📝 Open current draft', callback_data: `news:draft:${state.latestDraft.public_token}` }]);
+  if (state?.presetPersistenceReady) rows.push([
+    { text: `⚙️ Saved searches (${state?.presets?.length || 0})`, callback_data: 'news:presets' },
+    { text: '➕ Save search', callback_data: 'news:psave' }
+  ]);
+  if (!state?.eligible && state?.reason === 'pro_required') rows.push([{ text: '⭐ Get Pro', callback_data: 'plans:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return { inline_keyboard: rows };
 }
 
 export function renderAiNewsSearchProgressText({ state = {} }) {
   const preferences = state?.preferences || {};
   const preset = AI_NEWS_PRESETS[preferences.preset_key] || AI_NEWS_PRESETS.for_you;
-  const providers = Array.isArray(state?.config?.source?.enabledProviders)
-    ? state.config.source.enabledProviders
-    : ['configured providers'];
   return [
-    '🔎 Finding relevant stories…',
+    '🔎 Finding stories…',
     '',
     `Topic: ${preset.label}${preferences.preset_key === 'custom' ? ` · ${value(preferences.custom_query)}` : ''}`,
     `Audience: ${audienceLabel(preferences)}`,
     `Angle: ${angleLabel(preferences)}`,
     '',
-    'Checking configured source providers:',
-    ...providers.map((provider) => `• ${sourceProviderLabel(provider)}`),
+    'Checking official sources, releases, discussions, and news reports.',
     '',
-    'Search status: searching',
-    'This message will stay visible and update with results or a clear failure state.'
+    'This message will update when the search finishes.'
   ].join('\n');
 }
 
@@ -205,40 +174,26 @@ export function renderAiNewsSearchProgressKeyboard() {
 export function renderAiNewsSearchFailureText({ result = {} }) {
   const usage = result?.searchUsage || {};
   const noClaimReasons = new Set([
-    'ai_news_disabled',
-    'ai_news_draft_config_invalid',
-    'operator_only',
-    'pro_required',
-    'ai_news_operator_acceptance_in_progress',
-    'linkedin_not_connected',
-    'profile_not_listed',
-    'migration_030_required',
-    'migration_032_required',
-    'migration_033_required',
-    'migration_035_required',
-    'migration_036_required',
-    'ai_news_search_daily_limit_reached',
-    'ai_news_search_cooldown'
+    'ai_news_disabled', 'ai_news_draft_config_invalid', 'operator_only', 'pro_required',
+    'ai_news_operator_acceptance_in_progress', 'linkedin_not_connected', 'profile_not_listed',
+    'migration_030_required', 'migration_032_required', 'migration_033_required', 'migration_035_required',
+    'migration_036_required', 'ai_news_search_daily_limit_reached', 'ai_news_search_cooldown'
   ]);
   const allowanceLine = result?.searchClaimReleased
-    ? 'Search allowance: restored because the search did not complete.'
+    ? 'Search allowance: restored.'
     : result?.searchClaimConsumed === false || noClaimReasons.has(result?.reason)
-      ? 'Search allowance: no new search claim was consumed.'
-      : 'Search allowance: this completed search attempt counts toward the rolling limit.';
-  const lines = [
+      ? 'Search allowance: unchanged.'
+      : 'Search allowance: this completed attempt counts toward the rolling limit.';
+  return [
     '⚠️ Search could not be completed',
     '',
-    aiNewsReasonText(result?.reason),
+    reasonText(result?.reason),
     '',
     allowanceLine,
-    Number.isFinite(Number(usage.remaining)) && Number.isFinite(Number(usage.limit))
-      ? `Remaining searches: ${Number(usage.remaining)}/${Number(usage.limit)}`
-      : null,
-    result?.errorCode ? `Diagnostic code: ${value(result.errorCode)}` : null,
+    Number.isFinite(Number(usage.remaining)) && Number.isFinite(Number(usage.limit)) ? `Searches left: ${Number(usage.remaining)}/${Number(usage.limit)}` : null,
     '',
-    'The failure remains visible. No draft or LinkedIn publication was created.'
-  ];
-  return lines.filter((line) => line !== null).join('\n');
+    'No draft or LinkedIn post was created.'
+  ].filter((line) => line !== null).join('\n');
 }
 
 export function renderAiNewsSearchFailureKeyboard({ result = {} }) {
@@ -319,51 +274,22 @@ function sourceProviderLabel(provider) {
 
 export function renderAiNewsSourcesText({ result }) {
   const canDraft = Boolean(result?.draftGenerationAvailable);
-  const generatorMode = result?.generatorMode || 'openai';
   const lines = [
-    '📰 Fresh source candidates',
+    '🗞 Stories for your network',
     '',
-    `Query: ${value(result?.query)}`,
     `Audience: ${audienceLabel(result?.preferences || { audience_key: result?.audienceKey })}`,
     `Angle: ${angleLabel(result?.preferences || { angle_key: result?.angleKey })}`,
-    result?.personalization?.available ? `Profile affinity: ${result.personalization.signalCount || 0} public signals` : 'Profile affinity: no public signals',
-    `Source mode: ${result?.sourceMode || 'newsdata_only'}`,
-    `Generator: ${generatorMode}`,
-    canDraft
-      ? 'Choose Draft to use one source as evidence, or Open to inspect the original first.'
-      : generatorMode === 'off'
-        ? 'Browse-only mode: open an original source. Draft generation is disabled.'
-        : 'Draft allowance is currently used. You can still inspect original sources.'
+    '',
+    canDraft ? 'Choose a story to create a draft, or open the original source first.' : 'Open an original source. Nothing is generated or published automatically.'
   ];
   for (const [index, article] of (result?.articles || []).entries()) {
-    const authority = Number.isFinite(Number(article.source_authority_score)) ? Number(article.source_authority_score) : null;
     const metadata = parseSourceMetadata(article.source_metadata_json || article.sourceMetadata || article.metadata);
-    const relevance = Number.isFinite(Number(metadata.relevanceScore)) ? Number(metadata.relevanceScore) : null;
-    const qualityTier = value(metadata.qualityTier, null);
-    const quality = [
-      sourceProviderLabel(article.provider),
-      article.source_is_primary ? 'primary' : qualityTier ? `quality ${qualityTier}` : null,
-      authority !== null ? `authority ${authority}/100` : null,
-      relevance !== null ? `relevance ${relevance}/100` : null,
-      Number.isFinite(Number(metadata.profileAffinityScore)) ? `profile ${Number(metadata.profileAffinityScore)}/100` : null,
-      Number.isFinite(Number(metadata.audienceFitScore)) ? `audience ${Number(metadata.audienceFitScore)}/100` : null,
-      Number.isFinite(Number(metadata.angleFitScore)) ? `angle ${Number(metadata.angleFitScore)}/100` : null
-    ].filter(Boolean).join(' · ');
-    lines.push(
-      '',
-      `${index + 1}. ${value(article.source_title)}`,
-      `${value(article.source_name, value(article.source_domain))} · ${new Date(article.published_at).toISOString()}`,
-      quality
-    );
+    const quality = sourceQualityLabel({ isPrimary: Boolean(article.source_is_primary), qualityTier: value(metadata.qualityTier, null) });
+    const match = sourceMatchLabel(metadata);
+    lines.push('', `${index + 1}. ${value(article.source_title)}`, `${value(article.source_name, value(article.source_domain))} · ${quality} · ${match}`);
   }
   const failed = (result?.providerSummary || []).filter((item) => item.outcome === 'failed');
-  if (failed.length) {
-    const labels = failed.map((item) => `${sourceProviderLabel(item.provider)}${item.errorCode ? ` [${item.errorCode}]` : ''}`);
-    lines.push('', `Provider isolation: ${labels.join(', ')} unavailable; remaining sources still returned.`);
-  }
-  if (result?.newsdataFallbackUsed) lines.push('', 'NewsData fallback was used because primary/free providers did not fill the candidate pool.');
-  const validUntil = result?.articles?.[0]?.expires_at;
-  if (validUntil) lines.push(`Selection valid until: ${new Date(validUntil).toISOString()}`);
+  if (failed.length) lines.push('', 'Some sources were unavailable. Results from available sources are shown.');
   return lines.join('\n');
 }
 
@@ -372,29 +298,19 @@ export function renderAiNewsSourcesKeyboard({ result }) {
   const canDraft = Boolean(result?.draftGenerationAvailable);
   for (const [index, article] of (result?.articles || []).entries()) {
     const row = [];
-    if (canDraft) {
-      row.push({
-        text: `Draft ${index + 1}`,
-        callback_data: `news:generate:${article.public_token}`
-      });
-    }
-    row.push({
-      text: canDraft ? 'Open source ↗' : `Open ${index + 1} ↗`,
-      url: article.source_url
-    });
+    if (canDraft) row.push({ text: `Create draft ${index + 1}`, callback_data: `news:generate:${article.public_token}` });
+    row.push({ text: canDraft ? 'Open original ↗' : `Open ${index + 1} ↗`, url: article.source_url });
     rows.push(row);
   }
-  if (searchAvailable(result?.searchUsage) && !result?.searchCooldown?.active) {
-    rows.push([{ text: '↻ Search again', callback_data: 'news:find' }]);
-  }
-  rows.push([{ text: '← News settings', callback_data: 'news:home' }]);
+  if (searchAvailable(result?.searchUsage) && !result?.searchCooldown?.active) rows.push([{ text: '↻ Search again', callback_data: 'news:find' }]);
+  rows.push([{ text: '← Back to story finder', callback_data: 'news:home' }]);
   return { inline_keyboard: rows };
 }
 
 export function renderAiNewsDraftText({ draft, notice = null }) {
   if (!draft) return '⚠️ Draft not found.';
   const lines = [
-    '📝 LinkedIn news draft',
+    '📝 LinkedIn draft',
     '',
     `Source: ${value(draft.source_title)}`,
     `${value(draft.source_name, value(draft.source_domain))} · ${draft.published_at ? new Date(draft.published_at).toISOString() : 'unknown date'}`,
@@ -406,8 +322,6 @@ export function renderAiNewsDraftText({ draft, notice = null }) {
     '──────────',
     '',
     `Status: ${value(draft.status)}`,
-    `Generator: ${value(draft.model_provider, 'unknown')}`,
-    `Model/template: ${value(draft.model_name)}`,
     `Edited by member: ${draft.edited_by_user ? 'yes' : 'no'}`,
     '',
     'Review every claim. Publishing still requires a separate explicit LinkedIn authorization.'
@@ -426,7 +340,7 @@ export function renderAiNewsDraftKeyboard({ draft }) {
     rows.push([{ text: '🗑 Cancel draft', callback_data: `news:cancel:${draft.public_token}` }]);
   }
   if (draft?.status === 'share_ready') rows.push([{ text: 'Continue LinkedIn authorization', callback_data: `news:approve:${draft.public_token}` }]);
-  rows.push([{ text: '← News drafts', callback_data: 'news:home' }]);
+  rows.push([{ text: '← Back to story finder', callback_data: 'news:home' }]);
   return { inline_keyboard: rows };
 }
 
@@ -473,45 +387,34 @@ function presetTopicLabel(preset) {
 
 export function renderAiNewsPresetsText({ state, notice = null }) {
   const presets = Array.isArray(state?.presets) ? state.presets : [];
-  const generatorEnabled = state?.config?.generator?.mode
-    ? state.config.generator.mode !== 'off'
-    : state?.config?.generator?.enabled !== false;
+  const generatorEnabled = state?.config?.generator?.mode ? state.config.generator.mode !== 'off' : state?.config?.generator?.enabled !== false;
   const lines = [
-    '⚙️ Personalized news presets',
+    '⚙️ Saved searches',
     '',
     generatorEnabled
-      ? 'Saved presets reuse your topic, audience, angle, language, and tone. Scheduled delivery creates a Telegram draft only; every LinkedIn post still needs preview and explicit approval.'
-      : 'Saved presets reuse your source settings. Draft generation and scheduled delivery are disabled in browse-only mode.',
+      ? 'Reuse a topic, audience, angle, language, and tone.'
+      : 'Reuse your story-finder settings.',
     '',
-    `Access: ${state?.eligible ? (state?.reason === 'operator_access' ? 'operator' : 'Pro') : 'locked'}`,
-    `Presets: ${state?.usage?.used ?? presets.length}/${state?.usage?.limit ?? state?.config?.presetLimit ?? 0}`,
-    `Generator: ${state?.config?.generator?.mode || 'openai'}`,
-    `Scheduler: ${state?.config?.schedule?.enabled ? `${state.config.schedule.driver} · live` : 'off'}`
+    `Saved: ${state?.usage?.used ?? presets.length}/${state?.usage?.limit ?? state?.config?.presetLimit ?? 0}`
   ];
-  if (state?.config?.schedule?.enabled) {
-    lines.push('Delivery guard: at most one scheduled draft per member per scheduler execution; multiple due presets rotate oldest-first.');
+  if (state?.config?.schedule?.enabled && generatorEnabled) {
+    lines.push('', 'Scheduled searches create Telegram drafts for review. They never publish to LinkedIn.');
   }
   if (!state?.eligible) lines.push('', `⚠️ ${reasonText(state?.reason)}`);
-  if (!presets.length) {
-    lines.push('', 'No saved presets yet.', 'Configure the topic, audience, angle, language, and tone on the main news screen, then tap “Save current”.');
-  } else {
-    lines.push('', 'Saved presets:');
-    presets.forEach((preset, index) => {
-      lines.push(`${index + 1}. ${value(preset.name)} · ${preset.status} · ${scheduleLabel({ scheduleKind: preset.schedule_kind, deliveryHourUtc: preset.delivery_hour_utc })}`);
-    });
+  if (!presets.length) lines.push('', 'No saved searches yet.', 'Set your preferences on the Story finder screen, then tap “Save search”.');
+  else {
+    lines.push('', 'Your saved searches');
+    presets.forEach((preset, index) => lines.push(`${index + 1}. ${value(preset.name)} · ${preset.status} · ${scheduleLabel({ scheduleKind: preset.schedule_kind, deliveryHourUtc: preset.delivery_hour_utc })}`));
   }
   if (notice) lines.push('', notice);
   return lines.join('\n');
 }
 
 export function renderAiNewsPresetsKeyboard({ state }) {
-  const rows = (state?.presets || []).map((preset, index) => ([{
-    text: `${index + 1}. ${String(preset.name || 'Preset').slice(0, 42)}`,
-    callback_data: `news:ps:${preset.public_token}`
-  }]));
-  if (state?.eligible && (state?.usage?.remaining ?? 0) > 0) rows.push([{ text: '➕ Save current settings', callback_data: 'news:psave' }]);
+  const rows = (state?.presets || []).map((preset, index) => ([{ text: `${index + 1}. ${String(preset.name || 'Saved search').slice(0, 42)}`, callback_data: `news:ps:${preset.public_token}` }]));
+  if (state?.eligible && (state?.usage?.remaining ?? 0) > 0) rows.push([{ text: '➕ Save current search', callback_data: 'news:psave' }]);
   if (!state?.eligible && state?.reason === 'pro_required') rows.push([{ text: '⭐ Get Pro', callback_data: 'plans:root' }]);
-  rows.push([{ text: '← AI/news drafts', callback_data: 'news:home' }]);
+  rows.push([{ text: '← Back to story finder', callback_data: 'news:home' }]);
   return { inline_keyboard: rows };
 }
 

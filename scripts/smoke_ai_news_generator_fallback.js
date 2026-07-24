@@ -194,14 +194,14 @@ try {
     presetUsage: { used: 0, limit: 3 },
     presetPersistenceReady: true
   };
-  assert.match(renderAiNewsHubText({ state }), /source browser/);
+  assert.match(renderAiNewsHubText({ state }), /Story finder/);
   assert.ok(renderAiNewsHubKeyboard({ state }).inline_keyboard.flat().some((button) => button.callback_data === 'news:find'));
 
   const result = {
     query: 'AI', sourceMode: 'multi_source', generatorMode: 'off', draftGenerationAvailable: false,
     articles: [{ ...source, public_token: '11111111-1111-4111-8111-111111111111', provider: 'rss', source_is_primary: true, source_authority_score: 95, expires_at: '2026-07-23T11:00:00.000Z' }]
   };
-  assert.match(renderAiNewsSourcesText({ result }), /Browse-only mode/);
+  assert.match(renderAiNewsSourcesText({ result }), /Open an original source/);
   const buttons = renderAiNewsSourcesKeyboard({ result }).inline_keyboard.flat();
   assert.equal(buttons.some((button) => String(button.callback_data || '').startsWith('news:generate:')), false);
   assert.ok(buttons.some((button) => button.url === source.source_url));

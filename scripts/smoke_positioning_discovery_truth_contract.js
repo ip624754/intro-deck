@@ -86,19 +86,19 @@ const required = {
     'Active, listed profile cards may be browsed by bot users',
     'Member-entered professional fields are not verified by LinkedIn or Intro Deck'
   ],
-  'Telegram home': ['Listed professional profiles. Contact by permission.'],
+  'Telegram home': ['Find professionals. Connect by permission.'],
   'Telegram help': [
-    'connect a LinkedIn account',
-    'member-provided professional card',
-    'continue privately only after approval'
+    'find professionals and connect by permission',
+    'LinkedIn confirms the connected account',
+    'Private contact details stay hidden until approval'
   ],
   'Telegram directory': [
     '🌐 Directory',
-    'Listed profile cards are visible to bot users',
-    'Private contact details stay hidden'
+    'Browse published professional profiles',
+    'Private contact details stay hidden until approval'
   ],
-  'Telegram profile editor': ['LinkedIn does not verify the professional fields you enter on your card.'],
-  'Telegram directory card': ['Profile details: member-provided'],
+  'Telegram profile editor': ['LinkedIn confirms the connected account. You provide your role, company, skills, and bio.'],
+  'Telegram directory card': ['👤 Professional profile', 'recipient approval required'],
   'Telegram invite caption': [
     'Discover professionals and connect by permission in Telegram.',
     'LinkedIn-connected identity',

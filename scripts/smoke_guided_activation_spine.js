@@ -74,10 +74,10 @@ const readyListed = withCompletion({ ...readyHidden, visibility_status: 'listed'
 assert.equal(getProfileActivationNextAction(readyListed).kind, 'listed_preview');
 
 const menuText = renderProfileMenuText({ profileSnapshot: seededDraft, persistenceEnabled: true });
-assert.match(menuText, /Profile setup/);
-assert.match(menuText, /Setup progress: 2\/6 required steps/);
-assert.match(menuText, /Next required step: Add headline/);
-assert.match(menuText, /Optional details and contact settings are kept on a separate screen/);
+assert.match(menuText, /🧩 Profile/);
+assert.match(menuText, /Setup: 2\/6 complete/);
+assert.match(menuText, /Next: Add headline/);
+assert.match(menuText, /LinkedIn confirms the connected account/);
 
 const menuButtons = renderProfileMenuKeyboard({ profileSnapshot: seededDraft, persistenceEnabled: true }).inline_keyboard.flat();
 assert.ok(menuButtons.some((button) => button.callback_data === 'p:next'));
@@ -95,7 +95,7 @@ for (const optionalCallback of ['p:ed:co', 'p:ed:ci', 'p:ed:li', 'p:ed:tg', 'p:c
 }
 
 const incompletePreviewText = renderProfilePreviewText({ profileSnapshot: seededDraft, persistenceEnabled: true });
-assert.match(incompletePreviewText, /Publishing remains locked/);
+assert.match(incompletePreviewText, /Next: Add headline/);
 const incompletePreviewButtons = renderProfilePreviewKeyboard({ profileSnapshot: seededDraft, persistenceEnabled: true }).inline_keyboard.flat();
 assert.ok(incompletePreviewButtons.some((button) => button.callback_data === 'p:next'));
 assert.ok(!incompletePreviewButtons.some((button) => button.callback_data === 'p:pub'));

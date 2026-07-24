@@ -47,7 +47,7 @@ const emptyListText = renderDirectoryListText({
   filterSummary
 });
 
-if (!emptyListText.includes('No listed profiles match the current filters.')) {
+if (!emptyListText.includes('No profiles match these filters.')) {
   throw new Error('Filtered empty state must be explicit for STEP009');
 }
 

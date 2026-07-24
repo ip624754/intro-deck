@@ -1,3 +1,13 @@
+# Current canonical step — STEP064B1
+
+- Source step `STEP064B1`, package `0.64.1`.
+- Primary member surfaces now use one Intro Deck naming/button/error contract.
+- Member UI hides migration numbers, raw database errors, rollout/provider internals, and raw ranking scores.
+- Callback and business contracts are unchanged.
+- Source QA passed; production acceptance remains pending.
+
+---
+
 # STEP064A current source delta
 
 - Current source step: `STEP064A`; package `0.64.0`.

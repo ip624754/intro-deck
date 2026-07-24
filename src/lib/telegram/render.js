@@ -20,6 +20,14 @@ import {
   describeLinkedInTrustSnapshotStatus,
   resolveLinkedInTrustState
 } from '../linkedin/trust.js';
+import {
+  MEMBER_BUTTONS,
+  MEMBER_SURFACES,
+  memberUnavailable,
+  profileStateLabel,
+  profileVisibilityLabel,
+  sanitizeMemberNotice
+} from './memberCopy.js';
 
 function buildInlineKeyboard(rows) {
   return {
@@ -214,7 +222,7 @@ function buildLinkedInIdentityDetailLines(profileSnapshot, { includeEmail = fals
 function buildBackHomeRow(backText, backCallbackData) {
   return [
     { text: backText, callback_data: backCallbackData },
-    { text: '🏠 Home', callback_data: 'home:root' }
+    { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
   ];
 }
 
@@ -535,7 +543,7 @@ export function renderIntroNotificationKeyboard({ eventType = null, introRequest
     rows.push([{ text: '📥 Open inbox', callback_data: 'intro:inbox' }]);
   }
 
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -656,49 +664,45 @@ function buildLinkedInPublicTrustLines(profileSnapshot, verificationConfig) {
 
 export function renderHomeText({ profileSnapshot = null, persistenceEnabled = false, directoryStats = null, introInboxStats = null, isOperator = false, notice = null } = {}) {
   const lines = [
-    '💼 Intro Deck',
+    MEMBER_SURFACES.home,
     '',
-    'Listed professional profiles. Contact by permission.',
-    ''
+    'Find professionals. Connect by permission.'
   ];
 
   if (!persistenceEnabled) {
-    lines.push('Profile saving is unavailable right now.');
+    lines.push('', memberUnavailable('Profile and directory access'));
   } else if (!profileSnapshot?.linkedin_sub) {
-    lines.push('LinkedIn: not connected yet');
-    lines.push(homeNextStepLine(profileSnapshot));
+    lines.push('', 'LinkedIn: Not connected');
+    lines.push('Next: Connect LinkedIn to create your profile.');
   } else {
-    const displayName = profileSnapshot.display_name || profileSnapshot.linkedin_name || 'Profile linked';
-    lines.push(`Connected as: ${displayName}`);
-    const linkedInImportLine = linkedinIdentityImportLine(profileSnapshot);
-    if (linkedInImportLine) {
-      lines.push(linkedInImportLine);
+    const activation = getProfileActivationState(profileSnapshot || {});
+    const displayName = profileSnapshot.display_name || profileSnapshot.linkedin_name || 'LinkedIn member';
+    lines.push('', displayName);
+    lines.push(`Profile: ${profileVisibilityLabel(profileSnapshot.visibility_status)}`);
+    lines.push('LinkedIn: Connected');
+    if (!activation.isReady) {
+      lines.push(`Setup: ${activation.completedCount}/${activation.totalCount} complete`);
+      lines.push(`Next: ${getProfileActivationNextAction(profileSnapshot || {}).label}`);
+    } else if (!activation.isListed) {
+      lines.push('Next: Preview and publish your profile.');
     }
-    lines.push(`Profile status: ${profileSnapshot.profile_state || 'draft'} • ${profileSnapshot.visibility_status || 'hidden'}`);
-    lines.push(activationProgressLine(profileSnapshot));
-    lines.push(readinessLine(profileSnapshot));
-    lines.push(`Skills: ${formatSkillSummary(profileSnapshot)}`);
-    lines.push(homeNextStepLine(profileSnapshot));
   }
 
   if (directoryStats) {
-    lines.push('');
-    lines.push(`Directory: ${directoryStats.totalCount} live profile${directoryStats.totalCount === 1 ? '' : 's'}`);
+    const total = Number(directoryStats.totalCount || 0) || 0;
+    lines.push(profileSnapshot?.visibility_status === 'listed'
+      ? `Other listed profiles: ${total}`
+      : `Listed profiles: ${total}`);
   }
 
   if (introInboxStats) {
-    lines.push('');
-    lines.push(`Intros: ${introInboxStats.receivedPending || 0} pending received • ${introInboxStats.sentPending || 0} pending sent`);
-  }
-
-  if (isOperator) {
-    lines.push('');
-    lines.push('Admin tools are available for this account.');
+    const received = Number(introInboxStats.receivedPending || 0) || 0;
+    const sent = Number(introInboxStats.sentPending || 0) || 0;
+    lines.push(`Requests: ${received} received · ${sent} sent`);
   }
 
   if (notice) {
-    lines.push('');
-    lines.push(notice);
+    lines.push('', sanitizeMemberNotice(notice));
   }
 
   return lines.join('\n');
@@ -712,89 +716,58 @@ export function renderHomeKeyboard({ appBaseUrl, telegramUserId, profileSnapshot
     rows.push([{ text: '🔐 Connect LinkedIn', url: buildLinkedInStartUrl({ appBaseUrl, telegramUserId }) }]);
   } else if (persistenceEnabled) {
     const activation = getProfileActivationState(profileSnapshot || {});
-    const profileLabel = activation.isReady ? '🧩 Edit profile' : '➡️ Continue setup';
-    const profileCallback = activation.isReady ? 'p:menu' : 'p:next';
     rows.push([
-      { text: profileLabel, callback_data: profileCallback },
-      { text: '🌐 Browse directory', callback_data: 'dir:list:0' }
+      { text: activation.isReady ? MEMBER_BUTTONS.editProfile : MEMBER_BUTTONS.continueSetup, callback_data: activation.isReady ? 'p:menu' : 'p:next' },
+      { text: MEMBER_BUTTONS.browseDirectory, callback_data: 'dir:list:0' }
     ]);
   }
 
   if (persistenceEnabled && !isLinkedInConnected) {
     rows.push([
-      { text: '🌐 Browse directory', callback_data: 'dir:list:0' },
-      { text: '⭐ Plans', callback_data: 'plans:root' }
+      { text: MEMBER_BUTTONS.browseDirectory, callback_data: 'dir:list:0' },
+      { text: MEMBER_BUTTONS.pro, callback_data: 'plans:root' }
     ]);
   }
 
   if (persistenceEnabled && isLinkedInConnected) {
     rows.push([
-      { text: '📨 Contact inbox', callback_data: 'contact:inbox' },
-      { text: '⭐ Plans', callback_data: 'plans:root' }
+      { text: MEMBER_BUTTONS.requests, callback_data: 'contact:inbox' },
+      { text: MEMBER_BUTTONS.pro, callback_data: 'plans:root' }
     ]);
     if (aiNewsVisible) {
       rows.push([
-        { text: '🧠 News drafts', callback_data: 'news:home' },
-        { text: '📨 Invite contacts', callback_data: 'invite:root' }
+        { text: MEMBER_BUTTONS.storyFinder, callback_data: 'news:home' },
+        { text: MEMBER_BUTTONS.invitePeople, callback_data: 'invite:root' }
       ]);
     } else {
-      rows.push([{ text: '📨 Invite contacts', callback_data: 'invite:root' }]);
+      rows.push([{ text: MEMBER_BUTTONS.invitePeople, callback_data: 'invite:root' }]);
     }
   }
 
-  rows.push([{ text: '❓ Help', callback_data: 'help:root' }]);
-
-  if (isOperator) {
-    rows.push([{ text: '👑 Админка', callback_data: 'adm:home' }]);
-  }
-
+  rows.push([{ text: MEMBER_BUTTONS.help, callback_data: 'help:root' }]);
+  if (isOperator) rows.push([{ text: '👑 Админка', callback_data: 'adm:home' }]);
   return buildInlineKeyboard(rows);
 }
 
 export function renderHelpText({ aiNewsVisible = false } = {}) {
   const lines = [
-    '❓ Help',
+    MEMBER_SURFACES.help,
     '',
-    'Use Intro Deck to connect a LinkedIn account, complete a member-provided professional card, browse listed profiles, and use one Contact flow to continue privately only after approval.',
+    'Intro Deck helps you find professionals and connect by permission.',
     '',
-    'Start here:',
-    '• connect LinkedIn',
-    '• complete your profile',
-    '• browse the directory',
-    '• open Contact inbox for requests and private chats',
-    '• use /contact to return to that hub',
-    '• open plans / Pro status',
-    '• invite professional contacts',
-    '• share your listed profile on LinkedIn with an exact preview and one explicit approval'
+    'Getting started',
+    '• Connect LinkedIn.',
+    '• Complete and publish your profile.',
+    '• Browse the directory.',
+    '• Send a request. The other person decides whether to accept.',
+    '',
+    'Privacy',
+    '• Private contact details stay hidden until approval.',
+    '• LinkedIn confirms the connected account. You provide your role, company, skills, and bio.',
+    '• LinkedIn posts always show an exact preview and need separate approval.'
   ];
-
   if (aiNewsVisible) {
-    lines.push('• create evidence-bound AI/news drafts with /news, save personal presets, receive reviewable Telegram drafts, and approve each LinkedIn post separately');
-  }
-
-  lines.push(
-    '',
-    'LinkedIn trust signals:',
-    '• Identity verified and Workplace verified are separate LinkedIn categories.',
-    '• A badge never verifies the role, company text, skills, bio, experience, or expertise entered on the Intro Deck card.',
-    '• Public badges require LinkedIn Lite mode, an explicit feature flag, and a fresh Lite snapshot.',
-    '',
-    'Share on LinkedIn:',
-    '• use /share or Profile preview → Share profile on LinkedIn',
-    '• Intro Deck shows the exact text before authorization',
-    '• nothing is published automatically, and the OAuth access token is not stored'
-  );
-
-  if (aiNewsVisible) {
-    lines.push(
-      '',
-      'AI/news drafts:',
-      '• every draft is bound to a named source URL and saved evidence snapshot',
-      '• source content is treated as untrusted data, not as instructions to the AI',
-      '• you review and may replace the complete text before approval',
-      '• AI may not add unsupported numbers or quotations',
-      '• subscription access never authorizes background publishing'
-    );
+    lines.push('', 'Story finder', '• Find sources for your professional audience.', '• Save searches to reuse your topic, audience, angle, and tone.', '• Nothing is generated or published automatically in browse-only mode.');
   }
   return lines.join('\n');
 }
@@ -802,35 +775,20 @@ export function renderHelpText({ aiNewsVisible = false } = {}) {
 export function renderHelpKeyboard({ aiNewsVisible = false } = {}) {
   const rows = [
     [
-      { text: '🧩 Profile', callback_data: 'p:menu' },
-      { text: '🌐 Browse directory', callback_data: 'dir:list:0' }
+      { text: MEMBER_BUTTONS.editProfile, callback_data: 'p:menu' },
+      { text: MEMBER_BUTTONS.browseDirectory, callback_data: 'dir:list:0' }
     ],
-    [{ text: '📨 Contact inbox', callback_data: 'contact:inbox' }]
+    [{ text: MEMBER_BUTTONS.requests, callback_data: 'contact:inbox' }]
   ];
-  if (aiNewsVisible) {
-    rows.push([{ text: '🧠 AI/news drafts', callback_data: 'news:home' }]);
-  }
+  if (aiNewsVisible) rows.push([{ text: MEMBER_BUTTONS.storyFinder, callback_data: 'news:home' }]);
   rows.push(
     [
-      { text: '⭐ Plans', callback_data: 'plans:root' },
-      { text: '📨 Invite contacts', callback_data: 'invite:root' }
+      { text: MEMBER_BUTTONS.pro, callback_data: 'plans:root' },
+      { text: MEMBER_BUTTONS.invitePeople, callback_data: 'invite:root' }
     ],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]
   );
   return buildInlineKeyboard(rows);
-}
-
-function pricingReceiptLabel(receipt) {
-  if (receipt?.receiptType === 'subscription') {
-    return 'Pro';
-  }
-  if (receipt?.receiptType === 'contact_unlock') {
-    return 'Telegram contact';
-  }
-  if (receipt?.receiptType === 'dm_open') {
-    return 'DM open';
-  }
-  return toDisplayValue(receipt?.receiptType, 'Receipt');
 }
 
 export function renderPricingText({ pricingState = null } = {}) {
@@ -843,57 +801,42 @@ export function renderPricingText({ pricingState = null } = {}) {
   const aiNewsConfig = state.aiNewsConfig || null;
   const fairUseLimit = allowance?.limit || state.contactPolicy?.proOutreachDailyLimit || 0;
   const lines = [
-    '⭐ Intro Deck Pro',
+    MEMBER_SURFACES.pro,
     '',
-    'Pro includes a bounded fair-use allowance for delivering contact requests across both private-chat and Telegram-contact options.',
-    ''
+    'Pro includes a bounded fair-use allowance for delivering private-chat and Telegram-contact requests.'
   ];
 
   if (!state.persistenceEnabled) {
-    lines.push('Pricing and purchase history are unavailable right now.');
+    lines.push('', memberUnavailable('Pricing and purchase history'));
   } else if (subscription?.isActive) {
-    lines.push(`Status: Pro active until ${formatDateShort(subscription.expiresAt)}`);
+    lines.push('', `Status: Active until ${formatDateShort(subscription.expiresAt)}`);
   } else if (subscription?.expiresAt) {
-    lines.push(`Status: Pro inactive • last expired ${formatDateShort(subscription.expiresAt)}`);
+    lines.push('', `Status: Inactive · expired ${formatDateShort(subscription.expiresAt)}`);
   } else {
-    lines.push('Status: Pro not active yet');
+    lines.push('', 'Status: Not active');
   }
 
-  lines.push('');
-  lines.push(`Pro monthly: ${pricing.proMonthlyPriceStars || 0}⭐ • ${subscriptionConfig.proMonthlyDurationDays || 30} days`);
-  lines.push(`Telegram-contact request delivery: ${pricing.contactUnlockPriceStars || 0}⭐ each without Pro`);
-  lines.push(`Private-chat request delivery: ${pricing.dmOpenPriceStars || 0}⭐ each without Pro`);
-  lines.push('');
-  lines.push('Pro fair use:');
-  lines.push(`• ${buildProFairUseDisclosure({ dailyLimit: fairUseLimit })}`);
-  if (allowance?.supported) {
-    lines.push(`• Current rolling window: ${allowance.used}/${allowance.limit} used • ${allowance.remaining} remaining`);
-  }
-  lines.push('• Recipient approval is always required. Approval or reply is not guaranteed.');
-  lines.push('• Decline or no reply alone does not trigger an automatic refund of a paid request-delivery fee.');
+  lines.push(
+    '',
+    `${pricing.proMonthlyPriceStars || 0}⭐ for ${subscriptionConfig.proMonthlyDurationDays || 30} days`,
+    `Telegram contact request: ${pricing.contactUnlockPriceStars || 0}⭐ without Pro`,
+    `Private chat request: ${pricing.dmOpenPriceStars || 0}⭐ without Pro`,
+    '',
+    'Fair use',
+    `• ${buildProFairUseDisclosure({ dailyLimit: fairUseLimit })}`
+  );
+  if (allowance?.supported) lines.push(`• Current window: ${allowance.used}/${allowance.limit} used · ${allowance.remaining} left`);
+  lines.push('• Payment covers request delivery. Recipient approval is always required.');
+  lines.push('• Acceptance or a reply is not guaranteed.');
+  lines.push('• A decline or no reply does not trigger an automatic refund for a delivered request.');
 
   if (aiNewsConfig?.mode === 'pro') {
-    lines.push('');
-    lines.push('Pro AI/news drafts:');
-    lines.push(`• Up to ${aiNewsConfig.dailyLimit || 0} evidence-bound draft attempts per rolling 24 hours.`);
-    lines.push(`• Up to ${aiNewsConfig.presetLimit || 0} saved personalized presets.`);
-    lines.push(`• Scheduled delivery: ${aiNewsConfig.schedule?.enabled ? 'up to one reviewable Telegram draft per scheduler window' : 'currently off'}; never automatic LinkedIn publishing.`);
-    lines.push('• Every LinkedIn post requires preview and separate explicit authorization.');
+    lines.push('', 'Story finder', `• ${aiNewsConfig.dailyLimit || 0} draft attempts per rolling 24 hours.`, `• ${aiNewsConfig.presetLimit || 0} saved searches.`, '• Every LinkedIn post still needs preview and separate approval.');
   }
-
   if (recentReceipts.length) {
-    lines.push('');
-    lines.push('Recent purchases:');
-    for (const receipt of recentReceipts) {
-      lines.push(`• ${pricingReceiptLabel(receipt)} • ${receipt?.amountStars || 0}⭐ • ${formatDateShort(receipt?.confirmedAt || receipt?.purchasedAt)}`);
-    }
+    lines.push('', 'Recent purchases');
+    for (const receipt of recentReceipts) lines.push(`• ${pricingReceiptLabel(receipt)} · ${receipt?.amountStars || 0}⭐ · ${formatDateShort(receipt?.confirmedAt || receipt?.purchasedAt)}`);
   }
-
-  if (state.reason && !state.persistenceEnabled) {
-    lines.push('');
-    lines.push(`Reason: ${state.reason}`);
-  }
-
   return lines.join('\n');
 }
 
@@ -902,69 +845,39 @@ export function renderPricingKeyboard({ pricingState = null } = {}) {
   const pricing = state.pricing || {};
   const subscription = state.subscription || null;
   const rows = [];
-
   if (state.persistenceEnabled) {
-    if (subscription?.isActive) {
-      rows.push([{ text: `✅ Pro active • until ${formatDateShort(subscription.expiresAt)}`, callback_data: 'plans:root' }]);
-    } else {
-      rows.push([{ text: `⭐ Buy Pro • ${pricing.proMonthlyPriceStars || 0}⭐`, callback_data: 'plans:buy:pro' }]);
-    }
-    rows.push([
-      { text: '🔄 Refresh', callback_data: 'plans:root' },
-      { text: '🏠 Home', callback_data: 'home:root' }
-    ]);
-    return buildInlineKeyboard(rows);
+    if (subscription?.isActive) rows.push([{ text: `✅ Pro active until ${formatDateShort(subscription.expiresAt)}`, callback_data: 'plans:root' }]);
+    else rows.push([{ text: `⭐ Get Pro · ${pricing.proMonthlyPriceStars || 0}⭐`, callback_data: 'plans:buy:pro' }]);
   }
-
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 export function renderProfileMenuText({ profileSnapshot = null, persistenceEnabled = false, linkedinVerificationAccess = null, notice = null } = {}) {
-  const lines = [
-    '🧩 Profile setup',
-    ''
-  ];
-
+  const lines = [MEMBER_SURFACES.profile];
   if (!persistenceEnabled) {
-    lines.push('Profile setup is unavailable right now.');
+    lines.push('', memberUnavailable('Profile editing'));
   } else if (!profileSnapshot?.linkedin_sub) {
-    lines.push('Connect LinkedIn first. Intro Deck uses the account connection for basic identity only; the professional card is completed by you.');
+    lines.push('', 'Connect LinkedIn to create your profile.', 'LinkedIn confirms the connected account. You provide your professional details.');
   } else {
     const activation = getProfileActivationState(profileSnapshot);
-    lines.push(`LinkedIn connected as: ${profileSnapshot.linkedin_name || profileSnapshot.display_name || 'LinkedIn user'}`);
-    lines.push('Professional card details are member-provided.');
-    lines.push('LinkedIn does not verify the professional fields you enter on your card.');
-    lines.push('');
-    lines.push(`📊 ${activationProgressLine(profileSnapshot)}`);
-    lines.push(activationNextStepLine(profileSnapshot));
-    lines.push('');
-    lines.push('Required for listing');
-    lines.push(...buildActivationStepLines(profileSnapshot));
-    lines.push('');
-    lines.push('Directory status');
-    lines.push(`• Visibility: ${profileSnapshot.visibility_status || 'hidden'}`);
-    lines.push(`• ${readinessLine(profileSnapshot)}`);
-    if (activation.isReady && !activation.isListed) {
-      lines.push('• Preview the public card before publishing it.');
-    }
-    lines.push('');
-    lines.push('Optional details and contact settings are kept on a separate screen.');
+    lines.push('', profileSnapshot.linkedin_name || profileSnapshot.display_name || 'LinkedIn member');
+    lines.push(`Status: ${profileVisibilityLabel(profileSnapshot.visibility_status)}`);
+    lines.push(`Setup: ${activation.completedCount}/${activation.totalCount} complete`);
+    if (!activation.isReady) lines.push(`Next: ${getProfileActivationNextAction(profileSnapshot || {}).label}`);
+    else if (!activation.isListed) lines.push('Next: Preview and publish your profile.');
+    lines.push('', 'LinkedIn confirms the connected account. You provide your role, company, skills, and bio.');
+    lines.push('', 'Required for listing', ...buildActivationStepLines(profileSnapshot));
     lines.push(...buildLinkedInVerificationPrivateLines(profileSnapshot, linkedinVerificationAccess));
   }
-
-  if (notice) {
-    lines.push('');
-    lines.push(notice);
-  }
-
+  if (notice) lines.push('', sanitizeMemberNotice(notice));
   return lines.join('\n');
 }
 
 export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = null, profileSnapshot = null, persistenceEnabled = false, linkedinVerificationAccess = null, linkedinVerificationLaunchTicket = null } = {}) {
   if (!persistenceEnabled) {
     return buildInlineKeyboard([
-      [{ text: '🏠 Home', callback_data: 'home:root' }]
+      [{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]
     ]);
   }
 
@@ -973,7 +886,7 @@ export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = 
     if (appBaseUrl && telegramUserId) {
       rows.push([{ text: '🔐 Connect LinkedIn', url: buildLinkedInStartUrl({ appBaseUrl, telegramUserId }) }]);
     }
-    rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+    rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
     return buildInlineKeyboard(rows);
   }
 
@@ -1009,58 +922,31 @@ export function renderProfileMenuKeyboard({ appBaseUrl = null, telegramUserId = 
     }]);
   }
 
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 export function renderProfilePreviewText({ profileSnapshot = null, persistenceEnabled = false, linkedinVerificationConfig = null, notice = null } = {}) {
-  const lines = [
-    '👁 Profile preview',
-    ''
-  ];
-
+  const lines = [MEMBER_SURFACES.profilePreview];
   if (!persistenceEnabled) {
-    lines.push('Preview is unavailable right now.');
+    lines.push('', memberUnavailable('Profile preview'));
   } else if (!profileSnapshot?.linkedin_sub) {
-    lines.push('Connect LinkedIn first before previewing your profile.');
+    lines.push('', 'Connect LinkedIn before previewing your profile.');
   } else {
     const activation = getProfileActivationState(profileSnapshot);
-    lines.push('🪪 Public card');
-    lines.push(`${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'Unnamed profile')}`);
+    lines.push('', toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'Unnamed profile'));
     lines.push(toDisplayValue(profileSnapshot.headline_user));
-    lines.push('');
-    lines.push(`🏢 Company: ${toDisplayValue(profileSnapshot.company_user)}`);
-    lines.push(`📍 City: ${toDisplayValue(profileSnapshot.city_user)}`);
-    lines.push(`🏷 Industry: ${toDisplayValue(profileSnapshot.industry_user)}`);
-    lines.push(`🧠 Skills: ${formatSkillSummary(profileSnapshot)}`);
-    lines.push(`🔗 Public LinkedIn URL: ${toDisplayValue(profileSnapshot.linkedin_public_url)}`);
-    lines.push('');
-    lines.push('📝 About');
-    lines.push(truncate(profileSnapshot.about_user, 320));
+    lines.push('', `Company: ${toDisplayValue(profileSnapshot.company_user)}`, `City: ${toDisplayValue(profileSnapshot.city_user)}`, `Industry: ${toDisplayValue(profileSnapshot.industry_user)}`, `Skills: ${formatSkillSummary(profileSnapshot)}`);
+    if (profileSnapshot.linkedin_public_url) lines.push(`LinkedIn: ${profileSnapshot.linkedin_public_url}`);
+    lines.push('', 'About', truncate(profileSnapshot.about_user, 320));
     lines.push(...buildLinkedInTrustPreviewLines(profileSnapshot, linkedinVerificationConfig));
-    lines.push('');
-    lines.push('🔒 Not shown publicly');
-    lines.push(`• Hidden Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`);
-    lines.push(`• Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
-    lines.push('');
-    lines.push(`📊 ${activationProgressLine(profileSnapshot)}`);
-    lines.push(`• ${readinessLine(profileSnapshot)}`);
-
-    if (!activation.isReady) {
-      lines.push(`• ${activationNextStepLine(profileSnapshot)}`);
-      lines.push('• Publishing remains locked until every required step is complete.');
-    } else if (activation.isListed) {
-      lines.push('• This card is currently visible in the directory.');
-    } else {
-      lines.push('• Ready to publish. Publishing makes this card visible to bot users; private contact details remain hidden.');
-    }
+    lines.push('', 'Private settings', `• Telegram username: ${hiddenTelegramUsernameSummary(profileSnapshot)}`, `• Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
+    lines.push('', `Profile: ${profileVisibilityLabel(profileSnapshot.visibility_status)}`);
+    if (!activation.isReady) lines.push(`Next: ${getProfileActivationNextAction(profileSnapshot || {}).label}`);
+    else if (activation.isListed) lines.push('Your profile is live in the directory.');
+    else lines.push('Ready to publish. Private contact details stay hidden.');
   }
-
-  if (notice) {
-    lines.push('');
-    lines.push(notice);
-  }
-
+  if (notice) lines.push('', sanitizeMemberNotice(notice));
   return lines.join('\n');
 }
 
@@ -1083,8 +969,8 @@ export function renderProfilePreviewKeyboard({ profileSnapshot = null, persisten
   }
 
   rows.push([
-    { text: '↩️ Back to profile', callback_data: 'p:menu' },
-    { text: '🏠 Home', callback_data: 'home:root' }
+    { text: '← Back to profile', callback_data: 'p:menu' },
+    { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
   ]);
 
   return buildInlineKeyboard(rows);
@@ -1121,7 +1007,7 @@ export function renderLinkedInSharePreviewKeyboard({ publishUrl = null, publicTo
   }
   rows.push([
     { text: '↩️ Profile preview', callback_data: 'p:prev' },
-    { text: '🏠 Home', callback_data: 'home:root' }
+    { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
   ]);
   return buildInlineKeyboard(rows);
 }
@@ -1157,8 +1043,8 @@ export function renderProfileOptionalKeyboard({ profileSnapshot = null, persiste
   if (!persistenceEnabled || !profileSnapshot?.linkedin_sub) {
     return buildInlineKeyboard([
       [
-        { text: '↩️ Back to profile', callback_data: 'p:menu' },
-        { text: '🏠 Home', callback_data: 'home:root' }
+        { text: '← Back to profile', callback_data: 'p:menu' },
+        { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
       ]
     ]);
   }
@@ -1175,8 +1061,8 @@ export function renderProfileOptionalKeyboard({ profileSnapshot = null, persiste
     [{ text: '💳 Contact mode', callback_data: 'p:cm' }],
     [{ text: '👁 Preview card', callback_data: 'p:prev' }],
     [
-      { text: '↩️ Back to profile', callback_data: 'p:menu' },
-      { text: '🏠 Home', callback_data: 'home:root' }
+      { text: '← Back to profile', callback_data: 'p:menu' },
+      { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
     ]
   ]);
 }
@@ -1206,8 +1092,8 @@ export function renderProfileInputPrompt({ fieldKey, profileSnapshot = null } = 
 export function renderProfileInputKeyboard() {
   return buildInlineKeyboard([
     [
-      { text: '↩️ Back to profile', callback_data: 'p:menu' },
-      { text: '🏠 Home', callback_data: 'home:root' }
+      { text: '← Back to profile', callback_data: 'p:menu' },
+      { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
     ]
   ]);
 }
@@ -1237,7 +1123,7 @@ export function renderDirectoryFilterInputKeyboard() {
   return buildInlineKeyboard([
     [{ text: '↩️ Back to filters', callback_data: 'dir:flt' }],
     [{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]
   ]);
 }
 
@@ -1250,7 +1136,7 @@ export function renderProfileSkillsText({ profileSnapshot = null, persistenceEna
   ];
 
   if (!persistenceEnabled) {
-    lines.push('Persistence is disabled in this environment. Skill selection is unavailable.');
+    lines.push('Skill selection is temporarily unavailable. Try again later.');
   } else if (!profileSnapshot?.linkedin_sub) {
     lines.push('Connect LinkedIn first before editing skills.');
   } else {
@@ -1286,8 +1172,8 @@ export function renderProfileSkillsKeyboard({ profileSnapshot = null } = {}) {
     [{ text: '🧹 Clear skills', callback_data: 'p:sk:clr' }],
     ...(nextRow ? [nextRow] : []),
     [
-      { text: '↩️ Back to profile', callback_data: 'p:menu' },
-      { text: '🏠 Home', callback_data: 'home:root' }
+      { text: '← Back to profile', callback_data: 'p:menu' },
+      { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
     ]
   ]);
 }
@@ -1310,139 +1196,77 @@ export function renderProfileSavedKeyboard({ profileSnapshot = null } = {}) {
   return buildInlineKeyboard([
     [primaryButton],
     [
-      { text: '↩️ Back to profile', callback_data: 'p:menu' },
-      { text: '🏠 Home', callback_data: 'home:root' }
+      { text: '← Back to profile', callback_data: 'p:menu' },
+      { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
     ]
   ]);
 }
 
 export function renderDirectoryListText({ profiles = [], page = 0, totalCount = 0, persistenceEnabled = false, filterSummary = summarizeDirectoryFilters(), viewerProfile = null, notice = null } = {}) {
   const lines = [
-    '🌐 Directory',
+    MEMBER_SURFACES.directory,
     '',
-    'Listed profile cards are visible to bot users. Private contact details stay hidden unless the owner approves a supported contact path.',
+    'Browse published professional profiles. Private contact details stay hidden until approval.',
     '',
     ...renderFilterSummaryLines(filterSummary)
   ];
-
   if (!persistenceEnabled) {
-    lines.push('');
-    lines.push('Directory browse is unavailable right now.');
+    lines.push('', memberUnavailable('Directory browsing'));
   } else if (!profiles.length) {
     lines.push('');
-    if (!filterSummary.isDefault) {
-      lines.push('No listed profiles match the current filters.');
-    } else if (viewerProfile?.linkedin_sub && !viewerProfile?.completion?.isReady) {
-      lines.push('No listed profiles yet. Complete your profile to become one of the first visible members.');
-    } else if (viewerProfile?.completion?.isReady && viewerProfile?.visibility_status !== 'listed') {
-      lines.push('No listed profiles yet. Your profile is ready — list it to be one of the first visible members.');
-    } else {
-      lines.push('No listed profiles yet. Check back soon or complete your own profile to join the directory.');
-    }
+    if (!filterSummary.isDefault) lines.push('No profiles match these filters.');
+    else if (viewerProfile?.linkedin_sub && !viewerProfile?.completion?.isReady) lines.push('No profiles are listed yet. Complete your profile to join the directory.');
+    else if (viewerProfile?.completion?.isReady && viewerProfile?.visibility_status !== 'listed') lines.push('No profiles are listed yet. Your profile is ready to publish.');
+    else lines.push('No profiles are listed yet. Check back soon.');
   } else {
-    lines.push('');
-    lines.push(`Page: ${page + 1}`);
-    lines.push(`Listed profiles: ${totalCount}`);
-    lines.push('');
-    profiles.forEach((profile, index) => {
-      const marker = profile.is_viewer ? '• you' : '• open';
-      lines.push(`${index + 1}. ${directoryProfileLabel(profile)} ${marker}`);
-    });
+    lines.push('', `Profiles: ${totalCount} · Page ${page + 1}`, '');
+    profiles.forEach((profile, index) => lines.push(`${index + 1}. ${directoryProfileLabel(profile)}${profile.is_viewer ? ' · you' : ''}`));
   }
-
-  if (notice) {
-    lines.push('');
-    lines.push(notice);
-  }
-
+  if (notice) lines.push('', sanitizeMemberNotice(notice));
   return lines.join('\n');
 }
 
 export function renderDirectoryListKeyboard({ profiles = [], page = 0, hasPrev = false, hasNext = false, viewerProfile = null, filterSummary = summarizeDirectoryFilters() } = {}) {
-  const rows = profiles.map((profile, index) => [{
-    text: `${index + 1}. ${truncate(toDisplayValue(profile.display_name, profile.linkedin_name || 'Unnamed'), 28)}`,
-    callback_data: `dir:open:${profile.profile_id}:${page}`
-  }]);
-
+  const rows = profiles.map((profile, index) => [{ text: `${index + 1}. ${truncate(toDisplayValue(profile.display_name, profile.linkedin_name || 'Unnamed'), 28)}`, callback_data: `dir:open:${profile.profile_id}:${page}` }]);
   const pagerRow = [];
-  if (hasPrev) {
-    pagerRow.push({ text: '⬅️ Prev', callback_data: `dir:list:${page - 1}` });
-  }
-  if (hasNext) {
-    pagerRow.push({ text: 'Next ➡️', callback_data: `dir:list:${page + 1}` });
-  }
-  if (pagerRow.length) {
-    rows.push(pagerRow);
-  }
-
-  rows.push([{ text: '🎯 Filters', callback_data: 'dir:flt' }]);
-
+  if (hasPrev) pagerRow.push({ text: MEMBER_BUTTONS.previous, callback_data: `dir:list:${page - 1}` });
+  if (hasNext) pagerRow.push({ text: MEMBER_BUTTONS.next, callback_data: `dir:list:${page + 1}` });
+  if (pagerRow.length) rows.push(pagerRow);
+  rows.push([{ text: MEMBER_BUTTONS.filters, callback_data: 'dir:flt' }]);
   if (!profiles.length && viewerProfile?.linkedin_sub) {
-    if (!viewerProfile?.completion?.isReady) {
-      rows.push([{ text: '➡️ Continue profile setup', callback_data: 'p:next' }]);
-    } else if (viewerProfile?.visibility_status !== 'listed' && filterSummary.isDefault) {
-      rows.push([{ text: '🌍 List my profile', callback_data: 'p:vis' }]);
-    } else {
-      rows.push([{ text: '👁 Preview my card', callback_data: 'p:prev' }]);
-    }
+    if (!viewerProfile?.completion?.isReady) rows.push([{ text: MEMBER_BUTTONS.continueSetup, callback_data: 'p:next' }]);
+    else if (viewerProfile?.visibility_status !== 'listed' && filterSummary.isDefault) rows.push([{ text: '🌐 Publish my profile', callback_data: 'p:vis' }]);
+    else rows.push([{ text: '👁 Preview my profile', callback_data: 'p:prev' }]);
   }
-
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 export function renderDirectoryCardText({ profileSnapshot = null, persistenceEnabled = false, linkedinVerificationConfig = null, notice = null } = {}) {
-  const lines = [
-    '👤 Directory profile',
-    ''
-  ];
-
+  const lines = [MEMBER_SURFACES.directoryProfile];
   if (!persistenceEnabled) {
-    lines.push('Persistence is disabled in this environment. Directory card is unavailable.');
+    lines.push('', memberUnavailable('This profile'));
   } else if (!profileSnapshot?.profile_id) {
-    lines.push('Listed profile not found.');
+    lines.push('', 'This profile is no longer available.');
   } else {
-    lines.push(`${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'Unnamed profile')}${profileSnapshot.is_viewer ? ' • you' : ''}`);
+    lines.push('', `${toDisplayValue(profileSnapshot.display_name, profileSnapshot.linkedin_name || 'Unnamed profile')}${profileSnapshot.is_viewer ? ' · you' : ''}`);
     lines.push(toDisplayValue(profileSnapshot.headline_user));
     lines.push(...buildLinkedInPublicTrustLines(profileSnapshot, linkedinVerificationConfig));
-    lines.push('');
-    lines.push('Profile details: member-provided');
-    lines.push(`Company: ${toDisplayValue(profileSnapshot.company_user)}`);
-    lines.push(`City: ${toDisplayValue(profileSnapshot.city_user)}`);
-    lines.push(`Industry: ${toDisplayValue(profileSnapshot.industry_user)}`);
-    lines.push(`Skills: ${formatSkillSummary(profileSnapshot)}`);
-    lines.push(directoryContactLabel(profileSnapshot));
-    lines.push('');
-    lines.push(`About: ${truncate(profileSnapshot.about_user, 320)}`);
-    lines.push('');
-    lines.push(`Visibility: ${toDisplayValue(profileSnapshot.visibility_status)}`);
-    lines.push(`Contact mode: ${profileContactModeSummary(profileSnapshot)}`);
-    lines.push(`State: ${toDisplayValue(profileSnapshot.profile_state)}`);
+    lines.push('', `Company: ${toDisplayValue(profileSnapshot.company_user)}`, `City: ${toDisplayValue(profileSnapshot.city_user)}`, `Industry: ${toDisplayValue(profileSnapshot.industry_user)}`, `Skills: ${formatSkillSummary(profileSnapshot)}`);
+    lines.push('', 'About', truncate(profileSnapshot.about_user, 320));
+    lines.push('', directoryContactLabel(profileSnapshot));
   }
-
-  if (notice) {
-    lines.push('');
-    lines.push(notice);
-  }
-
+  if (notice) lines.push('', sanitizeMemberNotice(notice));
   return lines.join('\n');
 }
 
 export function renderDirectoryCardKeyboard({ profileSnapshot = null, page = 0 } = {}) {
   const rows = [];
-
-  if (canViewerOpenDirectoryLinkedIn(profileSnapshot)) {
-    rows.push([{ text: profileSnapshot?.is_viewer ? '🔗 Open my LinkedIn' : '🔗 Open LinkedIn', url: profileSnapshot.linkedin_public_url.trim() }]);
-  }
-
-  if (canOpenContactRequestRail(profileSnapshot)) {
-    rows.push([{ text: '🤝 Request contact', callback_data: `dir:contact:${profileSnapshot.profile_id}:${page}` }]);
-  }
-
-  rows.push([{ text: '↩️ Back to directory', callback_data: `dir:list:${page}` }]);
-  rows.push([{ text: '🎯 Filters', callback_data: 'dir:flt' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
-
+  if (canViewerOpenDirectoryLinkedIn(profileSnapshot)) rows.push([{ text: profileSnapshot?.is_viewer ? '🔗 Open my LinkedIn' : '🔗 Open LinkedIn', url: profileSnapshot.linkedin_public_url.trim() }]);
+  if (canOpenContactRequestRail(profileSnapshot)) rows.push([{ text: '🤝 Contact options', callback_data: `dir:contact:${profileSnapshot.profile_id}:${page}` }]);
+  rows.push([{ text: MEMBER_BUTTONS.backToDirectory, callback_data: `dir:list:${page}` }]);
+  rows.push([{ text: MEMBER_BUTTONS.filters, callback_data: 'dir:flt' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -1487,7 +1311,7 @@ export function renderContactRequestText({ profileSnapshot = null, pricingState 
     }
   }
 
-  if (notice) lines.push('', notice);
+  if (notice) lines.push('', sanitizeMemberNotice(notice));
   return lines.join('\n');
 }
 
@@ -1504,38 +1328,38 @@ export function renderContactRequestKeyboard({ profileSnapshot = null, pricingSt
       const telegramCoverage = getContactRequestCoverageLabel({ pricingState, amountStars: pricing.contactUnlockPriceStars || 0 });
       rows.push([{ text: `💬 Private chat • ${chatCoverage}`, callback_data: `dir:dm:${profileSnapshot.profile_id}:${page}` }]);
       rows.push([{ text: `🔐 Telegram contact • ${telegramCoverage}`, callback_data: `dir:unlock:${profileSnapshot.profile_id}:${page}` }]);
-      rows.push([{ text: '⭐ Plans / Pro status', callback_data: 'plans:root' }]);
+      rows.push([{ text: MEMBER_BUTTONS.pro, callback_data: 'plans:root' }]);
     }
   }
-  if (profileSnapshot?.profile_id) rows.push([{ text: '↩️ Back to profile', callback_data: `dir:open:${profileSnapshot.profile_id}:${page}` }]);
-  rows.push([{ text: '🌐 Directory', callback_data: `dir:list:${page}` }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  if (profileSnapshot?.profile_id) rows.push([{ text: '← Back to profile', callback_data: `dir:open:${profileSnapshot.profile_id}:${page}` }]);
+  rows.push([{ text: MEMBER_BUTTONS.backToDirectory, callback_data: `dir:list:${page}` }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
 export function renderContactInboxText({ notice = null } = {}) {
   const lines = [
-    '📨 Contact inbox',
+    MEMBER_SURFACES.requests,
     '',
-    'One place to open contact requests and approved private conversations.',
+    'Review contact requests and continue approved private conversations.',
     '',
-    'Requests',
-    '• Free intro requests',
-    '• Telegram-contact reveal requests',
+    'Contact requests',
+    '• Intro requests',
+    '• Telegram contact requests',
     '',
     'Private chats',
     '• New chat requests',
-    '• Approved conversations'
+    '• Active conversations'
   ];
-  if (notice) lines.push('', notice);
+  if (notice) lines.push('', sanitizeMemberNotice(notice));
   return lines.join('\n');
 }
 
 export function renderContactInboxKeyboard() {
   return buildInlineKeyboard([
-    [{ text: '📥 Requests', callback_data: 'intro:inbox' }, { text: '💬 Private chats', callback_data: 'dm:inbox' }],
-    [{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }, { text: '⭐ Plans', callback_data: 'plans:root' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: '📥 Contact requests', callback_data: 'intro:inbox' }, { text: '💬 Private chats', callback_data: 'dm:inbox' }],
+    [{ text: MEMBER_BUTTONS.browseDirectory, callback_data: 'dir:list:0' }, { text: MEMBER_BUTTONS.pro, callback_data: 'plans:root' }],
+    [{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]
   ]);
 }
 
@@ -1667,8 +1491,8 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
 
   rows.push([{ text: '🔄 Refresh', callback_data: 'intro:inbox' }]);
   rows.push([{ text: '💬 Private chats', callback_data: 'dm:inbox' }]);
-  rows.push([{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.browseDirectory, callback_data: 'dir:list:0' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
 
   return buildInlineKeyboard(rows);
 }
@@ -1682,7 +1506,7 @@ export function renderIntroDetailText({ persistenceEnabled = false, introRequest
 
   if (!persistenceEnabled) {
     lines.push('');
-    lines.push('Persistence is disabled in this environment. Intro detail is unavailable.');
+    lines.push('This request is temporarily unavailable. Try again later.');
   } else if (!introRequest?.intro_request_id) {
     lines.push('');
     lines.push('Intro request not found.');
@@ -1749,7 +1573,7 @@ export function renderIntroDetailKeyboard({ introRequest = null } = {}) {
   }
 
   rows.push([{ text: '↩️ Back to inbox', callback_data: 'intro:inbox' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
 
   return buildInlineKeyboard(rows);
 }
@@ -1762,7 +1586,7 @@ export function renderContactUnlockDetailText({ persistenceEnabled = false, requ
   ];
 
   if (!persistenceEnabled) {
-    lines.push('', 'Persistence is disabled in this environment. Telegram contact detail is unavailable.');
+    lines.push('', 'Telegram contact details are temporarily unavailable. Try again later.');
   } else if (!request?.contact_unlock_request_id) {
     lines.push('', 'Telegram contact request not found.');
   } else {
@@ -1823,7 +1647,7 @@ export function renderContactUnlockDetailKeyboard({ request = null } = {}) {
   }
 
   rows.push([{ text: '↩️ Back to inbox', callback_data: 'intro:inbox' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -1889,10 +1713,9 @@ export function renderDmInboxKeyboard({ inboxState = null } = {}) {
     rows.push([{ text: `💬 ${index + 1}. ${label}`, callback_data: `dm:view:${item?.dm_thread_id || 0}` }]);
   }
 
-  rows.push([{ text: '🔄 Refresh', callback_data: 'dm:inbox' }]);
-  rows.push([{ text: '📨 Contact inbox', callback_data: 'contact:inbox' }]);
-  rows.push([{ text: '🌐 Browse directory', callback_data: 'dir:list:0' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+    rows.push([{ text: MEMBER_BUTTONS.backToRequests, callback_data: 'contact:inbox' }]);
+  rows.push([{ text: MEMBER_BUTTONS.browseDirectory, callback_data: 'dir:list:0' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -1963,7 +1786,7 @@ export function renderDmThreadKeyboard({ thread = null } = {}) {
   }
 
   rows.push([{ text: '↩️ Back to Private chats', callback_data: 'dm:inbox' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -1978,7 +1801,7 @@ export function renderDirectoryFiltersText({ persistenceEnabled = false, filterS
 
   if (!persistenceEnabled) {
     lines.push('');
-    lines.push('Persistence is disabled in this environment. Directory filters are unavailable.');
+    lines.push('Directory filters are temporarily unavailable. Try again later.');
   }
 
   if (notice) {
@@ -2020,8 +1843,8 @@ export function renderDirectoryFiltersKeyboard({ filterSummary = summarizeDirect
   if (!filterSummary.isDefault) {
     rows.push([{ text: '🧹 Clear filters', callback_data: 'dir:fc' }]);
   }
-  rows.push([{ text: '↩️ Back to directory', callback_data: 'dir:list:0' }]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.backToDirectory, callback_data: 'dir:list:0' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
 
   return buildInlineKeyboard(rows);
 }
@@ -2030,38 +1853,20 @@ export function renderDirectoryFiltersKeyboard({ filterSummary = summarizeDirect
 
 export function renderInviteText({ inviteState = null, notice = null } = {}) {
   const lines = [
-    '📨 Invite people',
+    MEMBER_SURFACES.invite,
     '',
-    'Share your personal Intro Deck invite. Invite activity and rewards are tracked automatically.',
-    '',
-    '<b>Share</b>',
-    '• Share to a chat — choose a Telegram chat and send the full photo card.',
-    '• Forwarding card — receive the same photo card here for manual forwarding.',
-    '• Copy invite link — use the attributed link outside the share flow.'
+    'Share your personal Intro Deck invite. Activity and rewards are tracked automatically.'
   ];
-
   if (!inviteState?.persistenceEnabled) {
-    lines.push('', 'Invite tracking is unavailable right now.');
+    lines.push('', memberUnavailable('Invite tracking'));
   } else {
     const invitedCount = Number(inviteState.invitedCount || 0) || 0;
     const activatedCount = Number(inviteState.activatedCount || 0) || 0;
     const rewardsSummary = inviteState?.rewardsSummary || null;
-    lines.push('', '<b>Your activity</b>');
-    lines.push(`• Invited: ${invitedCount}`);
-    lines.push(`• Activated: ${activatedCount}`);
-    lines.push(`• Activation rate: ${getInviteActivationRate(invitedCount, activatedCount)}`);
-    if (rewardsSummary && String(rewardsSummary.mode || 'off') !== 'off') {
-      lines.push(`• Available points: ${Number(rewardsSummary.availablePoints || 0) || 0}`);
-    }
-    if (inviteState.invitedBy?.displayName) {
-      lines.push(`• Joined from: ${escapeHtml(inviteState.invitedBy.displayName)}`);
-    }
+    lines.push('', `Invited: ${invitedCount}`, `Activated: ${activatedCount}`);
+    if (rewardsSummary && String(rewardsSummary.mode || 'off') !== 'off') lines.push(`Points: ${Number(rewardsSummary.availablePoints || 0) || 0}`);
   }
-
-  if (notice) {
-    lines.push('', escapeHtml(notice));
-  }
-
+  if (notice) lines.push('', escapeHtml(sanitizeMemberNotice(notice)));
   return lines.join('\n');
 }
 
@@ -2078,7 +1883,7 @@ export function renderInviteKeyboard({ inviteState = null } = {}) {
     if (pointsEntry) activityRow.push(pointsEntry);
     rows.push(activityRow);
   }
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -2134,7 +1939,7 @@ export function renderInvitePerformanceKeyboard({ inviteState = null } = {}) {
   const bottomRow = [];
   const pointsEntry = getInvitePointsEntry(inviteState?.rewardsSummary);
   if (pointsEntry) bottomRow.push(pointsEntry);
-  bottomRow.push({ text: '🏠 Home', callback_data: 'home:root' });
+  bottomRow.push({ text: MEMBER_BUTTONS.home, callback_data: 'home:root' });
   rows.push(bottomRow);
   return buildInlineKeyboard(rows);
 }
@@ -2192,7 +1997,7 @@ export function renderInviteHistoryKeyboard({ inviteState = null, historyState =
   const bottomRow = [];
   const pointsEntry = getInvitePointsEntry(inviteState?.rewardsSummary);
   if (pointsEntry) bottomRow.push(pointsEntry);
-  bottomRow.push({ text: '🏠 Home', callback_data: 'home:root' });
+  bottomRow.push({ text: MEMBER_BUTTONS.home, callback_data: 'home:root' });
   rows.push(bottomRow);
   if (!(Number(inviteState?.invitedCount || 0) > 0)) {
     rows.push([
@@ -2293,7 +2098,7 @@ export function renderInviteRewardsKeyboard({ rewardsState = null } = {}) {
     ],
     [
       { text: '📊 Activity', callback_data: 'invite:activity' },
-      { text: '🏠 Home', callback_data: 'home:root' }
+      { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
     ]
   ]);
 }
@@ -2357,7 +2162,7 @@ export function renderInviteRedeemKeyboard({ redeemState = null } = {}) {
     { text: '🎯 Points', callback_data: 'invite:points' },
     { text: '📨 Invite people', callback_data: 'invite:root' }
   ]);
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
@@ -2401,7 +2206,7 @@ export function renderInviteLinkText({ inviteState = null } = {}) {
 export function renderInviteLinkKeyboard() {
   return buildInlineKeyboard([
     [{ text: '↩️ Invite people', callback_data: 'invite:root' }],
-    [{ text: '🏠 Home', callback_data: 'home:root' }]
+    [{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]
   ]);
 }
 
@@ -2681,7 +2486,7 @@ export function renderOperatorDiagnosticsKeyboard({
   hotExhausted = []
 } = {}) {
   if (!allowed) {
-    return buildInlineKeyboard([[{ text: '🏠 Home', callback_data: 'home:root' }]]);
+    return buildInlineKeyboard([[{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]]);
   }
 
   const rows = [];
@@ -2713,6 +2518,6 @@ export function renderOperatorDiagnosticsKeyboard({
     rows.push(introButtons.map((value) => ({ text: `#${value}`, callback_data: `ops:i:${value}` })));
   }
 
-  rows.push([{ text: '🏠 Home', callback_data: 'home:root' }]);
+  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }

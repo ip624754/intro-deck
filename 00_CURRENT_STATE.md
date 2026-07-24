@@ -1,3 +1,14 @@
+# Current canonical step — STEP064B1
+
+- Package: `0.64.1`
+- Baseline: STEP064A FULL SHA-256 `4ce8b99159022dd8209ced89c3719cd894dbec478687b09b09ee08b7c81d7d0b`
+- Member copy and primary navigation are unified through a canonical glossary and user-safe error mapper.
+- No migration, ENV, callback, payment, referral, ranking, auth, or publishing change.
+- Source QA: 100/118 PASS versus baseline 99/117; inherited NON_PASS 18; new regressions 0.
+- Production deployment: not verified.
+
+---
+
 # STEP064A current source delta
 
 - Current source step: `STEP064A`; package `0.64.0`.

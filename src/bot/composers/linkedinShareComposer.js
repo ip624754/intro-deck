@@ -7,6 +7,7 @@ import {
   renderLinkedInSharePreviewText
 } from '../../lib/telegram/render.js';
 import { safeEditOrReply } from '../../lib/telegram/safeEditOrReply.js';
+import { memberReasonText } from '../../lib/telegram/memberCopy.js';
 import {
   cancelLinkedInShareForTelegramUser,
   createProfileShareDraftForTelegramUser
@@ -21,12 +22,12 @@ function shareStartFailureNotice(reason) {
     case 'linkedin_share_publish_in_progress':
       return '⏳ A LinkedIn share is already publishing. Wait for the receipt before creating another share.';
     case 'migration_029_required':
-      return '⚠️ Share on LinkedIn is not ready yet because migration 029 has not been applied.';
+      return '⚠️ LinkedIn sharing is temporarily unavailable.';
     case 'linkedin_not_connected':
     case 'linkedin_account_missing':
       return '⚠️ Connect LinkedIn before creating a profile share.';
     default:
-      return `⚠️ LinkedIn sharing is unavailable right now (${reason || 'unknown_reason'}).`;
+      return `⚠️ ${memberReasonText(reason, 'LinkedIn sharing is temporarily unavailable. Try again later.')}`;
   }
 }
 
@@ -116,7 +117,7 @@ export function createLinkedInShareComposer({
 
     const notice = result.changed
       ? '✅ LinkedIn share cancelled. Nothing was published.'
-      : `ℹ️ Share was not cancelled (${result.reason || 'no_change'}).`;
+      : `ℹ️ ${memberReasonText(result.reason, 'The share could not be cancelled. Open the latest profile preview and try again.')}`;
     await renderProfilePreview(ctx, notice);
   });
 

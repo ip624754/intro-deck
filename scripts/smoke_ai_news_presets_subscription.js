@@ -22,8 +22,8 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const packageJson = JSON.parse(read('package.json'));
 const vercel = JSON.parse(read('vercel.json'));
 
-assert.equal(['STEP063B-H2', 'STEP064A'].includes(CURRENT_SOURCE_STEP), true);
-assert.equal(['0.63.6', '0.64.0'].includes(packageJson.version), true);
+assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['0.63.6', '0.64.0', '0.64.1'].includes(packageJson.version), true);
 assert.equal(packageJson.scripts['smoke:ai-news-productization'], 'node scripts/smoke_ai_news_presets_subscription.js');
 
 const migration = read('migrations/031_ai_news_presets_subscription.sql');
@@ -164,9 +164,9 @@ const presetsText = renderAiNewsPresetsText({
     presets: [{ name: 'AI & Technology · EN · Professional', status: 'active', schedule_kind: 'daily', delivery_hour_utc: 8 }]
   }
 });
-assert.match(presetsText, /Scheduled delivery creates a Telegram draft only/i);
-assert.match(presetsText, /Access: Pro/);
-assert.match(presetsText, /at most one scheduled draft per member per scheduler execution/i);
+assert.match(presetsText, /Scheduled searches create Telegram drafts for review/i);
+assert.match(presetsText, /Saved: 1\/3/);
+assert.match(presetsText, /never publish to LinkedIn/i);
 const presetText = renderAiNewsPresetText({
   state: {
     preset: { name: 'AI', preset_key: 'ai_technology', post_language: 'en', tone: 'professional', status: 'active', schedule_kind: 'daily', delivery_hour_utc: 8 },
@@ -175,7 +175,7 @@ const presetText = renderAiNewsPresetText({
 });
 assert.match(presetText, /never authorizes or publishes a LinkedIn post/i);
 assert.match(presetText, /multiple due presets rotate oldest-first/i);
-assert.match(renderHelpText({ aiNewsVisible: true }), /save personal presets/i);
+assert.match(renderHelpText({ aiNewsVisible: true }), /Save searches to reuse/i);
 const pricingText = renderPricingText({
   pricingState: {
     persistenceEnabled: true,
@@ -187,9 +187,8 @@ const pricingText = renderPricingText({
     recentReceipts: []
   }
 });
-assert.match(pricingText, /saved personalized presets/);
-assert.match(pricingText, /never automatic LinkedIn publishing/);
-assert.match(pricingText, /separate explicit authorization/);
+assert.match(pricingText, /3 saved searches/);
+assert.match(pricingText, /Every LinkedIn post still needs preview and separate approval/);
 
 const terms = read('terms/index.html');
 const privacy = read('privacy/index.html');

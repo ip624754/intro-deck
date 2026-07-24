@@ -50,7 +50,7 @@ export function createContactUnlockComposer({
     }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'Persistence is disabled in this environment.' });
+      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
       return;
     }
 
@@ -115,7 +115,7 @@ export function createContactUnlockComposer({
 
     let notice = 'Telegram contact request updated.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.changed && result.reason === 'contact_unlock_revealed') {
       notice = `✅ Approved Telegram contact request from ${result.request?.display_name || 'this member'}. Your hidden Telegram username is now revealed to the requester.`;
     } else if (result.changed && result.reason === 'contact_unlock_declined') {

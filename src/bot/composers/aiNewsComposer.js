@@ -107,7 +107,7 @@ export async function buildAiNewsDraftSurface(ctx, publicToken = null, notice = 
   }).catch((error) => ({ draft: null, reason: error?.message || String(error) }));
   return {
     text: result.draft ? renderAiNewsDraftText({ draft: result.draft, notice }) : `⚠️ ${aiNewsReasonText(result.reason)}`,
-    reply_markup: result.draft ? renderAiNewsDraftKeyboard({ draft: result.draft }) : { inline_keyboard: [[{ text: '← News drafts', callback_data: 'news:home' }]] }
+    reply_markup: result.draft ? renderAiNewsDraftKeyboard({ draft: result.draft }) : { inline_keyboard: [[{ text: '← Back to story finder', callback_data: 'news:home' }]] }
   };
 }
 

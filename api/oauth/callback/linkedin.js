@@ -19,6 +19,7 @@ import {
 import { persistLinkedInIdentity } from '../../../src/lib/storage/linkedinIdentityStore.js';
 import { publishLinkedInShareForOAuthCallback } from '../../../src/lib/storage/linkedinShareStore.js';
 import { sendTelegramMessage } from '../../../src/lib/telegram/botApi.js';
+import { memberReasonText } from '../../../src/lib/telegram/memberCopy.js';
 
 function escapeHtml(input) {
   return String(input)
@@ -109,7 +110,7 @@ function buildLinkedInShareResultMessage(result) {
     return lines.join('\n');
   }
   lines.push('❌ The LinkedIn post was not published.');
-  lines.push(`• Reason: ${result?.reason || 'linkedin_share_failed'}`);
+  lines.push(`• ${memberReasonText(result?.reason, 'LinkedIn rejected the publication request.')}`);
   if (result?.error?.status) lines.push(`• HTTP status: ${result.error.status}`);
   if (result?.error?.requestId) lines.push(`• LinkedIn request ID: ${result.error.requestId}`);
   lines.push(isNewsDraft ? '• Your AI/news draft remains available for review when the outcome is confirmed failed.' : '• Your Intro Deck profile remains unchanged.');
@@ -125,7 +126,7 @@ async function notifyLinkedInShareResult({ telegramUserId, result }) {
     text: buildLinkedInShareResultMessage(result),
     replyMarkup: {
       inline_keyboard: [
-        [{ text: isNewsDraft ? '🧠 News drafts' : '👁 Profile preview', callback_data: isNewsDraft ? 'news:home' : 'p:prev' }],
+        [{ text: isNewsDraft ? '🗞 Story finder' : '👁 Profile preview', callback_data: isNewsDraft ? 'news:home' : 'p:prev' }],
         [{ text: '🏠 Home', callback_data: 'home:root' }]
       ]
     }
@@ -156,7 +157,7 @@ function renderLinkedInShareResultPage(result) {
   }
   return renderHtml({
     title: 'LinkedIn post not published',
-    body: `<h1>LinkedIn post was not published</h1><p>${escapeHtml(result?.reason || 'The provider rejected the request.')}</p><p>Return to Telegram to review the result.</p>`
+    body: `<h1>LinkedIn post was not published</h1><p>${escapeHtml(memberReasonText(result?.reason, 'LinkedIn rejected the publication request.'))}</p><p>Return to Telegram to review the result.</p>`
   });
 }
 
@@ -243,7 +244,7 @@ function buildVerificationMessageLines({ verificationSync, persistResult }) {
     if (persistResult?.verificationPersistence?.persisted) {
       lines.push('• Category snapshot saved in Intro Deck.');
     } else if (persistResult?.verificationPersistence?.reason === 'migration_028_required') {
-      lines.push('• Snapshot fetched, but migration 028 is required before it can be stored.');
+      lines.push('• LinkedIn trust details could not be saved right now.');
     }
   } else {
     lines.push(`• ${describeLinkedInVerificationSyncReason(verificationSync.reason, verificationSync.error)}`);

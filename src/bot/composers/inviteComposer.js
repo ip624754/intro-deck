@@ -223,7 +223,7 @@ export function createInviteComposer({
     }).catch((error) => ({ persistenceEnabled: true, created: false, blocked: true, reason: String(error?.message || error) }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'Persistence is disabled in this environment.' });
+      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
       return;
     }
 
@@ -265,7 +265,7 @@ export function createInviteComposer({
     }).catch((error) => ({ persistenceEnabled: true, changed: false, blocked: true, reason: String(error?.message || error) }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'Persistence is disabled in this environment.' });
+      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
       return;
     }
 

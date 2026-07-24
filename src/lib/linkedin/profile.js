@@ -96,23 +96,7 @@ export function buildManualProfileFieldsReminder() {
 }
 
 export function buildPersistenceSummary(persistResult) {
-  if (!persistResult?.persisted) {
-    return 'Persistence unavailable in current environment';
-  }
-
-  const parts = ['LinkedIn identity saved'];
-  if (Array.isArray(persistResult.identityImportedFields) && persistResult.identityImportedFields.length > 0) {
-    parts.push(`imported=${persistResult.identityImportedFields.length}`);
-  }
-  if (persistResult.profileSeed?.displayNameSeeded) {
-    parts.push('display_name_seeded');
-  }
-  if (persistResult.profileDraft?.profile_state) {
-    parts.push(`profile=${persistResult.profileDraft.profile_state}`);
-  }
-  if (persistResult.profileDraft?.visibility_status) {
-    parts.push(`visibility=${persistResult.profileDraft.visibility_status}`);
-  }
-
-  return parts.join(', ');
+  return persistResult?.persisted
+    ? 'LinkedIn connection saved.'
+    : 'LinkedIn connected, but profile saving is temporarily unavailable.';
 }

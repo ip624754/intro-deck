@@ -49,7 +49,7 @@ const textDisconnected = renderHomeText({
   profileSnapshot: null,
   persistenceEnabled: false
 });
-if (!textDisconnected.includes('Profile saving is unavailable right now.')) {
+if (!textDisconnected.includes('Profile and directory access is temporarily unavailable.')) {
   throw new Error('home text must expose disabled persistence state');
 }
 
@@ -57,11 +57,14 @@ const textConnected = renderHomeText({
   persistenceEnabled: true,
   profileSnapshot
 });
-if (!textConnected.includes('Connected as: Rustam')) {
-  throw new Error('home text missing connected profile summary');
+if (!textConnected.includes('Rustam')) {
+  throw new Error('home text missing member name');
 }
-if (!textConnected.includes('Skills: Founder, Growth')) {
-  throw new Error('home text missing skills summary');
+if (!textConnected.includes('Profile: Hidden') || !textConnected.includes('LinkedIn: Connected')) {
+  throw new Error('home text missing concise profile and LinkedIn status');
+}
+if (textConnected.includes('Skills: Founder, Growth')) {
+  throw new Error('home text must not expose detailed profile fields');
 }
 
 const keyboard = renderHomeKeyboard({
@@ -128,13 +131,13 @@ const menuText = renderProfileMenuText({
   profileSnapshot,
   persistenceEnabled: true
 });
-if (!menuText.includes('Profile setup')) {
+if (!menuText.includes('🧩 Profile')) {
   throw new Error('profile menu text missing title');
 }
 if (!menuText.includes('✅ Skills')) {
   throw new Error('profile menu text missing required skills status');
 }
-if (!menuText.includes('Setup progress: 6/6 required steps')) {
+if (!menuText.includes('Setup: 6/6 complete')) {
   throw new Error('profile menu text missing guided setup progress');
 }
 
@@ -203,7 +206,7 @@ if (!skillsKeyboard.includes('p:sk:clr')) {
 console.log('OK: router baseline contract');
 
 const helpText = renderHelpText({ aiNewsVisible: true });
-if (!helpText.includes('Use Intro Deck to connect a LinkedIn account')) {
+if (!helpText.includes('Intro Deck helps you find professionals and connect by permission.')) {
   throw new Error('help text missing product summary');
 }
 const helpKeyboardInline = renderHelpKeyboard({ aiNewsVisible: true }).inline_keyboard;

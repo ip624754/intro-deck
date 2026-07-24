@@ -51,7 +51,7 @@ const preview = renderProfilePreviewText({
     completion: { isReady: false, hasRequiredSkills: false, filledCount: 1, totalCount: 8, requiredFilledCount: 1, requiredCount: 4, skillsCount: 0, requiredSkillCount: 1 }
   }
 });
-assert.match(preview, /Hidden Telegram username: @rustam_dev/);
+assert.match(preview, /Telegram username: @rustam_dev/);
 assert.match(preview, /Contact mode: Paid contact options/);
 
 const detailText = renderContactUnlockDetailText({

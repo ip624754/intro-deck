@@ -1,6 +1,7 @@
 import { getLinkedInConfig, getLinkedInShareConfig, getLinkedInVerificationConfig, isOperatorTelegramUser } from '../../../src/config/env.js';
 import { buildAuthorizeUrl, buildSignedState, fetchOidcDiscovery, verifySignedLinkedInLaunchTicket } from '../../../src/lib/linkedin/oidc.js';
 import { markLinkedInShareAuthorizationForTelegramUser } from '../../../src/lib/storage/linkedinShareStore.js';
+import { memberReasonText } from '../../../src/lib/telegram/memberCopy.js';
 
 function escapeHtml(input) {
   return String(input)
@@ -136,7 +137,7 @@ export default async function handler(req, res) {
       if (!authorization.persistenceEnabled || !authorization.ok) {
         return res.status(409).send(renderHtml({
           title: 'LinkedIn share no longer available',
-          body: `<h1>Share no longer available</h1><p>${escapeHtml(authorization.reason || 'The share draft could not be authorized.')}</p><p>Return to Telegram and create a fresh preview.</p>`
+          body: `<h1>Share no longer available</h1><p>${escapeHtml(memberReasonText(authorization.reason, 'The share preview could not be authorized.'))}</p><p>Return to Telegram and create a fresh preview.</p>`
         }));
       }
       if (authorization.alreadyPublished) {

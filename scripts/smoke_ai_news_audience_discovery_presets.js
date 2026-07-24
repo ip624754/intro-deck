@@ -38,7 +38,7 @@ import {
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-assert.equal(['STEP063B-H2', 'STEP064A'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1'].includes(CURRENT_SOURCE_STEP), true);
 assert.equal(normalizePresetKey('business_growth'), 'business_markets');
 assert.equal(normalizePresetKey('unknown'), 'for_you');
 for (const key of ['for_you', 'ai_technology', 'startups_product', 'business_markets', 'career_leadership', 'crypto_web3', 'custom']) {
@@ -151,14 +151,14 @@ const hubText = renderAiNewsHubText({ state: hubState });
 assert.match(hubText, /Topic: For you/);
 assert.match(hubText, /Audience: Founders & executives/);
 assert.match(hubText, /Angle: Founder perspective/);
-assert.match(hubText, /Profile match: .*public profile signals/);
+assert.match(hubText, /Profile context: On/);
 const hubButtons = renderAiNewsHubKeyboard({ state: hubState }).inline_keyboard.flat().map((button) => button.text);
 for (const expected of ['✨ For you', '🤖 AI & Tech', '🚀 Startups', '📈 Business', '🧭 Career', '⛓ Crypto']) {
   assert.ok(hubButtons.some((text) => text.includes(expected)), `missing hub button ${expected}`);
 }
 assert.ok(hubButtons.some((text) => text.includes('Founders & executives')));
 assert.ok(hubButtons.some((text) => text.includes('Founder perspective')));
-assert.ok(hubButtons.includes('🔎 Find relevant stories'));
+assert.ok(hubButtons.includes('🔎 Find stories'));
 
 const audienceCallbacks = renderAiNewsAudienceKeyboard({ preferences }).inline_keyboard.flat().map((button) => button.callback_data).filter(Boolean);
 assert.ok(audienceCallbacks.includes('news:aud:product_engineering'));
@@ -259,9 +259,8 @@ const sourceText = renderAiNewsSourcesText({ result: {
 } });
 assert.match(sourceText, /Audience: Founders & executives/);
 assert.match(sourceText, /Angle: Founder perspective/);
-assert.match(sourceText, /profile 14\/100/);
-assert.match(sourceText, /audience 12\/100/);
-assert.match(sourceText, /angle 8\/100/);
+assert.match(sourceText, /Good match|Strong match|Related/);
+assert.doesNotMatch(sourceText, /profile 14\/100|audience 12\/100|angle 8\/100/);
 
 const presetText = renderAiNewsPresetText({ state: {
   preset: { ...preferences, name: presetName, status: 'active', schedule_kind: 'manual', delivery_hour_utc: 9 },

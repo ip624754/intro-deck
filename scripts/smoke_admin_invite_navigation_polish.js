@@ -78,7 +78,7 @@ const inviteText = renderInviteText({
     rewardsSummary: { mode: 'live', pendingPoints: 10, availablePoints: 20 }
   }
 });
-if (!inviteText.includes('Share your personal Intro Deck invite') || !inviteText.includes('Available points: 20')) {
+if (!inviteText.includes('Share your personal Intro Deck invite') || !inviteText.includes('Points: 20')) {
   throw new Error('Invite root must explain simplified share actions and bounded points state');
 }
 

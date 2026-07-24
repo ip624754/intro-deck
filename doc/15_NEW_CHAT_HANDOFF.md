@@ -1,3 +1,15 @@
+# Latest handoff — STEP064B1
+
+Canonical candidate: STEP064B1 over exact STEP064A baseline SHA-256 `4ce8b99159022dd8209ced89c3719cd894dbec478687b09b09ee08b7c81d7d0b`.
+
+Implemented: canonical member glossary, simplified Home/Profile/Directory/Requests/Invite/Story finder/Pro/Help, and user-safe error mapping. No migration or ENV change. No callback, payment, invite attribution, ranking, OAuth, or publishing behavior change.
+
+QA: `npm run check` PASS; full smoke 100 PASS / 18 inherited NON_PASS / 118 total; baseline PASS → candidate NON_PASS = 0. Production not verified.
+
+Next action: deploy and run `doc/98_STEP064B1_OPERATOR_ROLLOUT.md`.
+
+---
+
 # STEP064A CURRENT HANDOFF
 
 ## Executive summary

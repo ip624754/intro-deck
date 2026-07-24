@@ -110,7 +110,7 @@ export function createIntroComposer({
     let notice = 'Intro inbox updated.';
     let receiptResult = null;
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.changed && result.reason === 'intro_request_accepted') {
       receiptResult = await deliverIntroNotificationReceipt({
         eventType: 'intro_request_accepted',

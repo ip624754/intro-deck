@@ -61,7 +61,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'Persistence is disabled in this environment.' });
+      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
       return;
     }
 
@@ -112,7 +112,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (!result.persistenceEnabled) {
-      await ctx.reply('⚠️ Persistence is disabled in this environment.');
+      await ctx.reply('⚠️ This feature is temporarily unavailable. Try again later.');
       return;
     }
 
@@ -146,7 +146,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'Persistence is disabled in this environment.' });
+      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
       return;
     }
 
@@ -185,7 +185,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
 
     let notice = 'Private chat updated.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.changed && result.reason === 'dm_thread_accepted') {
       notice = `✅ Accepted private-chat request from ${result.thread?.display_name || 'this member'}. The conversation is now active.`;
     } else if (result.changed && result.reason === 'dm_thread_declined') {

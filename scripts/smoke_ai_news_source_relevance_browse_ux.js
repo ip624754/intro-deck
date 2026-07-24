@@ -227,8 +227,8 @@ const state = {
   presetPersistenceReady: true
 };
 const hubText = renderAiNewsHubText({ state });
-assert.match(hubText, /Search allowance: 0\/10/);
-assert.match(hubText, /Search resets at:/);
+assert.match(hubText, /Searches: 0\/10/);
+assert.match(hubText, /Available again:/);
 assert.doesNotMatch(hubText, /Latest draft: failed/);
 assert.equal(renderAiNewsHubKeyboard({ state }).inline_keyboard.flat().some((button) => button.callback_data === 'news:find'), false);
 
@@ -254,9 +254,10 @@ const sourceResult = {
   }]
 };
 const sourceText = renderAiNewsSourcesText({ result: sourceResult });
-assert.match(sourceText, /quality high/);
-assert.match(sourceText, /relevance 100\/100/);
-assert.match(sourceText, /rss_http_503/);
+assert.match(sourceText, /Established source/);
+assert.match(sourceText, /Strong match/);
+assert.match(sourceText, /Some sources were unavailable/);
+assert.doesNotMatch(sourceText, /relevance 100\/100|rss_http_503|authority 92\/100/);
 const sourceButtons = renderAiNewsSourcesKeyboard({ result: sourceResult }).inline_keyboard.flat();
 assert.equal(sourceButtons.some((button) => button.callback_data === 'news:find'), false);
 assert.ok(sourceButtons.some((button) => button.url?.startsWith('https://www.reuters.com/')));

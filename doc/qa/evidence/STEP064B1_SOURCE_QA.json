@@ -1,0 +1,19 @@
+{
+  "step": "STEP064B1",
+  "package": "0.64.1",
+  "status": "source_implemented_qa_passed_production_not_verified",
+  "baseline": {
+    "artifact": "IntroDeck_STEP064A_FULL_2026-07-24.zip",
+    "sha256": "4ce8b99159022dd8209ced89c3719cd894dbec478687b09b09ee08b7c81d7d0b"
+  },
+  "qa": {
+    "node": "22.16.0",
+    "repository_engine": "20.x",
+    "npm_check": "pass",
+    "baseline_smoke": { "pass": 99, "non_pass": 18, "total": 117 },
+    "candidate_smoke": { "pass": 100, "non_pass": 18, "total": 118 },
+    "baseline_pass_to_candidate_non_pass": 0,
+    "new_smoke": "pass"
+  },
+  "production_verified": false
+}

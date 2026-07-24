@@ -76,6 +76,14 @@ export default async function handler(req, res) {
       enabled: flags.operatorDiagnosticsSurfaceConfigured,
       operatorCount: operatorConfig.operatorTelegramUserIds.length
     },
+    memberCopyPolicy: {
+      canonicalSurfaces: ['home', 'profile', 'directory', 'requests', 'story_finder', 'invite', 'pro', 'help'],
+      memberDiagnostics: 'user_safe_copy_only',
+      buttonContract: 'sentence_case_verb_object_contextual_back',
+      rawRuntimeStatesVisible: false,
+      callbackIdsChanged: false,
+      businessLogicChanged: false
+    },
     inviteSharePolicy: {
       publicCardCta: 'single_open_intro_deck',
       publicCardOwnerNavigation: false,

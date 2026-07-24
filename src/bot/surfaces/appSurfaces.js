@@ -19,36 +19,24 @@ function fallbackRenderHelpText({ aiNewsVisible = false } = {}) {
   return [
     '❓ Help',
     '',
-    'Use Intro Deck to connect a LinkedIn account, complete a member-provided professional card, browse listed profiles, and use one Contact flow to continue privately only after approval.',
+    'Intro Deck helps you find professionals and connect by permission.',
     '',
-    'Shortcuts:',
-    '• /profile — open your profile',
-    '• /browse — browse the directory',
-    '• /contact — open the Contact inbox hub',
-    '• /inbox — open contact requests',
-    '• /dm — open private chats',
-    '• /plans — open pricing and Pro status',
-    '• /invite — share your invite',
-    '• /share — preview and explicitly publish your listed profile on LinkedIn',
-    ...(aiNewsVisible ? ['• /news — create evidence-bound drafts, manage personal presets, and approve each LinkedIn post separately'] : []),
-    '• /menu — return home'
+    '• Connect LinkedIn and complete your profile.',
+    '• Browse published profiles.',
+    '• Send a request. The other person decides whether to accept.',
+    '• Private contact details stay hidden until approval.',
+    ...(aiNewsVisible ? ['• Use Story finder to find sources for your professional audience.'] : [])
   ].join('\n');
 }
 
 function fallbackRenderHelpKeyboard({ aiNewsVisible = false } = {}) {
   const rows = [
-      [
-        { text: '🧩 Profile', callback_data: 'p:menu' },
-        { text: '🌐 Browse directory', callback_data: 'dir:list:0' }
-      ],
-      [{ text: '📨 Contact inbox', callback_data: 'contact:inbox' }],
-      ...(aiNewsVisible ? [[{ text: '🧠 AI/news drafts', callback_data: 'news:home' }]] : []),
-      [
-        { text: '⭐ Plans', callback_data: 'plans:root' },
-        { text: '📨 Invite contacts', callback_data: 'invite:root' }
-      ],
-      [{ text: '🏠 Home', callback_data: 'home:root' }]
-    ];
+    [{ text: '🧩 Edit profile', callback_data: 'p:menu' }, { text: '🌐 Browse', callback_data: 'dir:list:0' }],
+    [{ text: '📥 Requests', callback_data: 'contact:inbox' }],
+    ...(aiNewsVisible ? [[{ text: '🗞 Story finder', callback_data: 'news:home' }]] : []),
+    [{ text: '⭐ Pro', callback_data: 'plans:root' }, { text: '✉️ Invite people', callback_data: 'invite:root' }],
+    [{ text: '🏠 Home', callback_data: 'home:root' }]
+  ];
   return { inline_keyboard: rows };
 }
 

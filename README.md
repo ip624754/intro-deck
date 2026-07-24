@@ -1,3 +1,9 @@
+# Current release: STEP064B1 / 0.64.1
+
+The current candidate unifies member-facing Telegram copy and primary navigation without changing business logic. See `doc/spec/STEP064B1_MEMBER_COPY_SYSTEM_PRIMARY_NAVIGATION.md` and `doc/98_STEP064B1_OPERATOR_ROLLOUT.md`.
+
+---
+
 # LinkedIn Telegram Directory Bot
 
 STEP064A source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.

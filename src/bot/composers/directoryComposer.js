@@ -99,7 +99,7 @@ export function createDirectoryComposer({
     let notice = 'Intro inbox updated.';
     let receiptResult = null;
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.created) {
       receiptResult = await deliverIntroNotificationReceipt({
         eventType: 'intro_request_created',
@@ -182,7 +182,7 @@ export function createDirectoryComposer({
 
     let notice = 'Filter cleared.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
       notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear this filter right now.')}`;
     } else {
@@ -209,7 +209,7 @@ export function createDirectoryComposer({
 
     let notice = 'Industry filter updated.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
       notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update the industry filter right now.')}`;
     } else {
@@ -238,7 +238,7 @@ export function createDirectoryComposer({
 
     let notice = 'Skill filter updated.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
       notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update the skill filter right now.')}`;
     } else {
@@ -265,7 +265,7 @@ export function createDirectoryComposer({
 
     let notice = 'Filters cleared.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
       notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear directory filters right now.')}`;
     } else {

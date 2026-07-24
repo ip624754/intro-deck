@@ -124,7 +124,7 @@ const inviteText = renderInviteText({
     rewardsSummary: { mode: 'earn_only', pendingPoints: 10, availablePoints: 0 }
   }
 });
-if (!inviteText.includes('Available points: 0') || !inviteText.includes('Invite activity and rewards are tracked automatically')) {
+if (!inviteText.includes('Points: 0') || !inviteText.includes('Activity and rewards are tracked automatically')) {
   throw new Error('Invite root text must show bounded rewards context without dense navigation copy');
 }
 

@@ -135,7 +135,7 @@ export function createProfileComposer({
 
     let notice = 'Skills cleared.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
       notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear skills right now.')}`;
     } else {
@@ -161,7 +161,7 @@ export function createProfileComposer({
 
     let notice = 'Skill updated.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
       notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update this skill right now.')}`;
     } else {
@@ -198,7 +198,7 @@ export function createProfileComposer({
 
     let notice = 'Contact mode updated.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.blocked && result.reason === 'hidden_telegram_username_required_for_paid_unlock') {
       notice = '⚠️ Add your hidden Telegram username first before enabling paid Telegram-contact requests.';
     } else if (result.blocked || !result.changed) {
@@ -227,7 +227,7 @@ export function createProfileComposer({
 
     let notice = 'Profile publication updated.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.blocked) {
       notice = '⚠️ Complete every required setup step before publishing the profile.';
     } else if (!result.changed && result.reason === 'visibility_unchanged') {
@@ -255,7 +255,7 @@ export function createProfileComposer({
 
     let notice = 'Profile visibility updated.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ Persistence is disabled in this environment.';
+      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed && result.reason === 'visibility_unchanged') {
       notice = 'ℹ️ Your profile is already hidden. Use Preview & publish when you are ready to list it.';
     } else if (!result.changed) {

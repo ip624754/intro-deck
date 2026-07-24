@@ -8,7 +8,7 @@ import { renderAiNewsSearchFailureText } from '../src/lib/telegram/aiNewsRender.
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-assert.equal(['STEP063B-H2', 'STEP064A'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1'].includes(CURRENT_SOURCE_STEP), true);
 
 const migration035 = read('migrations/035_ai_news_audience_aware_discovery.sql');
 const migration036 = read('migrations/036_ai_news_audience_contract_repair.sql');
@@ -83,8 +83,8 @@ const restoredText = renderAiNewsSearchFailureText({
     searchUsage: { used: 1, limit: 10, remaining: 9 }
   }
 });
-assert.match(restoredText, /allowance: restored because the search did not complete/i);
-assert.match(restoredText, /search_source_persistence_internal_error/);
+assert.match(restoredText, /Search allowance: restored/i);
+assert.doesNotMatch(restoredText, /search_source_persistence_internal_error/);
 
 const noClaimText = renderAiNewsSearchFailureText({
   result: {
@@ -93,6 +93,6 @@ const noClaimText = renderAiNewsSearchFailureText({
     searchClaimConsumed: false
   }
 });
-assert.match(noClaimText, /no new search claim was consumed/i);
+assert.match(noClaimText, /Search allowance: unchanged/i);
 
 console.log('STEP063B-H1R1 migration ordering and exact claim recovery smoke: PASS');

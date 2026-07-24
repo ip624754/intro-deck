@@ -18,7 +18,7 @@ import { releaseAiNewsSourceSearchClaim } from '../src/db/aiNewsRepo.js';
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-assert.equal(['STEP063B-H2', 'STEP064A'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1'].includes(CURRENT_SOURCE_STEP), true);
 
 const state = {
   preferences: {
@@ -33,9 +33,9 @@ const state = {
   }
 };
 const progressText = renderAiNewsSearchProgressText({ state });
-assert.match(progressText, /Finding relevant stories/);
-assert.match(progressText, /Search status: searching/);
-assert.match(progressText, /Checking configured source providers/);
+assert.match(progressText, /Finding stories/);
+assert.match(progressText, /Checking official sources, releases, discussions, and news reports/);
+assert.doesNotMatch(progressText, /Search status: searching/);
 assert.doesNotMatch(progressText, /trusted source providers/i);
 assert.equal(renderAiNewsSearchProgressKeyboard().inline_keyboard[0][0].callback_data, 'news:searching');
 
@@ -49,7 +49,7 @@ const failedResult = {
 const failureText = renderAiNewsSearchFailureText({ result: failedResult });
 assert.match(failureText, /Search could not be completed/);
 assert.match(failureText, /allowance: restored/i);
-assert.match(failureText, /No draft or LinkedIn publication was created/);
+assert.match(failureText, /No draft or LinkedIn post was created/);
 const failureButtons = renderAiNewsSearchFailureKeyboard({ result: failedResult }).inline_keyboard.flat();
 assert.ok(failureButtons.some((button) => button.callback_data === 'news:find'));
 assert.ok(failureButtons.some((button) => button.callback_data === 'news:home'));

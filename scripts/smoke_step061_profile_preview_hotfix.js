@@ -6,14 +6,14 @@ const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const packageJson = JSON.parse(read('package.json'));
 
-assert.equal(['0.63.6', '0.64.0'].includes(packageJson.version), true);
+assert.equal(['0.63.6', '0.64.0', '0.64.1'].includes(packageJson.version), true);
 assert.equal(
   packageJson.scripts['smoke:step061-profile-preview-hotfix'],
   'node scripts/smoke_step061_profile_preview_hotfix.js'
 );
 
 const releaseSource = read('src/config/release.js');
-assert.match(releaseSource, /CURRENT_SOURCE_STEP = '(?:STEP061H1|STEP061A|STEP063A|STEP063A-H1A|STEP063B|STEP063B-H1|STEP063B-H1R1|STEP063B-H2|STEP064A)'/);
+assert.match(releaseSource, /CURRENT_SOURCE_STEP = '(?:STEP061H1|STEP061A|STEP063A|STEP063A-H1A|STEP063B|STEP063B-H1|STEP063B-H1R1|STEP063B-H2|STEP064A|STEP064B1)'/);
 
 const surfaceSource = read('src/bot/surfaces/appSurfaces.js');
 const previewStart = surfaceSource.indexOf('async function buildProfilePreviewSurface');

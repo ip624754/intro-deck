@@ -172,9 +172,9 @@ const draftText = renderAiNewsDraftText({ draft: { ...source, post_text: postTex
 assert.match(draftText, /Review every claim/);
 assert.match(draftText, /explicit LinkedIn authorization/);
 
-assert.doesNotMatch(renderHelpText(), /AI\/news drafts/);
+assert.doesNotMatch(renderHelpText(), /Story finder/);
 assert.doesNotMatch(JSON.stringify(renderHelpKeyboard()), /news:home/);
-assert.match(renderHelpText({ aiNewsVisible: true }), /AI\/news drafts/);
+assert.match(renderHelpText({ aiNewsVisible: true }), /Story finder/);
 assert.match(JSON.stringify(renderHelpKeyboard({ aiNewsVisible: true })), /news:home/);
 const operatorText = renderOperatorDiagnosticsText({
   allowed: true,

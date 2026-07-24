@@ -1,3 +1,4 @@
+import { memberReasonText } from '../../lib/telegram/memberCopy.js';
 
 export function formatDmRequestReason(reason) {
   switch (reason) {
@@ -228,7 +229,12 @@ export function formatUserFacingError(input, fallback = 'Something went wrong. P
   }
 
   if (message.includes('DATABASE_URL is not configured')) {
-    return 'This feature is unavailable right now.';
+    return 'This feature is temporarily unavailable. Try again later.';
+  }
+
+  const memberMapped = memberReasonText(message, null);
+  if (memberMapped) {
+    return memberMapped;
   }
 
   if (message === 'payment_currency_mismatch') {
@@ -261,6 +267,10 @@ export function formatUserFacingError(input, fallback = 'Something went wrong. P
   ];
 
   if (internalSignals.some((needle) => message.includes(needle))) {
+    return fallback;
+  }
+
+  if (/^[a-z0-9_]+$/i.test(message) && message.includes('_')) {
     return fallback;
   }
 

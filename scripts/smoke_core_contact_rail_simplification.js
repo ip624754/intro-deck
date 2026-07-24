@@ -61,9 +61,9 @@ const proOptions = JSON.stringify(renderContactRequestKeyboard({ profileSnapshot
 assert.match(proOptions, /Included in Pro/);
 
 assert.match(JSON.stringify(renderHomeKeyboard({ persistenceEnabled: true, profileSnapshot: { linkedin_sub: 'x', completion: { isReady: true }, visibility_status: 'listed' } })), /contact:inbox/);
-assert.match(renderHelpText(), /one Contact flow/);
+assert.match(renderHelpText(), /find professionals and connect by permission/i);
 assert.match(JSON.stringify(renderHelpKeyboard()), /contact:inbox/);
-assert.match(renderContactInboxText(), /One place to open contact requests/);
+assert.match(renderContactInboxText(), /Review contact requests and continue approved private conversations/);
 assert.match(JSON.stringify(renderContactInboxKeyboard()), /intro:inbox/);
 assert.match(JSON.stringify(renderContactInboxKeyboard()), /dm:inbox/);
 

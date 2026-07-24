@@ -334,9 +334,9 @@ for (const token of [
 
 
 const sourceRender = fs.readFileSync(new URL('../src/lib/telegram/aiNewsRender.js', import.meta.url), 'utf8');
-assert.match(sourceRender, /Open source/);
-assert.match(sourceRender, /Selection valid until/);
-assert.match(sourceRender, /source_authority_score/);
+assert.match(sourceRender, /Open original|Open \${index \+ 1}/);
+assert.match(sourceRender, /Nothing is generated or published automatically/);
+assert.match(sourceRender, /sourceQualityLabel/);
 
 const shareStore = fs.readFileSync(new URL('../src/lib/storage/linkedinShareStore.js', import.meta.url), 'utf8');
 assert.doesNotMatch(shareStore, /discoverNewsSources|fetchTrustedRssSources|fetchHackerNewsStories|fetchGitHubReleases/);
