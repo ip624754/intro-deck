@@ -1,0 +1,39 @@
+{
+  "step": "STEP064B4B",
+  "baselineStep": "STEP064B4A",
+  "baseline": {
+    "total": 105,
+    "pass": 100,
+    "nonPass": 5
+  },
+  "candidate": {
+    "total": 106,
+    "pass": 101,
+    "nonPass": 5
+  },
+  "baselinePassRegressions": [],
+  "baselinePassRegressionCount": 0,
+  "baselineNonPass": [
+    "smoke:code-split",
+    "smoke:profile-session-schema",
+    "smoke:broadcast-idempotency",
+    "smoke:step053a-pack",
+    "smoke:step061-profile-preview-hotfix"
+  ],
+  "candidateNonPass": [
+    "smoke:code-split",
+    "smoke:profile-session-schema",
+    "smoke:broadcast-idempotency",
+    "smoke:step053a-pack",
+    "smoke:step061-profile-preview-hotfix"
+  ],
+  "inheritedNonPassUnchanged": true,
+  "newFocusedSmoke": "smoke:member-language-rendering",
+  "newFocusedSmokeStatus": "PASS",
+  "truthBoundary": {
+    "fullInventoryExecuted": true,
+    "dependencyInstallationCompleted": false,
+    "canonicalNode20LocalRunVerified": false,
+    "productionDeploymentVerified": false
+  }
+}

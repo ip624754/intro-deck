@@ -15,6 +15,7 @@ import {
   renderInviteRedeemKeyboard,
   renderInviteRedeemText
 } from '../../lib/telegram/render.js';
+import { localizeMemberKeyboard, localizeMemberText } from '../../lib/telegram/memberLocalization.js';
 
 function parseStartParam(ctx) {
   const text = String(ctx.message?.text || '').trim();
@@ -162,8 +163,8 @@ export function createInviteComposer({
       catalog: [],
       rewardsSummary: { mode: 'off', availablePoints: 0, pendingPoints: 0, redeemedPoints: 0 }
     }));
-    const text = renderInviteRedeemText({ redeemState: state, notice });
-    const reply_markup = renderInviteRedeemKeyboard({ redeemState: state });
+    const text = localizeMemberText(renderInviteRedeemText({ redeemState: state, notice }), ctx.interfaceLanguage);
+    const reply_markup = localizeMemberKeyboard(renderInviteRedeemKeyboard({ redeemState: state }), ctx.interfaceLanguage);
     if (method === 'reply') {
       await ctx.reply(text, { reply_markup, parse_mode: 'HTML', disable_web_page_preview: true });
       return;
@@ -241,7 +242,7 @@ export function createInviteComposer({
     }).catch((error) => ({ persistenceEnabled: true, created: false, blocked: true, reason: String(error?.message || error) }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
+      await ctx.answerCallbackQuery({ text: localizeMemberText('This feature is temporarily unavailable. Try again later.', ctx.interfaceLanguage) });
       return;
     }
 
@@ -265,12 +266,12 @@ export function createInviteComposer({
       telegramUsername: ctx.from.username || null
     }).catch(() => ({ rewardsSummary: result.summary || { availablePoints: 0 } }));
 
-    const text = renderInviteRedeemConfirmText({
+    const text = localizeMemberText(renderInviteRedeemConfirmText({
       catalogItem: result.catalogItem,
       rewardsSummary: summaryState.rewardsSummary,
       notice: null
-    });
-    const reply_markup = renderInviteRedeemConfirmKeyboard({ redemptionId: result.redemption.redemptionId });
+    }), ctx.interfaceLanguage);
+    const reply_markup = localizeMemberKeyboard(renderInviteRedeemConfirmKeyboard({ redemptionId: result.redemption.redemptionId }), ctx.interfaceLanguage);
     await safeEditOrReply(ctx, text, { reply_markup, parse_mode: 'HTML', disable_web_page_preview: true });
   });
 
@@ -283,7 +284,7 @@ export function createInviteComposer({
     }).catch((error) => ({ persistenceEnabled: true, changed: false, blocked: true, reason: String(error?.message || error) }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
+      await ctx.answerCallbackQuery({ text: localizeMemberText('This feature is temporarily unavailable. Try again later.', ctx.interfaceLanguage) });
       return;
     }
 
@@ -320,7 +321,7 @@ export function createInviteComposer({
   });
 
   composer.callbackQuery('invite:send_card', async (ctx) => {
-    await ctx.answerCallbackQuery('Forwarding card sent below.');
+    await ctx.answerCallbackQuery(ctx.interfaceLanguage === 'ru' ? 'Карточка для пересылки отправлена ниже.' : 'Forwarding card sent below.');
     const card = await buildInviteCardMessage(ctx);
     const media = card.media || null;
     const photo = media?.photoFileId || media?.photoUrl || null;

@@ -55,8 +55,3 @@ After production acceptance, plan only:
 `STEP064B4C — Transaction, Notification & OAuth Language Boundary`
 
 Do not start B4C automatically and do not combine it with publisher or payment redesign.
-
-## Inherited canonical compatibility anchors
-
-- STEP050J migration-required schema compatibility remains active for contact unlock; `migrations/019_contact_unlock_requests.sql` is still the canonical prerequisite for that legacy rail.
-- STEP061 AI/news preset and scheduled Telegram-draft-only productization remains active and unchanged by B4B.

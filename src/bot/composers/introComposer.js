@@ -4,6 +4,7 @@ import { decideIntroRequestForTelegramUser } from '../../lib/storage/introReques
 import { deliverIntroNotificationReceipt } from '../../lib/storage/notificationStore.js';
 import { renderIntroInboxKeyboard, renderIntroInboxText } from '../../lib/telegram/render.js';
 import { formatUserFacingError } from '../utils/notices.js';
+import { localizeMemberKeyboard, localizeMemberText } from '../../lib/telegram/memberLocalization.js';
 
 function fitTelegramText(text, limit = 3900) {
   const value = String(text || '').trim();
@@ -36,7 +37,7 @@ export function createIntroComposer({
       await safeEditOrReply(ctx, text, options);
       return;
     } catch (error) {
-      const fallbackNotice = `⚠️ ${formatUserFacingError(String(error?.message || error), 'Could not open intro inbox right now.')}`;
+      const fallbackNotice = `⚠️ ${formatUserFacingError(String(error?.message || error), 'Could not open intro inbox right now.', ctx.interfaceLanguage)}`;
       const fallbackText = renderIntroInboxText({
         persistenceEnabled: false,
         inboxState: null,
@@ -45,10 +46,10 @@ export function createIntroComposer({
       });
       const fallbackKeyboard = renderIntroInboxKeyboard({ inboxState: null, contactUnlockInbox: null });
       if (method === 'reply') {
-        await ctx.reply(fitTelegramText(fallbackText), { reply_markup: fallbackKeyboard });
+        await ctx.reply(fitTelegramText(localizeMemberText(fallbackText, ctx.interfaceLanguage)), { reply_markup: localizeMemberKeyboard(fallbackKeyboard, ctx.interfaceLanguage) });
         return;
       }
-      await safeEditOrReply(ctx, fitTelegramText(fallbackText), { reply_markup: fallbackKeyboard });
+      await safeEditOrReply(ctx, fitTelegramText(localizeMemberText(fallbackText, ctx.interfaceLanguage)), { reply_markup: localizeMemberKeyboard(fallbackKeyboard, ctx.interfaceLanguage) });
     }
   };
 
@@ -62,7 +63,7 @@ export function createIntroComposer({
   });
 
   composer.callbackQuery('intro:noop', async (ctx) => {
-    await ctx.answerCallbackQuery({ text: 'No linked public profile card is available for this row yet.' });
+    await ctx.answerCallbackQuery({ text: ctx.interfaceLanguage === 'ru' ? 'Для этой строки пока нет доступной публичной карточки профиля.' : 'No linked public profile card is available for this row yet.' });
   });
 
   composer.callbackQuery(/^intro:view:(\d+)$/, async (ctx) => {
@@ -156,13 +157,13 @@ export function createIntroComposer({
         notice += ' Requester notice delivery failed, but the decision is saved.';
       }
     } else if (result.duplicate) {
-      notice = `ℹ️ ${formatIntroDecisionReason(result.reason)}`;
+      notice = `ℹ️ ${formatIntroDecisionReason(result.reason, ctx.interfaceLanguage)}`;
     } else if (result.throttled) {
-      notice = `⏳ ${formatIntroDecisionReason(result.reason)}`;
+      notice = `⏳ ${formatIntroDecisionReason(result.reason, ctx.interfaceLanguage)}`;
     } else if (result.blocked) {
-      notice = `⚠️ ${formatIntroDecisionReason(result.reason)}`;
+      notice = `⚠️ ${formatIntroDecisionReason(result.reason, ctx.interfaceLanguage)}`;
     } else {
-      notice = `⚠️ ${formatUserFacingError(result.reason, formatIntroDecisionReason(result.reason))}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, formatIntroDecisionReason(result.reason, ctx.interfaceLanguage), ctx.interfaceLanguage)}`;
     }
 
     const detailRequestId = result.introRequest?.intro_request_id || introRequestId;

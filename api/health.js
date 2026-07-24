@@ -103,7 +103,11 @@ export default async function handler(req, res) {
       telegramLocaleInference: 'first_seen_only',
       fallbackWhenUnavailable: 'en',
       explicitMemberOverride: true,
-      initialLocalizedSurfaces: ['home', 'profile_root', 'profile_preview', 'help', 'language_settings'],
+      localizedMemberSurfaces: ['home', 'profile', 'directory', 'requests', 'private_chat', 'contact_unlock', 'invite', 'pro', 'story_finder', 'help', 'language_settings'],
+      renderingBoundary: 'stored_interface_language_per_telegram_update',
+      userProvidedContentTranslation: false,
+      publicInviteCardLanguage: 'canonical_english_deferred',
+      transactionAndOAuthRendering: 'deferred_to_step064b4c',
       existingCallbackIdsChanged: false,
       businessLogicChanged: false
     },

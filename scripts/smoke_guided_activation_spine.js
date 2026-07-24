@@ -130,7 +130,7 @@ assert.match(profileComposerSource, /callbackQuery\('p:pub'/);
 assert.match(profileComposerSource, /visibilityStatus: 'listed'/);
 assert.match(profileComposerSource, /callbackQuery\('p:vis'/);
 assert.match(profileComposerSource, /visibilityStatus: 'hidden'/);
-assert.match(profileComposerSource, /safeEditOrReply\(ctx, renderProfileInputPrompt/);
+assert.match(profileComposerSource, /safeEditOrReply\(ctx, (?:localizeMemberText\()?renderProfileInputPrompt/);
 assert.match(textComposerSource, /renderProfileSavedKeyboard/);
 assert.match(profileStoreSource, /export async function setProfileVisibilityForTelegramUser/);
 assert.match(createBotSource, /buildProfileOptionalSurface: surfaces\.buildProfileOptionalSurface/);

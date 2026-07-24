@@ -12,6 +12,7 @@ import {
   toggleProfileSkillForTelegramUser
 } from '../../lib/storage/profileEditStore.js';
 import { formatUserFacingError } from '../utils/notices.js';
+import { localizeMemberKeyboard, localizeMemberText } from '../../lib/telegram/memberLocalization.js';
 
 export function createProfileComposer({
   clearAllPendingInputs,
@@ -58,11 +59,11 @@ export function createProfileComposer({
       fieldKey
     });
 
-    await safeEditOrReply(ctx, renderProfileInputPrompt({
+    await safeEditOrReply(ctx, localizeMemberText(renderProfileInputPrompt({
       fieldKey,
       profileSnapshot: editState.profile
-    }), {
-      reply_markup: renderProfileInputKeyboard()
+    }), ctx.interfaceLanguage), {
+      reply_markup: localizeMemberKeyboard(renderProfileInputKeyboard(), ctx.interfaceLanguage)
     });
   };
 
@@ -104,7 +105,7 @@ export function createProfileComposer({
   composer.callbackQuery('p:next', async (ctx) => {
     await ctx.answerCallbackQuery();
     await openNextActivationStep(ctx).catch(async (error) => {
-      await renderProfileMenu(ctx, 'edit', `⚠️ ${formatUserFacingError(error?.message || error, 'Could not continue profile setup right now.')}`);
+      await renderProfileMenu(ctx, 'edit', `⚠️ ${formatUserFacingError(error?.message || error, 'Could not continue profile setup right now.', ctx.interfaceLanguage)}`);
     });
   });
 
@@ -137,7 +138,7 @@ export function createProfileComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear skills right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear skills right now.', ctx.interfaceLanguage)}`;
     } else {
       notice = '✅ Skills cleared. Choose at least 1 skill to complete the required setup.';
     }
@@ -163,7 +164,7 @@ export function createProfileComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update this skill right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update this skill right now.', ctx.interfaceLanguage)}`;
     } else {
       notice = result.toggledOn
         ? `✅ Added skill: ${result.skillMeta.label}`
@@ -181,7 +182,7 @@ export function createProfileComposer({
     try {
       await openFieldEditor(ctx, fieldKey);
     } catch (error) {
-      await renderProfileMenu(ctx, 'edit', `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open this editor right now.')}`);
+      await renderProfileMenu(ctx, 'edit', `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open this editor right now.', ctx.interfaceLanguage)}`);
     }
   });
 
@@ -202,7 +203,7 @@ export function createProfileComposer({
     } else if (result.blocked && result.reason === 'hidden_telegram_username_required_for_paid_unlock') {
       notice = '⚠️ Add your hidden Telegram username first before enabling paid Telegram-contact requests.';
     } else if (result.blocked || !result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update contact mode right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update contact mode right now.', ctx.interfaceLanguage)}`;
     } else {
       notice = result.profile?.contact_mode === 'paid_unlock_requires_approval'
         ? '✅ Contact mode now offers private-chat and Telegram-contact requests.'
@@ -233,7 +234,7 @@ export function createProfileComposer({
     } else if (!result.changed && result.reason === 'visibility_unchanged') {
       notice = 'ℹ️ Your profile is already listed.';
     } else if (!result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not publish the profile right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not publish the profile right now.', ctx.interfaceLanguage)}`;
     } else {
       notice = '✅ Profile published in the directory.';
     }
@@ -259,7 +260,7 @@ export function createProfileComposer({
     } else if (!result.changed && result.reason === 'visibility_unchanged') {
       notice = 'ℹ️ Your profile is already hidden. Use Preview & publish when you are ready to list it.';
     } else if (!result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not hide the profile right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not hide the profile right now.', ctx.interfaceLanguage)}`;
     } else {
       notice = '✅ Profile hidden from the directory.';
     }

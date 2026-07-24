@@ -1,0 +1,63 @@
+# STEP064B4B Changed Files
+
+Added: 15
+Modified: 31
+Deleted: 0
+Total changed: 46
+
+## Added
+- `STEP064B4B_HANDOFF.md`
+- `STEP064B4B_PATCH_README.md`
+- `STEP064B4B_QA_REPORT.md`
+- `STEP064B4B_QA_checklist.md`
+- `STEP064B4B_changed_files.txt`
+- `doc/102_STEP064B4B_OPERATOR_ROLLOUT.md`
+- `doc/qa/STEP064B4B_QA_REPORT.md`
+- `doc/qa/evidence/STEP064B4A_BASELINE_SMOKE_INVENTORY_FOR_B4B.json`
+- `doc/qa/evidence/STEP064B4B_CANDIDATE_SMOKE_INVENTORY.json`
+- `doc/qa/evidence/STEP064B4B_QA_EVIDENCE_SUMMARY.json`
+- `doc/spec/STEP064B4B_MEMBER_INTERFACE_RENDERING.md`
+- `scripts/smoke_member_interface_language_rendering.js`
+- `src/bot/middleware/languageContext.js`
+- `src/bot/surfaces/localizedSurfaceBuilders.js`
+- `src/lib/telegram/memberLocalization.js`
+
+## Modified
+- `00_CURRENT_STATE.md`
+- `README.md`
+- `api/health.js`
+- `doc/00_CURRENT_STATE.md`
+- `doc/02_HANDOFF_STANDARD.md`
+- `doc/15_NEW_CHAT_HANDOFF.md`
+- `doc/36_NEXT_STEPS_ROADMAP.md`
+- `package-lock.json`
+- `package.json`
+- `scripts/smoke_ai_news_audience_discovery_presets.js`
+- `scripts/smoke_ai_news_migration_claim_recovery.js`
+- `scripts/smoke_ai_news_personalized_query_final_fit.js`
+- `scripts/smoke_ai_news_presets_subscription.js`
+- `scripts/smoke_ai_news_search_progress_recovery.js`
+- `scripts/smoke_critical_transaction_copy_semantics.js`
+- `scripts/smoke_guided_activation_spine.js`
+- `scripts/smoke_interface_language_boundary_foundation.js`
+- `scripts/smoke_linkedin_verification_compat_fail_safe.js`
+- `scripts/smoke_linkedin_verified_badges_trust_surfaces.js`
+- `scripts/smoke_linkedin_verified_development_integration.js`
+- `scripts/smoke_member_copy_navigation_consistency.js`
+- `src/bot/composers/aiNewsComposer.js`
+- `src/bot/composers/contactUnlockComposer.js`
+- `src/bot/composers/directoryComposer.js`
+- `src/bot/composers/dmComposer.js`
+- `src/bot/composers/introComposer.js`
+- `src/bot/composers/inviteComposer.js`
+- `src/bot/composers/profileComposer.js`
+- `src/bot/createBot.js`
+- `src/bot/utils/notices.js`
+- `src/config/release.js`
+
+## Deleted
+- None
+
+## Scope note
+- Presentation/rendering and language-context changes only.
+- No migration, ENV, payment, OAuth, publisher, entitlement, or state-machine changes.

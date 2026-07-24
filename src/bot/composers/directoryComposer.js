@@ -13,6 +13,7 @@ import { cancelProfileFieldEdit } from '../../lib/storage/profileEditStore.js';
 import { sendIntroRequestForTelegramUser } from '../../lib/storage/introRequestStore.js';
 import { deliverIntroNotificationReceipt } from '../../lib/storage/notificationStore.js';
 import { formatUserFacingError } from '../utils/notices.js';
+import { localizeMemberKeyboard, localizeMemberText } from '../../lib/telegram/memberLocalization.js';
 
 export function createDirectoryComposer({
   clearAllPendingInputs,
@@ -123,13 +124,13 @@ export function createDirectoryComposer({
         notice += ' Recipient notice delivery failed, but the intro request is saved.';
       }
     } else if (result.duplicate) {
-      notice = `ℹ️ ${formatIntroRequestReason(result.reason)}`;
+      notice = `ℹ️ ${formatIntroRequestReason(result.reason, ctx.interfaceLanguage)}`;
     } else if (result.throttled) {
-      notice = `⏳ ${formatIntroRequestReason(result.reason)}`;
+      notice = `⏳ ${formatIntroRequestReason(result.reason, ctx.interfaceLanguage)}`;
     } else if (result.blocked) {
-      notice = `⚠️ ${formatIntroRequestReason(result.reason)}`;
+      notice = `⚠️ ${formatIntroRequestReason(result.reason, ctx.interfaceLanguage)}`;
     } else {
-      notice = `⚠️ ${formatIntroRequestReason(result.reason)}`;
+      notice = `⚠️ ${formatIntroRequestReason(result.reason, ctx.interfaceLanguage)}`;
     }
 
     const surface = await buildIntroInboxSurface(ctx, notice);
@@ -154,14 +155,14 @@ export function createDirectoryComposer({
         kind
       });
 
-      await ctx.reply(renderDirectoryFilterInputPrompt({
+      await ctx.reply(localizeMemberText(renderDirectoryFilterInputPrompt({
         kind,
         filterSummary: result.filterSummary
-      }), {
-        reply_markup: renderDirectoryFilterInputKeyboard()
+      }), ctx.interfaceLanguage), {
+        reply_markup: localizeMemberKeyboard(renderDirectoryFilterInputKeyboard(), ctx.interfaceLanguage)
       });
     } catch (error) {
-      const surface = await buildDirectoryFiltersSurface(ctx, `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open filters right now.')}`);
+      const surface = await buildDirectoryFiltersSurface(ctx, `⚠️ ${formatUserFacingError(error?.message || error, 'Could not open filters right now.', ctx.interfaceLanguage)}`);
       await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
     }
   });
@@ -184,7 +185,7 @@ export function createDirectoryComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear this filter right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear this filter right now.', ctx.interfaceLanguage)}`;
     } else {
       notice = `✅ ${result.inputMeta?.label || 'Filter'} cleared.`;
     }
@@ -211,7 +212,7 @@ export function createDirectoryComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update the industry filter right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update the industry filter right now.', ctx.interfaceLanguage)}`;
     } else {
       notice = result.filterSummary.selectedIndustrySlug
         ? `✅ Industry filter: ${result.filterSummary.industryLabel}`
@@ -240,7 +241,7 @@ export function createDirectoryComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update the skill filter right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not update the skill filter right now.', ctx.interfaceLanguage)}`;
     } else {
       notice = result.toggledOn
         ? `✅ Added skill filter: ${result.skillMeta.label}`
@@ -267,7 +268,7 @@ export function createDirectoryComposer({
     if (!result.persistenceEnabled) {
       notice = '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (!result.changed) {
-      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear directory filters right now.')}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, 'Could not clear directory filters right now.', ctx.interfaceLanguage)}`;
     } else {
       notice = '✅ Directory filters cleared.';
     }

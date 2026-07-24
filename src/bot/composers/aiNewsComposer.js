@@ -32,6 +32,7 @@ import {
   renderAiNewsTopicPromptText
 } from '../../lib/telegram/aiNewsRender.js';
 import { buildLinkedInStartUrl } from '../../lib/telegram/render.js';
+import { localizeMemberKeyboard, localizeMemberSurface, localizeMemberText } from '../../lib/telegram/memberLocalization.js';
 import {
   resolveTelegramMessageReference,
   safeEditMessageByReference,
@@ -66,7 +67,11 @@ import {
 const activeAiNewsSearches = new Set();
 
 async function answer(ctx, options = undefined) {
-  if (ctx.callbackQuery) await ctx.answerCallbackQuery(options).catch(() => null);
+  if (!ctx.callbackQuery) return;
+  const localizedOptions = options?.text
+    ? { ...options, text: localizeMemberText(options.text, ctx.interfaceLanguage) }
+    : options;
+  await ctx.answerCallbackQuery(localizedOptions).catch(() => null);
 }
 
 export async function buildAiNewsHubSurface(ctx, notice = null) {
@@ -74,7 +79,7 @@ export async function buildAiNewsHubSurface(ctx, notice = null) {
     telegramUserId: ctx.from.id,
     telegramUsername: ctx.from.username || null
   }).catch((error) => ({ eligible: false, reason: error?.message || String(error), preferences: {}, config: {}, dailyUsage: { remaining: 0, limit: 0 } }));
-  return { text: renderAiNewsHubText({ state, notice }), reply_markup: renderAiNewsHubKeyboard({ state }) };
+  return localizeMemberSurface({ text: renderAiNewsHubText({ state, notice }), reply_markup: renderAiNewsHubKeyboard({ state }) }, ctx.interfaceLanguage);
 }
 
 export async function buildAiNewsAudienceSurface(ctx) {
@@ -82,10 +87,10 @@ export async function buildAiNewsAudienceSurface(ctx) {
     telegramUserId: ctx.from.id,
     telegramUsername: ctx.from.username || null
   }).catch(() => ({ preferences: {} }));
-  return {
+  return localizeMemberSurface({
     text: renderAiNewsAudienceText({ preferences: state.preferences }),
     reply_markup: renderAiNewsAudienceKeyboard({ preferences: state.preferences })
-  };
+  }, ctx.interfaceLanguage);
 }
 
 export async function buildAiNewsAngleSurface(ctx) {
@@ -93,10 +98,10 @@ export async function buildAiNewsAngleSurface(ctx) {
     telegramUserId: ctx.from.id,
     telegramUsername: ctx.from.username || null
   }).catch(() => ({ preferences: {} }));
-  return {
+  return localizeMemberSurface({
     text: renderAiNewsAngleText({ preferences: state.preferences }),
     reply_markup: renderAiNewsAngleKeyboard({ preferences: state.preferences })
-  };
+  }, ctx.interfaceLanguage);
 }
 
 export async function buildAiNewsDraftSurface(ctx, publicToken = null, notice = null) {
@@ -105,10 +110,10 @@ export async function buildAiNewsDraftSurface(ctx, publicToken = null, notice = 
     telegramUsername: ctx.from.username || null,
     publicToken
   }).catch((error) => ({ draft: null, reason: error?.message || String(error) }));
-  return {
+  return localizeMemberSurface({
     text: result.draft ? renderAiNewsDraftText({ draft: result.draft, notice }) : `⚠️ ${aiNewsReasonText(result.reason)}`,
     reply_markup: result.draft ? renderAiNewsDraftKeyboard({ draft: result.draft }) : { inline_keyboard: [[{ text: '← Back to story finder', callback_data: 'news:home' }]] }
-  };
+  }, ctx.interfaceLanguage);
 }
 
 
@@ -117,7 +122,7 @@ export async function buildAiNewsPresetsSurface(ctx, notice = null) {
     telegramUserId: ctx.from.id,
     telegramUsername: ctx.from.username || null
   }).catch((error) => ({ eligible: false, reason: error?.message || String(error), presets: [], config: {} }));
-  return { text: renderAiNewsPresetsText({ state, notice }), reply_markup: renderAiNewsPresetsKeyboard({ state }) };
+  return localizeMemberSurface({ text: renderAiNewsPresetsText({ state, notice }), reply_markup: renderAiNewsPresetsKeyboard({ state }) }, ctx.interfaceLanguage);
 }
 
 export async function buildAiNewsPresetSurface(ctx, publicToken, notice = null) {
@@ -126,7 +131,7 @@ export async function buildAiNewsPresetSurface(ctx, publicToken, notice = null) 
     telegramUsername: ctx.from.username || null,
     publicToken
   }).catch((error) => ({ eligible: false, reason: error?.message || String(error), preset: null, config: {} }));
-  return { text: renderAiNewsPresetText({ state, notice }), reply_markup: renderAiNewsPresetKeyboard({ state }) };
+  return localizeMemberSurface({ text: renderAiNewsPresetText({ state, notice }), reply_markup: renderAiNewsPresetKeyboard({ state }) }, ctx.interfaceLanguage);
 }
 
 export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
@@ -179,7 +184,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
     const presetKey = ctx.match?.[1];
     if (presetKey === 'custom') {
       await beginAiNewsTopicInputForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null });
-      await safeEditOrReply(ctx, renderAiNewsTopicPromptText(), { reply_markup: { inline_keyboard: [[{ text: 'Cancel', callback_data: 'news:home' }]] } });
+      await safeEditOrReply(ctx, localizeMemberText(renderAiNewsTopicPromptText(), ctx.interfaceLanguage), { reply_markup: localizeMemberKeyboard({ inline_keyboard: [[{ text: 'Cancel', callback_data: 'news:home' }]] }, ctx.interfaceLanguage) });
       return;
     }
     await updateAiNewsPresetForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, presetKey });
@@ -199,7 +204,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
     if (audienceKey === 'custom') {
       const result = await beginAiNewsAudienceInputForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null });
       if (!result.started) return showHub(ctx, `⚠️ ${aiNewsReasonText(result.reason)}`);
-      await safeEditOrReply(ctx, renderAiNewsAudiencePromptText(), { reply_markup: { inline_keyboard: [[{ text: 'Cancel', callback_data: 'news:home' }]] } });
+      await safeEditOrReply(ctx, localizeMemberText(renderAiNewsAudiencePromptText(), ctx.interfaceLanguage), { reply_markup: localizeMemberKeyboard({ inline_keyboard: [[{ text: 'Cancel', callback_data: 'news:home' }]] }, ctx.interfaceLanguage) });
       return;
     }
     const result = await updateAiNewsAudienceForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, audienceKey });
@@ -238,7 +243,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
     await clearAllPendingInputs(ctx.from.id);
     const result = await beginAiNewsTopicInputForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null });
     if (!result.started) return showHub(ctx, `⚠️ ${aiNewsReasonText(result.reason)}`);
-    await safeEditOrReply(ctx, renderAiNewsTopicPromptText(), { reply_markup: { inline_keyboard: [[{ text: 'Cancel', callback_data: 'news:home' }]] } });
+    await safeEditOrReply(ctx, localizeMemberText(renderAiNewsTopicPromptText(), ctx.interfaceLanguage), { reply_markup: localizeMemberKeyboard({ inline_keyboard: [[{ text: 'Cancel', callback_data: 'news:home' }]] }, ctx.interfaceLanguage) });
   });
 
   composer.callbackQuery('news:searching', async (ctx) => {
@@ -267,8 +272,8 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
     await answer(ctx, { text: 'Search started.' });
     try {
       await clearAllPendingInputs(ctx.from.id);
-      const progressMessage = await safeEditOrReply(ctx, renderAiNewsSearchProgressText({ state }), {
-        reply_markup: renderAiNewsSearchProgressKeyboard(),
+      const progressMessage = await safeEditOrReply(ctx, localizeMemberText(renderAiNewsSearchProgressText({ state }), ctx.interfaceLanguage), {
+        reply_markup: localizeMemberKeyboard(renderAiNewsSearchProgressKeyboard(), ctx.interfaceLanguage),
         disable_web_page_preview: true
       });
       const progressReference = resolveTelegramMessageReference(ctx, progressMessage);
@@ -290,15 +295,15 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
 
       if (!result.found) {
         if (result.reason === 'ai_news_search_cooldown') return;
-        await safeEditMessageByReference(ctx, progressReference, renderAiNewsSearchFailureText({ result }), {
-          reply_markup: renderAiNewsSearchFailureKeyboard({ result }),
+        await safeEditMessageByReference(ctx, progressReference, localizeMemberText(renderAiNewsSearchFailureText({ result }), ctx.interfaceLanguage), {
+          reply_markup: localizeMemberKeyboard(renderAiNewsSearchFailureKeyboard({ result }), ctx.interfaceLanguage),
           disable_web_page_preview: true
         });
         return;
       }
 
-      await safeEditMessageByReference(ctx, progressReference, renderAiNewsSourcesText({ result }), {
-        reply_markup: renderAiNewsSourcesKeyboard({ result }),
+      await safeEditMessageByReference(ctx, progressReference, localizeMemberText(renderAiNewsSourcesText({ result }), ctx.interfaceLanguage), {
+        reply_markup: localizeMemberKeyboard(renderAiNewsSourcesKeyboard({ result }), ctx.interfaceLanguage),
         disable_web_page_preview: true
       });
     } finally {
@@ -309,7 +314,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
   composer.callbackQuery(/^news:generate:([0-9a-f-]{36})$/i, async (ctx) => {
     await answer(ctx);
     await clearAllPendingInputs(ctx.from.id);
-    await safeEditOrReply(ctx, '📝 Building an evidence-bound draft with the configured generator. Nothing will be published…');
+    await safeEditOrReply(ctx, localizeMemberText('📝 Building an evidence-bound draft with the configured generator. Nothing will be published…', ctx.interfaceLanguage));
     const result = await generateAiNewsDraftForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, sourceToken: ctx.match?.[1] }).catch((error) => ({ generated: false, reason: error?.message || String(error) }));
     if (!result.generated) return showHub(ctx, `⚠️ Draft generation failed: ${aiNewsReasonText(result.reason)}`);
     await showDraft(ctx, result.draft.public_token);
@@ -325,7 +330,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
     await clearAllPendingInputs(ctx.from.id);
     const result = await beginAiNewsDraftEditForTelegramUser({ telegramUserId: ctx.from.id, telegramUsername: ctx.from.username || null, publicToken: ctx.match?.[1] });
     if (!result.started) return showDraft(ctx, ctx.match?.[1], `⚠️ ${aiNewsReasonText(result.reason)}`);
-    await safeEditOrReply(ctx, renderAiNewsEditPromptText(), { reply_markup: { inline_keyboard: [[{ text: 'Cancel edit', callback_data: 'news:home' }]] } });
+    await safeEditOrReply(ctx, localizeMemberText(renderAiNewsEditPromptText(), ctx.interfaceLanguage), { reply_markup: localizeMemberKeyboard({ inline_keyboard: [[{ text: 'Cancel edit', callback_data: 'news:home' }]] }, ctx.interfaceLanguage) });
   });
 
   composer.callbackQuery(/^news:cancel:([0-9a-f-]{36})$/i, async (ctx) => {
@@ -393,7 +398,7 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
   composer.callbackQuery(/^news:psrun:([0-9a-f-]{36})$/i, async (ctx) => {
     await answer(ctx);
     const token = ctx.match?.[1];
-    await safeEditOrReply(ctx, '🧠 Running this preset now. It will create a draft only…');
+    await safeEditOrReply(ctx, localizeMemberText('🧠 Running this preset now. It will create a draft only…', ctx.interfaceLanguage));
     const result = await runAiNewsPresetNowForTelegramUser({
       telegramUserId: ctx.from.id,
       telegramUsername: ctx.from.username || null,

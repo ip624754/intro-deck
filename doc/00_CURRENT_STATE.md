@@ -1,3 +1,18 @@
+# Current canonical source step — STEP064B4B
+
+- Package: `0.64.5`
+- Baseline: STEP064B4A FULL SHA-256 `9171532cb405ca1238e286a64b7a73bf43d97296d1873cce24f10477fae90975`
+- Migration: none. New ENV: none.
+- Persisted member interface language is loaded once per Telegram update.
+- RU/EN presentation boundary now covers Profile editors, Directory, Requests, contact unlock, private chats, Pro, Invite owner surfaces, and Story Finder.
+- Callback IDs, URLs, switch-inline payloads, state machines, payments, OAuth, publishing, rewards accounting, and AI/news language persistence are unchanged.
+- User-provided profile/message/draft content is not translated.
+- Payment/OAuth/notification/publication language and the external public invite card remain deferred to STEP064B4C.
+- Source QA: candidate 101/106 PASS versus baseline 100/105; baseline PASS regressions 0; five inherited NON_PASS remain.
+- Production deployment and Telegram operator acceptance: not verified.
+
+---
+
 # Current canonical source step — STEP064B4A
 
 - Package: `0.64.4`

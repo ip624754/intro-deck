@@ -14,13 +14,13 @@ import { createOperatorComposer } from './composers/operatorComposer.js';
 import { createProfileComposer } from './composers/profileComposer.js';
 import { createTextComposer } from './composers/textComposer.js';
 import { createSurfaceBuilders } from './surfaces/appSurfaces.js';
+import { createLocalizedSurfaceBuilders } from './surfaces/localizedSurfaceBuilders.js';
 import { createAdminSurfaceBuilders } from './surfaces/adminSurfaces.js';
 import { formatIntroDecisionReason, formatIntroRequestReason } from './utils/notices.js';
 import { clearAllPendingInputs } from './utils/pendingInputs.js';
-
+import { createLanguageContextMiddleware } from './middleware/languageContext.js';
 let botSingleton = null;
 let botInitPromise = null;
-
 export async function createBot() {
   if (botSingleton) {
     if (botInitPromise) {
@@ -33,9 +33,9 @@ export async function createBot() {
   const { appBaseUrl, invitePhotoFileId } = getAppConfig();
   const bot = new Bot(botToken);
 
-  const surfaces = createSurfaceBuilders({ appBaseUrl, invitePhotoFileId });
+  const surfaces = createLocalizedSurfaceBuilders(createSurfaceBuilders({ appBaseUrl, invitePhotoFileId }));
   const adminSurfaces = createAdminSurfaceBuilders({ currentStep: CURRENT_SOURCE_STEP });
-
+  bot.use(createLanguageContextMiddleware());
 
   bot.use(createInviteComposer({
     clearAllPendingInputs,

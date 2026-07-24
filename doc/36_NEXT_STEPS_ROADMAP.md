@@ -1,3 +1,13 @@
+# Current roadmap position — STEP064B4B
+
+1. Deploy and production-accept STEP064B4B using `doc/102_STEP064B4B_OPERATOR_ROLLOUT.md`.
+2. STEP064B4C: bind transaction, notification, OAuth, and ordinary profile-share rendering to explicit language snapshots/preferences.
+3. Keep payments, publisher authority, reward accounting, and AI/news preset language mechanics unchanged.
+
+Do not localize critical transaction copy through generic presentation replacement. B4C requires explicit per-operation language evidence and replay-safe recipient rendering.
+
+---
+
 # Current roadmap position — STEP064B4A
 
 1. Apply migration 037 and production-accept STEP064B4A.

@@ -1,6 +1,6 @@
-# Current release: STEP064B4A / 0.64.4
+# Current release: STEP064B4B / 0.64.5
 
-The current source candidate adds persistent and independent member interface/default-post language preferences, first-seen-only Telegram locale seeding, fail-closed migration compatibility, a `/language` surface, and an initial EN/RU Home/Profile/Help slice. Migration 037 is required; no new ENV. Existing AI/news preset language, callback IDs, payments, OAuth state machines, rewards, admin mutations, and LinkedIn publishing remain unchanged. See `doc/spec/STEP064B4A_LANGUAGE_PREFERENCE_FOUNDATION.md` and `doc/101_STEP064B4A_OPERATOR_ROLLOUT.md`.
+The current source candidate completes the stored-language RU/EN presentation boundary for member Telegram surfaces: Profile editors, Directory, Requests, contact unlock, private chats, Pro, Invite owner surfaces, and Story Finder. Callback IDs, URLs, state machines, payments, OAuth, publisher behavior, rewards accounting, and AI/news language persistence remain unchanged. Transaction/notification/OAuth/publication rendering and the external public invite card are explicitly deferred to STEP064B4C. No migration or new ENV. See `doc/spec/STEP064B4B_MEMBER_INTERFACE_RENDERING.md` and `doc/102_STEP064B4B_OPERATOR_ROLLOUT.md`.
 
 ---
 
@@ -12,7 +12,7 @@ The current candidate unifies operator/admin Telegram copy in Russian, renders i
 
 # LinkedIn Telegram Directory Bot
 
-STEP064B4A source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
+STEP064B4B source candidate for a Telegram-native professional directory with guided profile activation, listed member profiles, LinkedIn-connected account identity, approval-based contact flows, and a mature operator/admin control plane.
 
 ## What this repo is
 

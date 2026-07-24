@@ -12,6 +12,7 @@ import {
 } from '../../lib/storage/dmStore.js';
 import { formatDmDecisionReason, formatDmRequestReason, formatUserFacingError } from '../utils/notices.js';
 import { TRANSACTION_DISCLOSURES, paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
+import { localizeMemberText } from '../../lib/telegram/memberLocalization.js';
 
 async function sendDmInvoice(ctx, invoice) {
   return ctx.api.raw.sendInvoice({
@@ -62,30 +63,30 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
+      await ctx.answerCallbackQuery({ text: localizeMemberText('This feature is temporarily unavailable. Try again later.', ctx.interfaceLanguage) });
       return;
     }
 
     if (result.blocked || result.throttled) {
-      await ctx.answerCallbackQuery({ text: formatDmRequestReason(result.reason) });
+      await ctx.answerCallbackQuery({ text: formatDmRequestReason(result.reason, ctx.interfaceLanguage) });
       return;
     }
 
     if (result.duplicate && result.thread?.dm_thread_id) {
-      const surface = await buildDmThreadSurface(ctx, result.thread.dm_thread_id, `ℹ️ ${formatDmRequestReason(result.reason)}`);
+      const surface = await buildDmThreadSurface(ctx, result.thread.dm_thread_id, `ℹ️ ${formatDmRequestReason(result.reason, ctx.interfaceLanguage)}`);
       await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
       return;
     }
 
-    await ctx.answerCallbackQuery({ text: 'Send your first private-chat request message.' });
-    await ctx.reply([
+    await ctx.answerCallbackQuery({ text: ctx.interfaceLanguage === 'ru' ? 'Отправьте первое сообщение для запроса в приватный чат.' : 'Send your first private-chat request message.' });
+    await ctx.reply(localizeMemberText([
       `💬 Private-chat request to ${result.target?.display_name || 'this member'}`,
       '',
       'Reply with the first message now.',
       'The conversation opens only if the recipient accepts.',
       'After you send the message, you can pay to deliver this permission request.',
       TRANSACTION_DISCLOSURES.requestDeliveryPayment
-    ].join('\n'));
+    ].join('\n'), ctx.interfaceLanguage));
   });
 
   composer.callbackQuery(/^dm:view:(\d+)$/, async (ctx) => {
@@ -113,22 +114,22 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (!result.persistenceEnabled) {
-      await ctx.reply('⚠️ This feature is temporarily unavailable. Try again later.');
+      await ctx.reply(localizeMemberText('⚠️ This feature is temporarily unavailable. Try again later.', ctx.interfaceLanguage));
       return;
     }
 
     if (!result.changed) {
-      const surface = await buildDmThreadSurface(ctx, threadId, `⚠️ ${formatDmRequestReason(result.reason)}`);
+      const surface = await buildDmThreadSurface(ctx, threadId, `⚠️ ${formatDmRequestReason(result.reason, ctx.interfaceLanguage)}`);
       await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
       return;
     }
 
-    await ctx.reply([
+    await ctx.reply(localizeMemberText([
       `💬 Reply to ${result.thread?.display_name || 'this member'}`,
       '',
       'Send your next text message in chat now.',
       'It will be delivered inside this active private chat.'
-    ].join('\n'));
+    ].join('\n'), ctx.interfaceLanguage));
   });
 
   composer.callbackQuery(/^dm:pay:(\d+)$/, async (ctx) => {
@@ -147,12 +148,12 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
+      await ctx.answerCallbackQuery({ text: localizeMemberText('This feature is temporarily unavailable. Try again later.', ctx.interfaceLanguage) });
       return;
     }
 
     if (result.blocked || !result.invoice) {
-      await ctx.answerCallbackQuery({ text: formatDmRequestReason(result.reason) });
+      await ctx.answerCallbackQuery({ text: formatDmRequestReason(result.reason, ctx.interfaceLanguage) });
       return;
     }
 
@@ -160,7 +161,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       await sendDmInvoice(ctx, result.invoice);
       await ctx.answerCallbackQuery({ text: paymentSheetOpenedNotice(result.invoice.amountStars) });
     } catch (error) {
-      await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, 'Could not open the DM payment sheet right now.') });
+      await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, 'Could not open the DM payment sheet right now.', ctx.interfaceLanguage) });
     }
   });
 
@@ -196,11 +197,11 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     } else if (result.changed && result.reason === 'dm_thread_blocked') {
       notice = '✅ Blocked this member from this chat path.';
     } else if (result.duplicate) {
-      notice = `ℹ️ ${formatDmDecisionReason(result.reason)}`;
+      notice = `ℹ️ ${formatDmDecisionReason(result.reason, ctx.interfaceLanguage)}`;
     } else if (result.blocked) {
-      notice = `⚠️ ${formatDmDecisionReason(result.reason)}`;
+      notice = `⚠️ ${formatDmDecisionReason(result.reason, ctx.interfaceLanguage)}`;
     } else {
-      notice = `⚠️ ${formatUserFacingError(result.reason, formatDmDecisionReason(result.reason))}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, formatDmDecisionReason(result.reason, ctx.interfaceLanguage), ctx.interfaceLanguage)}`;
     }
 
     const surface = result.thread?.dm_thread_id
@@ -227,7 +228,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     await ctx.api.raw.answerPreCheckoutQuery({
       pre_checkout_query_id: ctx.preCheckoutQuery.id,
       ok,
-      ...(ok ? {} : { error_message: formatDmRequestReason(authorization.reason) })
+      ...(ok ? {} : { error_message: formatDmRequestReason(authorization.reason, ctx.interfaceLanguage) })
     });
   });
 
@@ -268,11 +269,11 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }
 
     if (result.duplicate) {
-      await ctx.reply(`ℹ️ ${formatDmRequestReason(result.reason)}`);
+      await ctx.reply(`ℹ️ ${formatDmRequestReason(result.reason, ctx.interfaceLanguage)}`);
       return;
     }
 
-    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'The private-chat payment was received, but the request could not be finalized. Do not pay again. Contact support.')}`);
+    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'The private-chat payment was received, but the request could not be finalized. Do not pay again. Contact support.', ctx.interfaceLanguage)}`);
   });
 
   return composer;

@@ -10,6 +10,7 @@ import {
 } from '../../lib/storage/contactUnlockStore.js';
 import { formatContactUnlockDecisionReason, formatContactUnlockRequestReason, formatUserFacingError } from '../utils/notices.js';
 import { TRANSACTION_DISCLOSURES, paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
+import { localizeMemberText } from '../../lib/telegram/memberLocalization.js';
 
 async function sendContactUnlockInvoice(ctx, invoice) {
   return ctx.api.raw.sendInvoice({
@@ -51,30 +52,30 @@ export function createContactUnlockComposer({
     }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
+      await ctx.answerCallbackQuery({ text: localizeMemberText('This feature is temporarily unavailable. Try again later.', ctx.interfaceLanguage) });
       return;
     }
 
     if (result.autoCovered && result.request?.contact_unlock_request_id) {
-      await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason) });
+      await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason, ctx.interfaceLanguage) });
       const surface = await buildContactUnlockDetailSurface(ctx, result.request.contact_unlock_request_id, '✅ Request sent with Pro. The recipient now decides whether to share their Telegram contact.');
       await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
       return;
     }
 
     if (result.blocked || result.throttled) {
-      await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason) });
+      await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason, ctx.interfaceLanguage) });
       return;
     }
 
     if (!result.invoice) {
       if (result.request?.contact_unlock_request_id) {
-        await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason) });
-        const surface = await buildContactUnlockDetailSurface(ctx, result.request.contact_unlock_request_id, `ℹ️ ${formatContactUnlockRequestReason(result.reason)}`);
+        await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason, ctx.interfaceLanguage) });
+        const surface = await buildContactUnlockDetailSurface(ctx, result.request.contact_unlock_request_id, `ℹ️ ${formatContactUnlockRequestReason(result.reason, ctx.interfaceLanguage)}`);
         await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
         return;
       }
-      await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason) });
+      await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason, ctx.interfaceLanguage) });
       return;
     }
 
@@ -82,7 +83,7 @@ export function createContactUnlockComposer({
       await sendContactUnlockInvoice(ctx, result.invoice);
       await ctx.answerCallbackQuery({ text: paymentSheetOpenedNotice(result.invoice.amountStars) });
     } catch (error) {
-      await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, 'Could not open the payment sheet right now.') });
+      await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, 'Could not open the payment sheet right now.', ctx.interfaceLanguage) });
     }
   });
 
@@ -122,11 +123,11 @@ export function createContactUnlockComposer({
     } else if (result.changed && result.reason === 'contact_unlock_declined') {
       notice = `✅ Declined the Telegram contact request from ${result.request?.display_name || 'this member'}. Your username was not shared.`;
     } else if (result.duplicate) {
-      notice = `ℹ️ ${formatContactUnlockDecisionReason(result.reason)}`;
+      notice = `ℹ️ ${formatContactUnlockDecisionReason(result.reason, ctx.interfaceLanguage)}`;
     } else if (result.blocked) {
-      notice = `⚠️ ${formatContactUnlockDecisionReason(result.reason)}`;
+      notice = `⚠️ ${formatContactUnlockDecisionReason(result.reason, ctx.interfaceLanguage)}`;
     } else {
-      notice = `⚠️ ${formatUserFacingError(result.reason, formatContactUnlockDecisionReason(result.reason))}`;
+      notice = `⚠️ ${formatUserFacingError(result.reason, formatContactUnlockDecisionReason(result.reason, ctx.interfaceLanguage), ctx.interfaceLanguage)}`;
     }
 
     const surface = result.request?.contact_unlock_request_id
@@ -153,7 +154,7 @@ export function createContactUnlockComposer({
     await ctx.api.raw.answerPreCheckoutQuery({
       pre_checkout_query_id: ctx.preCheckoutQuery.id,
       ok,
-      ...(ok ? {} : { error_message: formatContactUnlockRequestReason(authorization.reason) })
+      ...(ok ? {} : { error_message: formatContactUnlockRequestReason(authorization.reason, ctx.interfaceLanguage) })
     });
   });
 
@@ -194,11 +195,11 @@ export function createContactUnlockComposer({
     }
 
     if (result.duplicate) {
-      await ctx.reply(`ℹ️ ${formatContactUnlockRequestReason(result.reason)}`);
+      await ctx.reply(`ℹ️ ${formatContactUnlockRequestReason(result.reason, ctx.interfaceLanguage)}`);
       return;
     }
 
-    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'The Telegram contact payment was received, but the request could not be finalized. Do not pay again. Contact support.')}`);
+    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'The Telegram contact payment was received, but the request could not be finalized. Do not pay again. Contact support.', ctx.interfaceLanguage)}`);
   });
 
   return composer;
