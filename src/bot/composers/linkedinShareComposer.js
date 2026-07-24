@@ -35,13 +35,36 @@ function shareStartFailureNotice(reason) {
 export function createLinkedInShareComposer({
   clearAllPendingInputs,
   appBaseUrl,
-  buildProfilePreviewSurface
+  buildProfilePreviewSurface,
+  buildLinkedInSharePerformanceSurface,
+  buildLinkedInSharePerformancePostSurface
 }) {
   const composer = new Composer();
 
   const renderProfilePreview = async (ctx, notice = null) => {
     const surface = await buildProfilePreviewSurface(ctx, notice);
     await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
+  };
+
+
+  const renderPerformance = async (ctx, notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildLinkedInSharePerformanceSurface(ctx, notice);
+    await safeEditOrReply(ctx, surface.text, {
+      reply_markup: surface.reply_markup,
+      ...(surface.parse_mode ? { parse_mode: surface.parse_mode } : {}),
+      ...(surface.disable_web_page_preview ? { disable_web_page_preview: true } : {})
+    });
+  };
+
+  const renderPerformancePost = async (ctx, publicToken, notice = null) => {
+    await clearAllPendingInputs(ctx.from.id);
+    const surface = await buildLinkedInSharePerformancePostSurface(ctx, publicToken, notice);
+    await safeEditOrReply(ctx, surface.text, {
+      reply_markup: surface.reply_markup,
+      ...(surface.parse_mode ? { parse_mode: surface.parse_mode } : {}),
+      ...(surface.disable_web_page_preview ? { disable_web_page_preview: true } : {})
+    });
   };
 
   const openSharePreview = async (ctx) => {
@@ -101,6 +124,17 @@ export function createLinkedInShareComposer({
 
   composer.command('share', async (ctx) => {
     await openSharePreview(ctx);
+  });
+
+
+  composer.callbackQuery('li:perf', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderPerformance(ctx);
+  });
+
+  composer.callbackQuery(/^li:perf:post:([0-9a-f-]{36})$/i, async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderPerformancePost(ctx, ctx.match?.[1]);
   });
 
   composer.callbackQuery('li:share:start', async (ctx) => {

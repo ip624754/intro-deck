@@ -55,6 +55,7 @@ import {
 import { normalizeAdminAuditSegment, normalizeAdminDeliverySegment, normalizeAdminIntroSegment, normalizeAdminQualitySegment, normalizeAdminUserSegment } from '../../db/adminRepo.js';
 import { formatUserFacingError } from '../utils/notices.js';
 import { changeInviteRewardsModeForTelegramUser, loadAdminInviteSnapshotState, settlePendingInviteRewardsBatch } from '../../lib/storage/inviteStore.js';
+import { loadAdminLinkedInShareConversionDashboard } from '../../lib/storage/linkedinShareConversionStore.js';
 
 function parseOpsIntroRequestId(text = '') {
   const match = String(text).match(/^\/ops(?:@\w+)?(?:\s+(\d+))?/);
@@ -81,6 +82,7 @@ export function createOperatorComposer({
   buildOperatorDiagnosticsSurface,
   buildAdminHomeSurface,
   buildAdminOperationsSurface,
+  buildAdminLinkedInShareSurface,
   buildAdminInviteSurface,
   buildAdminCommunicationsSurface,
   buildAdminMonetizationSurface,
@@ -169,6 +171,22 @@ export function createOperatorComposer({
 
 
 
+
+  async function renderAdminLinkedInShare(ctx, { notice = null } = {}, method = 'edit') {
+    if (!isOperatorTelegramUser(ctx.from.id)) {
+      await renderOperatorOnly(ctx, method);
+      return;
+    }
+    const state = await loadAdminLinkedInShareConversionDashboard().catch((error) => ({
+      persistenceEnabled: true,
+      ready: false,
+      metrics: {},
+      posts: [],
+      reason: String(error?.message || error)
+    }));
+    const surface = await buildAdminLinkedInShareSurface({ state, notice });
+    await renderSurface(ctx, surface, method);
+  }
 
   async function renderAdminInvite(ctx, { notice = null, view = 'overview' } = {}, method = 'edit') {
     if (!isOperatorTelegramUser(ctx.from.id)) {
@@ -938,6 +956,11 @@ export function createOperatorComposer({
   composer.callbackQuery('adm:ops', async (ctx) => {
     await ctx.answerCallbackQuery();
     await renderAdminSurface(ctx, 'ops', 'edit');
+  });
+
+  composer.callbackQuery('adm:li_share', async (ctx) => {
+    await ctx.answerCallbackQuery();
+    await renderAdminLinkedInShare(ctx, {}, 'edit');
   });
 
   composer.callbackQuery('adm:invite', async (ctx) => {

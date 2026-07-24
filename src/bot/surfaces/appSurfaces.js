@@ -10,6 +10,7 @@ import { loadPricingSurfaceState } from '../../lib/storage/monetizationStore.js'
 import { loadAiNewsPresetOperatorDiagnostics } from '../../lib/storage/aiNewsPresetStore.js';
 import { loadInviteHistoryState, loadInviteRewardsSummaryState, loadInviteSurfaceState } from '../../lib/storage/inviteStore.js';
 import { loadProfileEditorState } from '../../lib/storage/profileEditStore.js';
+import { loadLinkedInShareConversionDashboardForTelegramUser, loadLinkedInShareConversionPostForTelegramUser } from '../../lib/storage/linkedinShareConversionStore.js';
 import { getAiNewsDraftConfig, getLinkedInConfig, getLinkedInShareConfig, getLinkedInVerificationConfig, getPricingConfig, isOperatorTelegramUser } from '../../config/env.js';
 import { loadActiveAdminNotice } from '../../lib/storage/adminStore.js';
 import { buildSignedLinkedInLaunchTicket } from '../../lib/linkedin/oidc.js';
@@ -95,6 +96,10 @@ const renderInviteRewardsText = render.renderInviteRewardsText;
 const renderInviteRewardsKeyboard = render.renderInviteRewardsKeyboard;
 const renderInlineInviteCaption = render.renderInlineInviteCaption;
 const renderInlineInviteShareText = render.renderInlineInviteShareText;
+const renderLinkedInSharePerformanceText = render.renderLinkedInSharePerformanceText;
+const renderLinkedInSharePerformanceKeyboard = render.renderLinkedInSharePerformanceKeyboard;
+const renderLinkedInSharePerformancePostText = render.renderLinkedInSharePerformancePostText;
+const renderLinkedInSharePerformancePostKeyboard = render.renderLinkedInSharePerformancePostKeyboard;
 
 
 function noticeMatchesProfile(notice, profileSnapshot) {
@@ -376,6 +381,32 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
         linkedinShareConfig: getLinkedInShareConfig(),
         interfaceLanguage: state.languagePreferences?.interfaceLanguage || 'en'
       })
+    };
+  }
+
+  async function buildLinkedInSharePerformanceSurface(ctx, notice = null) {
+    const state = await loadLinkedInShareConversionDashboardForTelegramUser({
+      telegramUserId: ctx.from.id,
+      limit: 5
+    });
+    return {
+      text: renderLinkedInSharePerformanceText({ state, notice, interfaceLanguage: ctx.interfaceLanguage || 'en' }),
+      reply_markup: renderLinkedInSharePerformanceKeyboard({ state, interfaceLanguage: ctx.interfaceLanguage || 'en' }),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
+    };
+  }
+
+  async function buildLinkedInSharePerformancePostSurface(ctx, publicToken, notice = null) {
+    const state = await loadLinkedInShareConversionPostForTelegramUser({
+      telegramUserId: ctx.from.id,
+      publicToken
+    });
+    return {
+      text: renderLinkedInSharePerformancePostText({ state, notice, interfaceLanguage: ctx.interfaceLanguage || 'en' }),
+      reply_markup: renderLinkedInSharePerformancePostKeyboard({ interfaceLanguage: ctx.interfaceLanguage || 'en' }),
+      parse_mode: 'HTML',
+      disable_web_page_preview: true
     };
   }
 
@@ -981,6 +1012,8 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
     buildPricingSurface,
     buildProfileMenuSurface,
     buildProfilePreviewSurface,
+    buildLinkedInSharePerformanceSurface,
+    buildLinkedInSharePerformancePostSurface,
     buildProfileSkillsSurface,
     buildProfileOptionalSurface,
     buildDirectoryListSurface,

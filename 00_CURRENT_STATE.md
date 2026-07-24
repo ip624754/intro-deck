@@ -1,3 +1,20 @@
+# Current canonical source step — STEP065A2
+
+- Package: `0.67.0`
+- Baseline: STEP065A1 FULL SHA-256 `f1dec2cded594fb573ea3fad1200ce5b2bb967c68b89e4ac1a17e933ce6f7901`
+- Migration: none. New ENV: none. Existing migration 038 remains the source of truth.
+- Owner profile preview exposes `📊 LinkedIn performance` / `📊 Эффективность LinkedIn`.
+- Owner dashboard shows published posts, total/unique opens, unique request starts/submissions/approvals, bounded conversion rates, 7-day metrics, and per-post drilldown.
+- Admin Operations exposes a read-only global LinkedIn share conversion dashboard.
+- Visitor identities, Telegram IDs, internal user IDs, and visitor lists are never rendered.
+- Per-post access is owner-bound by Telegram user plus exact share `public_token`.
+- Analytics read failure does not block profile, request, payment, approval, OAuth, or publisher flows.
+- No migration 039 was added; no event or request state machine changed.
+- Full smoke comparison: candidate 107/114 PASS versus baseline 106/113; baseline PASS regressions 0; seven matching inherited/environmental NON_PASS remain.
+- Production deployment/acceptance: not verified.
+
+---
+
 # Current canonical source step — STEP065A1
 
 - Package: `0.66.0`

@@ -1,0 +1,13 @@
+{
+  "full_files": 787,
+  "overlay_files": 787,
+  "missing_count": 0,
+  "extra_count": 0,
+  "hash_mismatch_count": 0,
+  "missing": [],
+  "extra": [],
+  "hash_mismatches": [],
+  "unsafe_path_count": 0,
+  "corrupt_entry_count": 0,
+  "ok": true
+}

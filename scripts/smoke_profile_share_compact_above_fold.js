@@ -5,8 +5,8 @@ import { buildProfileSharePostText } from '../src/lib/linkedin/share.js';
 import { renderLinkedInSharePreviewText } from '../src/lib/telegram/render.js';
 
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-assert.ok(['STEP064B4D1A', 'STEP064B4D2', 'STEP064B4D2A', 'STEP065A1'].includes(CURRENT_SOURCE_STEP));
-assert.ok(['0.64.9', '0.65.0', '0.65.1', '0.66.0'].includes(packageJson.version));
+assert.ok(['STEP064B4D1A', 'STEP064B4D2', 'STEP064B4D2A', 'STEP065A1', 'STEP065A2'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['0.64.9', '0.65.0', '0.65.1', '0.66.0', '0.67.0'].includes(packageJson.version));
 
 const profile = {
   display_name: 'Rustam Lukmanov',

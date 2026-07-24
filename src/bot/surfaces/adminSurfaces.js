@@ -239,10 +239,54 @@ function buildOperationsHubKeyboard({ summary = null } = {}) {
       { text: '🚩 Качество', callback_data: 'adm:qual' },
       { text: '🧾 Доставка', callback_data: 'adm:dlv' }
     ],
+    [{ text: '📊 LinkedIn-публикации', callback_data: 'adm:li_share' }],
     [{ text: '📨 Инвайты', callback_data: 'adm:invite' }],
     buildBackHomeRow('← Назад в админку', 'adm:home')
   ]);
 }
+
+function adminPercent(value) {
+  const number = Number(value || 0);
+  return Number.isFinite(number) ? `${number.toFixed(number % 1 === 0 ? 0 : 1)}%` : '0%';
+}
+
+function buildAdminLinkedInShareText({ state = null, notice = null } = {}) {
+  const metrics = state?.metrics || {};
+  const posts = Array.isArray(state?.posts) ? state.posts.slice(0, 5) : [];
+  const lines = [
+    '📊 LinkedIn-публикации',
+    '',
+    'Сводная attribution-воронка по действиям внутри Telegram. Личности посетителей не раскрываются.',
+    '',
+    'За всё время:',
+    `• Опубликовано постов: ${metrics.publishedPosts || 0}`,
+    `• Владельцев с публикациями: ${metrics.publishingOwners || 0}`,
+    `• Открытия профиля: ${metrics.totalOpens || 0} всего · ${metrics.uniqueOpens || 0} уникальных`,
+    `• Уникальные запросы: ${metrics.uniqueSubmitted || 0}`,
+    `• Уникальные одобрения: ${metrics.uniqueApproved || 0}`,
+    `• Открытие → запрос: ${adminPercent(metrics.openToRequestPct)}`,
+    `• Запрос → одобрение: ${adminPercent(metrics.requestToApprovalPct)}`,
+    '',
+    'Последние 7 дней:',
+    `• Посты: ${metrics.publishedPosts7d || 0} · открытия: ${metrics.uniqueOpens7d || 0}`,
+    `• Запросы: ${metrics.uniqueSubmitted7d || 0} · одобрения: ${metrics.uniqueApproved7d || 0}`,
+    '',
+    'Последние публикации:'
+  ];
+  if (!state?.ready) lines.push('• Аналитика временно недоступна.');
+  else if (!posts.length) lines.push('• Пока нет attributed LinkedIn-публикаций.');
+  else posts.forEach((post, index) => lines.push(`• ${index + 1}. ${truncate(post.ownerName || 'Участник', 24)} · ${formatDateTimeShort(post.publishedAt)} · открытия ${post.uniqueOpens || 0} · запросы ${post.uniqueSubmitted || 0} · одобрения ${post.uniqueApproved || 0}`));
+  if (notice) lines.push('', notice);
+  return lines.join('\n');
+}
+
+function buildAdminLinkedInShareKeyboard() {
+  return buildInlineKeyboard([
+    [{ text: '🔄 Обновить', callback_data: 'adm:li_share' }],
+    buildBackHomeRow('← Назад в операции', 'adm:ops')
+  ]);
+}
+
 function normalizeAdminInviteView(view = 'overview') {
   const normalized = typeof view === 'string' ? view.trim().toLowerCase() : 'overview';
   if (['overview', 'rewards', 'settlement', 'audit'].includes(normalized)) {
@@ -1852,6 +1896,10 @@ export function createAdminSurfaceBuilders({ currentStep = 'STEP048.2' } = {}) {
     buildAdminOperationsSurface: async ({ summary = null } = {}) => ({
       text: buildOperationsHubText({ summary }),
       reply_markup: buildOperationsHubKeyboard({ summary })
+    }),
+    buildAdminLinkedInShareSurface: async ({ state = null, notice = null } = {}) => ({
+      text: buildAdminLinkedInShareText({ state, notice }),
+      reply_markup: buildAdminLinkedInShareKeyboard()
     }),
     buildAdminInviteSurface: async ({ state = null, notice = null, view = 'overview' } = {}) => ({
       text: buildAdminInviteText({ state, notice, view }),

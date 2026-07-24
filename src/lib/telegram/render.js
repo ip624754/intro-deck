@@ -1213,6 +1213,7 @@ export function renderProfilePreviewKeyboard({ profileSnapshot = null, persisten
     } else if (activation.isListed) {
       if (linkedinShareConfig?.enabled) {
         rows.push([{ text: russian ? '📣 Поделиться профилем в LinkedIn' : '📣 Share profile on LinkedIn', callback_data: 'li:share:start' }]);
+        rows.push([{ text: russian ? '📊 Эффективность LinkedIn' : '📊 LinkedIn performance', callback_data: 'li:perf' }]);
       }
       rows.push([{ text: russian ? '🙈 Скрыть из каталога' : '🙈 Hide from directory', callback_data: 'p:vis' }]);
     } else {
@@ -1265,6 +1266,125 @@ export function renderLinkedInSharePreviewKeyboard({ publishUrl = null, publicTo
     { text: memberButtons.home, callback_data: 'home:root' }
   ]);
   return buildInlineKeyboard(rows);
+}
+
+
+function conversionPercent(value) {
+  const number = Number(value || 0);
+  return Number.isFinite(number) ? `${number.toFixed(number % 1 === 0 ? 0 : 1)}%` : '0%';
+}
+
+function linkedInAttributionEventLabel(eventType, russian = false) {
+  const labels = russian ? {
+    profile_opened: 'Профиль открыт',
+    contact_request_started: 'Начат запрос контакта',
+    private_chat_request_started: 'Начат запрос в чат',
+    request_submitted: 'Запрос отправлен',
+    request_approved: 'Запрос одобрен'
+  } : {
+    profile_opened: 'Profile opened',
+    contact_request_started: 'Contact request started',
+    private_chat_request_started: 'Private chat request started',
+    request_submitted: 'Request submitted',
+    request_approved: 'Request approved'
+  };
+  return labels[eventType] || (russian ? 'Событие' : 'Activity');
+}
+
+function linkedInPostShortId(value) {
+  const raw = String(value || '');
+  if (!raw) return '—';
+  return raw.length > 18 ? `…${raw.slice(-14)}` : raw;
+}
+
+export function renderLinkedInSharePerformanceText({ state = null, notice = null, interfaceLanguage = 'en' } = {}) {
+  const ru = normalizeInterfaceLanguage(interfaceLanguage) === 'ru';
+  const metrics = state?.metrics || {};
+  const posts = Array.isArray(state?.posts) ? state.posts.slice(0, 3) : [];
+  const lines = [
+    ru ? '📊 Эффективность LinkedIn' : '📊 LinkedIn performance',
+    '',
+    ru ? 'Воронка учитывает только действия внутри Telegram по ссылкам конкретных LinkedIn-публикаций.' : 'This funnel counts only Telegram actions attributed to specific LinkedIn profile-share links.',
+    '',
+    ru ? '<b>За всё время</b>' : '<b>All time</b>',
+    `• ${ru ? 'Опубликовано постов' : 'Published posts'}: ${Number(metrics.publishedPosts || 0) || 0}`,
+    `• ${ru ? 'Открытия профиля' : 'Profile opens'}: ${Number(metrics.totalOpens || 0) || 0} ${ru ? 'всего' : 'total'} · ${Number(metrics.uniqueOpens || 0) || 0} ${ru ? 'уникальных' : 'unique'}`,
+    `• ${ru ? 'Начали запрос' : 'Started a request'}: ${Number(metrics.uniqueStarted || 0) || 0}`,
+    `• ${ru ? 'Отправили запрос' : 'Submitted a request'}: ${Number(metrics.uniqueSubmitted || 0) || 0}`,
+    `• ${ru ? 'Получили одобрение' : 'Approved'}: ${Number(metrics.uniqueApproved || 0) || 0}`,
+    '',
+    ru ? '<b>Конверсия</b>' : '<b>Conversion</b>',
+    `• ${ru ? 'Открытие → запрос' : 'Open → request'}: ${conversionPercent(metrics.openToRequestPct)}`,
+    `• ${ru ? 'Запрос → одобрение' : 'Request → approval'}: ${conversionPercent(metrics.requestToApprovalPct)}`,
+    '',
+    ru ? '<b>Последние 7 дней</b>' : '<b>Last 7 days</b>',
+    `• ${ru ? 'Посты' : 'Posts'}: ${Number(metrics.publishedPosts7d || 0) || 0} · ${ru ? 'уникальные открытия' : 'unique opens'}: ${Number(metrics.uniqueOpens7d || 0) || 0}`,
+    `• ${ru ? 'Запросы' : 'Requests'}: ${Number(metrics.uniqueSubmitted7d || 0) || 0} · ${ru ? 'одобрения' : 'approvals'}: ${Number(metrics.uniqueApproved7d || 0) || 0}`,
+    '',
+    ru ? '<b>Последние публикации</b>' : '<b>Recent posts</b>'
+  ];
+  if (!state?.ready) {
+    lines.push(ru ? '• Аналитика временно недоступна.' : '• Analytics is temporarily unavailable.');
+  } else if (!posts.length) {
+    lines.push(ru ? '• Пока нет опубликованных LinkedIn-постов с attribution-ссылкой.' : '• No attributed LinkedIn profile-share posts yet.');
+  } else {
+    posts.forEach((post, index) => lines.push(
+      `${index + 1}. ${formatDateShort(post.publishedAt)} · ${linkedInPostShortId(post.providerPostId)} · ${ru ? 'открытия' : 'opens'} ${post.uniqueOpens || 0} · ${ru ? 'запросы' : 'requests'} ${post.uniqueSubmitted || 0} · ${ru ? 'одобрения' : 'approved'} ${post.uniqueApproved || 0}`
+    ));
+  }
+  lines.push('', ru ? 'Личности посетителей не показываются.' : 'Visitor identities are not shown.');
+  if (notice) lines.push('', escapeHtml(notice));
+  return lines.join('\n');
+}
+
+export function renderLinkedInSharePerformanceKeyboard({ state = null, interfaceLanguage = 'en' } = {}) {
+  const ru = normalizeInterfaceLanguage(interfaceLanguage) === 'ru';
+  const rows = [];
+  const posts = Array.isArray(state?.posts) ? state.posts.slice(0, 3) : [];
+  posts.forEach((post, index) => {
+    if (post.publicToken) rows.push([{ text: `${index + 1}. ${ru ? 'Пост' : 'Post'} · ${post.uniqueOpens || 0} ${ru ? 'откр.' : 'opens'}`, callback_data: `li:perf:post:${post.publicToken}` }]);
+  });
+  rows.push([{ text: ru ? '🔄 Обновить' : '🔄 Refresh', callback_data: 'li:perf' }]);
+  rows.push([
+    { text: ru ? '👤 Профиль' : '👤 Profile', callback_data: 'p:prev' },
+    { text: ru ? '🏠 Главная' : '🏠 Home', callback_data: 'home:root' }
+  ]);
+  return buildInlineKeyboard(rows);
+}
+
+export function renderLinkedInSharePerformancePostText({ state = null, notice = null, interfaceLanguage = 'en' } = {}) {
+  const ru = normalizeInterfaceLanguage(interfaceLanguage) === 'ru';
+  const post = state?.post;
+  if (!post) return [ru ? '📊 Публикация LinkedIn' : '📊 LinkedIn post', '', ru ? 'Данные публикации не найдены.' : 'Post analytics were not found.'].join('\n');
+  const lines = [
+    ru ? '📊 Публикация LinkedIn' : '📊 LinkedIn post',
+    '',
+    `${ru ? 'Опубликовано' : 'Published'}: ${formatDateTimeShort(post.publishedAt)}`,
+    `${ru ? 'ID публикации' : 'Post ID'}: ${post.providerPostId || '—'}`,
+    '',
+    `• ${ru ? 'Открытия' : 'Opens'}: ${post.totalOpens || 0} ${ru ? 'всего' : 'total'} · ${post.uniqueOpens || 0} ${ru ? 'уникальных' : 'unique'}`,
+    `• ${ru ? 'Начали запрос' : 'Started'}: ${post.uniqueStarted || 0}`,
+    `• ${ru ? 'Отправили запрос' : 'Submitted'}: ${post.uniqueSubmitted || 0}`,
+    `• ${ru ? 'Одобрено' : 'Approved'}: ${post.uniqueApproved || 0}`,
+    `• ${ru ? 'Открытие → запрос' : 'Open → request'}: ${conversionPercent(post.openToRequestPct)}`,
+    `• ${ru ? 'Запрос → одобрение' : 'Request → approval'}: ${conversionPercent(post.requestToApprovalPct)}`,
+    '',
+    ru ? '<b>Последние события</b>' : '<b>Recent activity</b>'
+  ];
+  const events = Array.isArray(post.recentEvents) ? post.recentEvents : [];
+  if (!events.length) lines.push(ru ? '• Событий пока нет.' : '• No attributed activity yet.');
+  else events.slice(0, 8).forEach((event) => lines.push(`• ${linkedInAttributionEventLabel(event.eventType, ru)} · ${formatDateTimeShort(event.createdAt)}`));
+  lines.push('', ru ? 'Личности посетителей и внутренние user ID не раскрываются.' : 'Visitor identities and internal user IDs are not exposed.');
+  if (notice) lines.push('', escapeHtml(notice));
+  return lines.join('\n');
+}
+
+export function renderLinkedInSharePerformancePostKeyboard({ interfaceLanguage = 'en' } = {}) {
+  const ru = normalizeInterfaceLanguage(interfaceLanguage) === 'ru';
+  return buildInlineKeyboard([
+    [{ text: ru ? '← Назад к эффективности' : '← Back to performance', callback_data: 'li:perf' }],
+    [{ text: ru ? '🏠 Главная' : '🏠 Home', callback_data: 'home:root' }]
+  ]);
 }
 
 export function renderProfileOptionalText({ profileSnapshot = null, persistenceEnabled = false, notice = null } = {}) {

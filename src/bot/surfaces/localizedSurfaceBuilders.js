@@ -7,6 +7,8 @@ const MEMBER_SURFACE_BUILDERS = Object.freeze([
   'buildPricingSurface',
   'buildProfileMenuSurface',
   'buildProfilePreviewSurface',
+  'buildLinkedInSharePerformanceSurface',
+  'buildLinkedInSharePerformancePostSurface',
   'buildProfileSkillsSurface',
   'buildProfileOptionalSurface',
   'buildDirectoryListSurface',

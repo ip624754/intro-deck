@@ -90,7 +90,9 @@ export async function createBot() {
   bot.use(createLinkedInShareComposer({
     clearAllPendingInputs,
     appBaseUrl,
-    buildProfilePreviewSurface: surfaces.buildProfilePreviewSurface
+    buildProfilePreviewSurface: surfaces.buildProfilePreviewSurface,
+    buildLinkedInSharePerformanceSurface: surfaces.buildLinkedInSharePerformanceSurface,
+    buildLinkedInSharePerformancePostSurface: surfaces.buildLinkedInSharePerformancePostSurface
   }));
 
   bot.use(createProfileComposer({
@@ -129,6 +131,7 @@ export async function createBot() {
     buildOperatorDiagnosticsSurface: surfaces.buildOperatorDiagnosticsSurface,
     buildAdminHomeSurface: adminSurfaces.buildAdminHomeSurface,
     buildAdminOperationsSurface: adminSurfaces.buildAdminOperationsSurface,
+    buildAdminLinkedInShareSurface: adminSurfaces.buildAdminLinkedInShareSurface,
     buildAdminInviteSurface: adminSurfaces.buildAdminInviteSurface,
     buildAdminCommunicationsSurface: adminSurfaces.buildAdminCommunicationsSurface,
     buildAdminMonetizationSurface: adminSurfaces.buildAdminMonetizationSurface,

@@ -1,3 +1,12 @@
+# STEP065A LinkedIn share acquisition corridor
+
+- STEP065A1 — LinkedIn Profile Share Attribution Foundation: source complete; migration 038 required for runtime.
+- STEP065A2 — Share Conversion Dashboard: source complete; read-only owner/admin surfaces over migration 038 ledger; no new migration or ENV.
+- Next gate: production acceptance of STEP065A2 with owner and admin screenshots plus SQL totals that match the rendered metrics.
+- Do not add visitor identity lists, external tracking, pixels, fingerprinting, or dashboard-driven mutations.
+
+---
+
 # STEP065A1 rollout corridor
 
 1. Apply and verify migration 038 before deploying code.

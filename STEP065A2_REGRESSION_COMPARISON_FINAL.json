@@ -1,0 +1,28 @@
+{
+  "baseline": {
+    "total": 113,
+    "pass": 106,
+    "non_pass": 7
+  },
+  "candidate": {
+    "total": 114,
+    "pass": 107,
+    "non_pass": 7
+  },
+  "baseline_pass_regressions": [],
+  "new_commands": [
+    {
+      "name": "smoke:linkedin-share-conversion",
+      "status": "PASS"
+    }
+  ],
+  "shared_non_pass": [
+    "smoke:code-split",
+    "smoke:profile-session-schema",
+    "smoke:broadcast-idempotency",
+    "smoke:schema-compat",
+    "smoke:step053a-pack",
+    "smoke:ai-news-productization",
+    "smoke:step061-profile-preview-hotfix"
+  ]
+}

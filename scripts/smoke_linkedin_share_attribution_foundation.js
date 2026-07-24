@@ -4,8 +4,8 @@ import { CURRENT_SOURCE_STEP } from '../src/config/release.js';
 import { buildProfileSharePostText } from '../src/lib/linkedin/share.js';
 
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-assert.equal(CURRENT_SOURCE_STEP, 'STEP065A1');
-assert.equal(packageJson.version, '0.66.0');
+assert.ok(['STEP065A1', 'STEP065A2'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['0.66.0', '0.67.0'].includes(packageJson.version));
 
 const attributionToken = 'AbCdEfGhIjKlMnOpQrStUv';
 const profile = {
@@ -91,9 +91,10 @@ for (const token of [
   'externalTracking: false',
   'browserFingerprinting: false',
   'visitorIdentityOwnerVisible: false',
-  'attributionFailureBlocksProductAction: false',
-  'dashboardIncluded: false'
+  'attributionFailureBlocksProductAction: false'
 ]) assert.match(healthSource, new RegExp(token.replaceAll('.', '\\.')));
+
+assert.match(healthSource, new RegExp(CURRENT_SOURCE_STEP === 'STEP065A2' ? 'dashboardIncluded: true' : 'dashboardIncluded: false'));
 
 assert.equal(readdirSync(new URL('../migrations/', import.meta.url)).some((name) => /^039_/i.test(name)), false);
 assert.match(storeSource, /attribution_profile_resolved_evidence_failed/);

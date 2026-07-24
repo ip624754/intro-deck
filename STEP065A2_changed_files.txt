@@ -1,0 +1,57 @@
+STEP065A2 changed files
+Added: 16
+Modified: 32
+Deleted: 0
+
+[ADDED]
+STEP065A2_ARTIFACT_VERIFICATION.json
+STEP065A2_BASELINE_SMOKE_INVENTORY.json
+STEP065A2_CANDIDATE_SMOKE_INVENTORY.json
+STEP065A2_HANDOFF.md
+STEP065A2_LINKEDIN_SHARE_CONVERSION_DASHBOARD.md
+STEP065A2_OPERATOR_ROLLOUT.md
+STEP065A2_PATCH_README.md
+STEP065A2_QA_REPORT.md
+STEP065A2_QA_checklist.md
+STEP065A2_REGRESSION_COMPARISON_FINAL.json
+STEP065A2_changed_files.txt
+doc/106_STEP065A2_OPERATOR_ROLLOUT.md
+doc/spec/STEP065A2_LINKEDIN_SHARE_CONVERSION_DASHBOARD.md
+scripts/smoke_linkedin_share_conversion_dashboard.js
+src/db/linkedinShareConversionRepo.js
+src/lib/storage/linkedinShareConversionStore.js
+
+[MODIFIED]
+00_CURRENT_STATE.md
+api/health.js
+doc/36_NEXT_STEPS_ROADMAP.md
+package-lock.json
+package.json
+scripts/smoke_ai_news_audience_discovery_presets.js
+scripts/smoke_ai_news_migration_claim_recovery.js
+scripts/smoke_ai_news_personalized_query_final_fit.js
+scripts/smoke_ai_news_presets_subscription.js
+scripts/smoke_ai_news_search_progress_recovery.js
+scripts/smoke_critical_transaction_copy_semantics.js
+scripts/smoke_interface_language_boundary_foundation.js
+scripts/smoke_linkedin_share_attribution_foundation.js
+scripts/smoke_linkedin_verification_compat_fail_safe.js
+scripts/smoke_linkedin_verified_badges_trust_surfaces.js
+scripts/smoke_linkedin_verified_development_integration.js
+scripts/smoke_member_copy_navigation_consistency.js
+scripts/smoke_member_interface_language_rendering.js
+scripts/smoke_member_mixed_language_copy_polish.js
+scripts/smoke_profile_share_compact_above_fold.js
+scripts/smoke_profile_share_cta_polish.js
+scripts/smoke_profile_share_editorial_upgrade.js
+scripts/smoke_profile_share_media_publication.js
+scripts/smoke_transaction_notification_oauth_language_boundary.js
+src/bot/composers/linkedinShareComposer.js
+src/bot/composers/operatorComposer.js
+src/bot/createBot.js
+src/bot/surfaces/adminSurfaces.js
+src/bot/surfaces/appSurfaces.js
+src/bot/surfaces/localizedSurfaceBuilders.js
+src/config/release.js
+src/lib/telegram/render.js
+

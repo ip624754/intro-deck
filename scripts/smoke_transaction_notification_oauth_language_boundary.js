@@ -34,7 +34,7 @@ import { buildProfileSharePostText } from '../src/lib/linkedin/share.js';
 import { renderLinkedInOAuthHtml } from '../src/lib/linkedin/oauthLanguage.js';
 import { CURRENT_SOURCE_STEP } from '../src/config/release.js';
 
-assert.ok(['STEP064B4C', 'STEP064B4C1', 'STEP064B4D1', 'STEP064B4D1A', 'STEP064B4D2', 'STEP064B4D2A', 'STEP065A1'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['STEP064B4C', 'STEP064B4C1', 'STEP064B4D1', 'STEP064B4D1A', 'STEP064B4D2', 'STEP064B4D2A', 'STEP065A1', 'STEP065A2'].includes(CURRENT_SOURCE_STEP));
 
 const enButtons = getTransactionButtons('en');
 const ruButtons = getTransactionButtons('ru');
@@ -204,8 +204,8 @@ for (const token of [
   'replayAndIdempotencyChanged: false'
 ]) assert.match(healthSource, new RegExp(token));
 const hasMigration038 = readdirSync(new URL('../migrations/', import.meta.url)).some((name) => /^038_/i.test(name));
-if (CURRENT_SOURCE_STEP === 'STEP065A1') {
-  assert.equal(hasMigration038, true, 'STEP065A1 requires migration 038');
+if (['STEP065A1', 'STEP065A2'].includes(CURRENT_SOURCE_STEP)) {
+  assert.equal(hasMigration038, true, 'STEP065A1+ requires migration 038');
 } else {
   assert.equal(hasMigration038, false, 'STEP064B4C corridor must not add migration 038');
 }
