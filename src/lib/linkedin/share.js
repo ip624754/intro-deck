@@ -1,77 +1,45 @@
 import { normalizeDefaultPostLanguage } from '../i18n/language.js';
 
 const DEFAULT_MAX_POST_LENGTH = 3000;
-const ABOUT_SNIPPET_LIMIT = 280;
+const COMPACT_FOCUS_LIMIT = 3;
+const COMPACT_LABEL_CHARACTER_BUDGET = 72;
 
 function text(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function compactLines(lines) {
-  return lines.map((line) => text(line)).filter(Boolean);
+function compactLabels(values, { limit = COMPACT_FOCUS_LIMIT, characterBudget = COMPACT_LABEL_CHARACTER_BUDGET } = {}) {
+  const selected = [];
+  let used = 0;
+  for (const value of values) {
+    const label = text(value);
+    if (!label || selected.includes(label)) continue;
+    const nextCost = label.length + (selected.length ? 2 : 0);
+    if (selected.length >= limit || used + nextCost > characterBudget) break;
+    selected.push(label);
+    used += nextCost;
+  }
+  return selected;
 }
 
-function summarizeAbout(value, maxLength = ABOUT_SNIPPET_LIMIT) {
-  const normalized = text(value).replace(/\s+/g, ' ');
-  if (!normalized) return '';
-  if (normalized.length <= maxLength) return normalized;
-  const candidate = normalized.slice(0, maxLength + 1);
-  const sentenceEnd = Math.max(candidate.lastIndexOf('. '), candidate.lastIndexOf('! '), candidate.lastIndexOf('? '));
-  if (sentenceEnd >= Math.floor(maxLength * 0.6)) {
-    return candidate.slice(0, sentenceEnd + 1).trim();
-  }
-  const wordBoundary = candidate.lastIndexOf(' ');
-  const trimmed = (wordBoundary > Math.floor(maxLength * 0.6) ? candidate.slice(0, wordBoundary) : candidate.slice(0, maxLength)).trim();
-  return `${trimmed}…`;
-}
-
-function buildFocusSummary({ russian = false, industry = '', skills = [] } = {}) {
-  if (skills.length) {
-    return `${russian ? 'Фокус' : 'Focus'}: ${skills.join(', ')}`;
-  }
-  if (industry) {
-    return `${russian ? 'Индустрия' : 'Industry'}: ${industry}`;
-  }
-  return '';
-}
-
-function buildEditorialBody({ profileSnapshot, russian = false } = {}) {
-  const headline = text(profileSnapshot.headline_user);
-  const company = text(profileSnapshot.company_user);
-  const industry = text(profileSnapshot.industry_user);
-  const skills = Array.isArray(profileSnapshot.skills)
-    ? profileSnapshot.skills.map((skill) => text(skill?.skill_label)).filter(Boolean).slice(0, 6)
-    : [];
-  const about = summarizeAbout(profileSnapshot.about_user);
-  const focusSummary = buildFocusSummary({ russian, industry, skills });
-
-  const identityLines = compactLines([
-    text(profileSnapshot.display_name) || text(profileSnapshot.linkedin_name),
-    headline,
-    company ? `${russian ? 'Компания' : 'Company'}: ${company}` : null,
-    focusSummary
-  ]);
-
-  const summaryParagraph = about || (
-    russian
-      ? 'Открыт к содержательным знакомствам, рабочим контактам и релевантным коллаборациям.'
-      : 'Open to relevant introductions, practical conversations, and aligned collaborations.'
+function buildCompactMemberLine({ profileSnapshot, russian = false } = {}) {
+  const skills = compactLabels(
+    Array.isArray(profileSnapshot.skills)
+      ? profileSnapshot.skills.map((skill) => skill?.skill_label)
+      : []
   );
-  const audienceParagraph = skills.length
-    ? (russian
-      ? `Особенно открыт к диалогу с основателями, билдерами и операторами, работающими в направлениях: ${skills.join(', ')}.`
-      : `I’m especially open to conversations with founders, builders, and operators working across: ${skills.join(', ')}.`)
-    : (industry
-      ? (russian
-        ? `Особенно открыт к релевантным знакомствам и рабочим контактам в сфере ${industry}.`
-        : `I’m especially open to relevant introductions and practical conversations in ${industry}.`)
-      : '');
+  if (skills.length) {
+    return `${russian ? 'Мой фокус' : 'My focus'}: ${skills.join(', ')}.`;
+  }
 
-  return {
-    identityLines,
-    summaryParagraph,
-    audienceParagraph
-  };
+  const industry = text(profileSnapshot.industry_user);
+  if (industry && industry.length <= COMPACT_LABEL_CHARACTER_BUDGET) {
+    return russian ? `Работаю в сфере ${industry}.` : `I work in ${industry}.`;
+  }
+
+  return russian
+    ? 'Открыт к релевантным профессиональным знакомствам.'
+    : 'Open to relevant professional introductions.';
 }
 
 export function buildProfileSharePostText({ profileSnapshot = null, botUsername = 'introdeckbot', postLanguage = 'en' } = {}) {
@@ -82,35 +50,18 @@ export function buildProfileSharePostText({ profileSnapshot = null, botUsername 
   const language = normalizeDefaultPostLanguage(postLanguage);
   const russian = language === 'ru';
   const username = String(botUsername || 'introdeckbot').trim().replace(/^@+/, '') || 'introdeckbot';
-  const displayName = text(profileSnapshot.display_name) || text(profileSnapshot.linkedin_name) || (russian ? 'Участник Intro Deck' : 'Intro Deck member');
   const profileId = profileSnapshot.profile_id != null ? String(profileSnapshot.profile_id).trim() : '';
   const shareUrl = profileId && /^\d+$/.test(profileId)
     ? `https://t.me/${username}?start=profile_${profileId}`
     : `https://t.me/${username}`;
-  const { identityLines, summaryParagraph, audienceParagraph } = buildEditorialBody({ profileSnapshot: { ...profileSnapshot, display_name: displayName }, russian });
+  const memberLine = buildCompactMemberLine({ profileSnapshot, russian });
 
   const post = [
     russian
-      ? 'Большинство профессиональных каталогов оптимизируют охват. Intro Deck оптимизирует согласие.'
-      : 'Most professional directories optimize for reach. Intro Deck optimizes for permission.',
+      ? 'Intro Deck — профессиональные знакомства с согласия владельца профиля, а не открытые контакты.'
+      : 'Intro Deck is professional networking built around permission, not open access to private contacts.',
     '',
-    russian
-      ? 'Я опубликовал здесь свой профессиональный профиль.'
-      : 'I’ve published my professional profile there.',
-    '',
-    ...identityLines,
-    '',
-    summaryParagraph,
-    ...(audienceParagraph ? ['', audienceParagraph] : []),
-    '',
-    russian
-      ? 'Intro Deck — профессиональный каталог внутри Telegram, где связь происходит только с разрешения владельца профиля. Данные профиля указывает сам участник, а приватные контакты остаются скрытыми до одобрения запроса.'
-      : 'Intro Deck is a permission-based professional directory inside Telegram, where contact happens only with the profile owner’s approval. Profile details are member-provided, and private contact information stays hidden until a request is approved.',
-    '',
-    `${russian ? 'Открыть мой профиль и запросить связь' : 'Open my profile and request an intro'}: ${shareUrl}`,
-    russian
-      ? 'Приватные контакты остаются скрытыми, пока я сам не одобрю запрос.'
-      : 'Private contact details remain hidden until I approve a request.'
+    `${memberLine} ${russian ? 'Открыть профиль и запросить знакомство' : 'Open my profile and request an intro'} → ${shareUrl}`
   ].join('\n');
 
   if (post.length > DEFAULT_MAX_POST_LENGTH) {

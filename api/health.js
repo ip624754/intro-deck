@@ -128,11 +128,14 @@ export default async function handler(req, res) {
       ordinaryProfileShareIntegration: 'users_default_post_language'
     },
     profileShareEditorialPolicy: {
-      ordinaryProfileTemplate: 'hook_identity_summary_audience_permission_cta',
+      ordinaryProfileTemplate: 'compact_permission_focus_cta',
+      aboveFoldTarget: 'two_paragraph_compact',
+      identityDuplicationInsidePost: false,
+      focusLabelLimit: 3,
+      emojiPolicy: 'none_arrow_only',
       previewMatchesPublishedPost: true,
       permissionPositioningIncluded: true,
       publicProfileUrlIncluded: true,
-      userProvidedSummaryPreferred: true,
       imageAttachmentIncluded: false,
       callbackIdsChanged: false,
       publisherChanged: false,

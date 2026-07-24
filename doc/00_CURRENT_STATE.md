@@ -1,3 +1,29 @@
+# Current canonical source step — STEP064B4D1A
+
+- Package: `0.64.9`
+- Baseline: STEP064B4D1 FULL SHA-256 `c82516e0d3885c72eee6b3600996d0af43b277ff5f77da023ff1594dd8dec8b6`
+- Migration: none. New ENV: none.
+- Ordinary LinkedIn profile-share copy is reduced to two compact paragraphs designed for above-the-fold readability.
+- The post no longer repeats the member name, headline, company, or About text already visible in LinkedIn's author header/profile.
+- A bounded focus line uses at most three skill labels, then a localized industry/fallback line.
+- Emoji policy is `none_arrow_only`; the neutral arrow `→` is retained in the CTA.
+- Preview remains exact to the text sent to the existing STEP059 publisher.
+- OAuth, callback IDs, publisher transport, exact-once/idempotency, payments, AI/news, migrations, and ENV are unchanged.
+- Source QA: candidate 103/110 PASS versus baseline 102/109; baseline PASS regressions 0; seven matching inherited/environmental NON_PASS remain.
+- Production deployment: not verified.
+
+---
+
+# Current canonical source step — STEP064B4D1
+
+- Package: `0.64.8`
+- Baseline: STEP064B4C1 FULL SHA-256 `46e933c6e9c2ec96c62e0f4471ef4da41e52a7fda28cad3913ad0ea08cceacaf`
+- Ordinary profile-share received the initial editorial hook/identity/summary/audience/permission/CTA upgrade.
+- Migration: none. New ENV: none. Publisher and callback contracts unchanged.
+- Superseded by STEP064B4D1A compact above-the-fold refinement.
+
+---
+
 # Current canonical source step — STEP064B4C1
 
 - Package: `0.64.7`

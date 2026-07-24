@@ -21,7 +21,7 @@ import {
 import { setUserLanguagePreference, upsertTelegramUser } from '../src/db/usersRepo.js';
 import { CURRENT_SOURCE_STEP } from '../src/config/release.js';
 
-assert.ok(['STEP064B4A', 'STEP064B4B', 'STEP064B4C', 'STEP064B4C1', 'STEP064B4D1'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['STEP064B4A', 'STEP064B4B', 'STEP064B4C', 'STEP064B4C1', 'STEP064B4D1', 'STEP064B4D1A'].includes(CURRENT_SOURCE_STEP));
 assert.equal(inferInterfaceLanguageFromTelegramLocale('ru'), 'ru');
 assert.equal(inferInterfaceLanguageFromTelegramLocale('ru-RU'), 'ru');
 assert.equal(inferInterfaceLanguageFromTelegramLocale('en-GB'), 'en');

@@ -43,11 +43,10 @@ const profile = {
 profile.completion = computeProfileCompletion(profile);
 
 const postText = buildProfileSharePostText({ profileSnapshot: profile, botUsername: '@introdeckbot' });
-assert.match(postText, /Most professional directories optimize for reach\. Intro Deck optimizes for permission\./);
-assert.match(postText, /Rustam Lukmanov/);
-assert.match(postText, /permission-based professional directory inside Telegram, where contact happens only with the profile owner’s approval/);
-assert.match(postText, /Private contact details remain hidden until I approve a request\./);
-assert.match(postText, /Open my profile and request an intro: https:\/\/t\.me\/introdeckbot\?start=profile_42/);
+assert.match(postText, /Intro Deck is professional networking built around permission/);
+assert.match(postText, /My focus: Product, Development\./);
+assert.match(postText, /Open my profile and request an intro → https:\/\/t\.me\/introdeckbot\?start=profile_42/);
+assert.doesNotMatch(postText, /Rustam Lukmanov|Founder building permission-based professional networking|Company:/);
 assert.ok(postText.length <= 3000);
 
 let capturedRequest = null;

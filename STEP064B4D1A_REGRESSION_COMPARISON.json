@@ -1,0 +1,19 @@
+{
+  "baseline": {
+    "total": 109,
+    "pass": 102,
+    "non_pass": 7
+  },
+  "candidate": {
+    "total": 110,
+    "pass": 103,
+    "non_pass": 7
+  },
+  "baseline_pass_regressions": [],
+  "new_scripts": [
+    {
+      "script": "smoke:profile-share-compact",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,3 +1,16 @@
+## STEP064B4D1A — Compact Above-the-Fold Profile Share
+
+Status: source implemented; production acceptance pending.
+
+- Two-paragraph ordinary profile-share template.
+- No duplicate identity/headline inside LinkedIn post body.
+- Maximum three focus labels.
+- No decorative emoji; neutral `→` CTA only.
+- No migration, ENV, callback, OAuth, publisher, payment, or AI/news change.
+- Next optional corridor after acceptance: branded image publication, separately governed as a HEAVY media-upload step.
+
+---
+
 # Current roadmap position — STEP064B4C1
 
 1. Deploy and production-accept STEP064B4C1 using `doc/104_STEP064B4C1_OPERATOR_ROLLOUT.md`.
