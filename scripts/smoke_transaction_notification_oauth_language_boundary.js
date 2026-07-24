@@ -34,7 +34,7 @@ import { buildProfileSharePostText } from '../src/lib/linkedin/share.js';
 import { renderLinkedInOAuthHtml } from '../src/lib/linkedin/oauthLanguage.js';
 import { CURRENT_SOURCE_STEP } from '../src/config/release.js';
 
-assert.ok(['STEP064B4C', 'STEP064B4C1', 'STEP064B4D1', 'STEP064B4D1A', 'STEP064B4D2'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['STEP064B4C', 'STEP064B4C1', 'STEP064B4D1', 'STEP064B4D1A', 'STEP064B4D2', 'STEP064B4D2A'].includes(CURRENT_SOURCE_STEP));
 
 const enButtons = getTransactionButtons('en');
 const ruButtons = getTransactionButtons('ru');
@@ -170,8 +170,8 @@ const profile = {
 };
 const enPost = buildProfileSharePostText({ profileSnapshot: profile, postLanguage: 'en' });
 const ruPost = buildProfileSharePostText({ profileSnapshot: profile, postLanguage: 'ru' });
-assert.match(enPost, /Intro Deck is professional networking built around permission/);
-assert.match(ruPost, /Intro Deck — профессиональные знакомства с согласия владельца профиля/);
+assert.match(enPost, /Professional networking built around permission/);
+assert.match(ruPost, /Профессиональные знакомства с согласия владельца профиля/);
 assert.doesNotMatch(enPost, /Иван Петров/);
 assert.doesNotMatch(ruPost, /Иван Петров/);
 assert.notEqual(enPost, ruPost);

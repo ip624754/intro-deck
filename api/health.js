@@ -99,6 +99,7 @@ export default async function handler(req, res) {
       languageSettingsLabels: 'localized_full_words',
       profileSystemLabels: 'localized_without_translating_user_content',
       homeProfileButton: 'profile_without_edit_verb',
+      englishLanguageSettingsLabels: 'interface_and_post_language_full_words',
       linkedinReceiptIdentifierLabel: 'localized_label_plus_immutable_raw_id',
       callbackIdsChanged: false,
       businessLogicChanged: false
@@ -129,11 +130,13 @@ export default async function handler(req, res) {
       ordinaryProfileShareIntegration: 'users_default_post_language'
     },
     profileShareEditorialPolicy: {
-      ordinaryProfileTemplate: 'compact_permission_focus_cta',
-      aboveFoldTarget: 'two_paragraph_compact',
+      ordinaryProfileTemplate: 'cta_first_permission_focus',
+      aboveFoldTarget: 'cta_first_two_paragraph_compact',
       identityDuplicationInsidePost: false,
       focusLabelLimit: 3,
       emojiPolicy: 'none_arrow_only',
+      ctaPosition: 'first_line',
+      englishLanguageSettingLabels: 'interface_and_post_language',
       previewMatchesPublishedPost: true,
       permissionPositioningIncluded: true,
       publicProfileUrlIncluded: true,

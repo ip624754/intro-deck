@@ -43,9 +43,9 @@ const profile = {
 profile.completion = computeProfileCompletion(profile);
 
 const postText = buildProfileSharePostText({ profileSnapshot: profile, botUsername: '@introdeckbot' });
-assert.match(postText, /Intro Deck is professional networking built around permission/);
+assert.match(postText, /Professional networking built around permission/);
 assert.match(postText, /My focus: Product, Development\./);
-assert.match(postText, /Open my profile and request an intro → https:\/\/t\.me\/introdeckbot\?start=profile_42/);
+assert.match(postText, /Open my Intro Deck profile → https:\/\/t\.me\/introdeckbot\?start=profile_42/);
 assert.doesNotMatch(postText, /Rustam Lukmanov|Founder building permission-based professional networking|Company:/);
 assert.ok(postText.length <= 3000);
 

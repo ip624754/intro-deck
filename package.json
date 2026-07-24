@@ -1,6 +1,6 @@
 {
   "name": "linkedin-telegram-directory-bot",
-  "version": "0.65.0",
+  "version": "0.65.1",
   "private": true,
   "type": "module",
   "packageManager": "npm@10.8.2",
@@ -91,6 +91,7 @@
     "smoke:profile-share-editorial": "node scripts/smoke_profile_share_editorial_upgrade.js",
     "smoke:profile-share-compact": "node scripts/smoke_profile_share_compact_above_fold.js",
     "smoke:profile-share-media": "node scripts/smoke_profile_share_media_publication.js",
+    "smoke:profile-share-cta-polish": "node scripts/smoke_profile_share_cta_polish.js",
     "smoke:contact-contract": "node scripts/smoke_contact_contract_payment_honesty.js",
     "step053a:preflight": "node scripts/step053a/stagingPreflight.js",
     "step053a:database": "node scripts/step053a/stagingDbAcceptance.js",

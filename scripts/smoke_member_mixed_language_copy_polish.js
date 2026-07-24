@@ -12,8 +12,8 @@ import {
 
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
-assert.ok(['STEP064B4C1', 'STEP064B4D1', 'STEP064B4D1A', 'STEP064B4D2'].includes(CURRENT_SOURCE_STEP));
-assert.ok(['0.64.7', '0.64.8', '0.64.9', '0.65.0'].includes(packageJson.version));
+assert.ok(['STEP064B4C1', 'STEP064B4D1', 'STEP064B4D1A', 'STEP064B4D2', 'STEP064B4D2A'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['0.64.7', '0.64.8', '0.64.9', '0.65.0', '0.65.1'].includes(packageJson.version));
 
 const ruPreferences = {
   interfaceLanguage: 'ru',
@@ -46,10 +46,10 @@ const enKeyboard = renderLanguageSettingsKeyboard({
   schemaReady: true
 });
 const enButtonTexts = enKeyboard.inline_keyboard.flat().map((button) => button.text);
-assert.ok(enButtonTexts.includes('✅ UI: English'));
-assert.ok(enButtonTexts.includes('▫️ UI: Russian'));
-assert.ok(enButtonTexts.includes('▫️ Posts: English'));
-assert.ok(enButtonTexts.includes('✅ Posts: Russian'));
+assert.ok(enButtonTexts.includes('✅ Interface: English'));
+assert.ok(enButtonTexts.includes('▫️ Interface: Russian'));
+assert.ok(enButtonTexts.includes('▫️ Post language: English'));
+assert.ok(enButtonTexts.includes('✅ Post language: Russian'));
 
 const profileSnapshot = {
   linkedin_sub: 'member-1',

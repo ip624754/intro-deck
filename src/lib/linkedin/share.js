@@ -56,12 +56,14 @@ export function buildProfileSharePostText({ profileSnapshot = null, botUsername 
     : `https://t.me/${username}`;
   const memberLine = buildCompactMemberLine({ profileSnapshot, russian });
 
+  const valueLine = russian
+    ? 'Профессиональные знакомства с согласия владельца профиля, а не открытый доступ к приватным контактам.'
+    : 'Professional networking built around permission, not open access to private contacts.';
+
   const post = [
-    russian
-      ? 'Intro Deck — профессиональные знакомства с согласия владельца профиля, а не открытые контакты.'
-      : 'Intro Deck is professional networking built around permission, not open access to private contacts.',
+    `${russian ? 'Открыть мой профиль в Intro Deck' : 'Open my Intro Deck profile'} → ${shareUrl}`,
     '',
-    `${memberLine} ${russian ? 'Открыть профиль и запросить знакомство' : 'Open my profile and request an intro'} → ${shareUrl}`
+    memberLine ? `${valueLine} ${memberLine}` : valueLine
   ].join('\n');
 
   if (post.length > DEFAULT_MAX_POST_LENGTH) {

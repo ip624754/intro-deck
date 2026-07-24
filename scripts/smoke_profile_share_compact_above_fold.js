@@ -5,8 +5,8 @@ import { buildProfileSharePostText } from '../src/lib/linkedin/share.js';
 import { renderLinkedInSharePreviewText } from '../src/lib/telegram/render.js';
 
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
-assert.ok(['STEP064B4D1A', 'STEP064B4D2'].includes(CURRENT_SOURCE_STEP));
-assert.ok(['0.64.9', '0.65.0'].includes(packageJson.version));
+assert.ok(['STEP064B4D1A', 'STEP064B4D2', 'STEP064B4D2A'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['0.64.9', '0.65.0', '0.65.1'].includes(packageJson.version));
 
 const profile = {
   display_name: 'Rustam Lukmanov',
@@ -25,18 +25,16 @@ const profile = {
 
 const enPost = buildProfileSharePostText({ profileSnapshot: profile, botUsername: '@introdeckbot', postLanguage: 'en' });
 assert.equal(enPost.split('\n\n').length, 2);
-assert.match(enPost, /^Intro Deck is professional networking built around permission, not open access to private contacts\./);
+assert.match(enPost, /^Open my Intro Deck profile → https:\/\/t\.me\/introdeckbot\?start=profile_2/);
 assert.match(enPost, /My focus: Crypto, Development, Founder\./);
-assert.match(enPost, /Open my profile and request an intro → https:\/\/t\.me\/introdeckbot\?start=profile_2$/);
 assert.doesNotMatch(enPost, /Rustam Lukmanov|Product & Systems Builder|CogniForge|Growth|This long user-provided summary/);
 assert.doesNotMatch(enPost, /🚀|🔥|✨|📣|🤝/);
 assert.ok(enPost.length < 320, `English compact post is too long: ${enPost.length}`);
 
 const ruPost = buildProfileSharePostText({ profileSnapshot: profile, botUsername: 'introdeckbot', postLanguage: 'ru' });
 assert.equal(ruPost.split('\n\n').length, 2);
-assert.match(ruPost, /^Intro Deck — профессиональные знакомства с согласия владельца профиля, а не открытые контакты\./);
+assert.match(ruPost, /^Открыть мой профиль в Intro Deck → https:\/\/t\.me\/introdeckbot\?start=profile_2/);
 assert.match(ruPost, /Мой фокус: Crypto, Development, Founder\./);
-assert.match(ruPost, /Открыть профиль и запросить знакомство → https:\/\/t\.me\/introdeckbot\?start=profile_2$/);
 assert.doesNotMatch(ruPost, /Rustam Lukmanov|Product & Systems Builder|CogniForge|Growth|This long user-provided summary/);
 assert.doesNotMatch(ruPost, /🚀|🔥|✨|📣|🤝/);
 assert.ok(ruPost.length < 340, `Russian compact post is too long: ${ruPost.length}`);
@@ -60,11 +58,13 @@ assert.match(preview, new RegExp(enPost.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
 
 const healthSource = readFileSync(new URL('../api/health.js', import.meta.url), 'utf8');
 for (const token of [
-  "ordinaryProfileTemplate: 'compact_permission_focus_cta'",
-  "aboveFoldTarget: 'two_paragraph_compact'",
+  "ordinaryProfileTemplate: 'cta_first_permission_focus'",
+  "aboveFoldTarget: 'cta_first_two_paragraph_compact'",
   'identityDuplicationInsidePost: false',
   'focusLabelLimit: 3',
   "emojiPolicy: 'none_arrow_only'",
+  "ctaPosition: 'first_line'",
+  "englishLanguageSettingLabels: 'interface_and_post_language'",
   'publisherChanged: true'
 ]) assert.match(healthSource, new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 

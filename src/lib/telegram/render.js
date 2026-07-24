@@ -982,10 +982,10 @@ export function renderLanguageSettingsKeyboard({ preferences = null, persistence
   const buttons = getMemberButtons(language);
   const rows = [];
   if (persistenceEnabled && schemaReady) {
-    const interfaceEnglish = language === 'ru' ? 'Интерфейс: Английский' : 'UI: English';
-    const interfaceRussian = language === 'ru' ? 'Интерфейс: Русский' : 'UI: Russian';
-    const postEnglish = language === 'ru' ? 'Публикации: Английский' : 'Posts: English';
-    const postRussian = language === 'ru' ? 'Публикации: Русский' : 'Posts: Russian';
+    const interfaceEnglish = language === 'ru' ? 'Интерфейс: Английский' : 'Interface: English';
+    const interfaceRussian = language === 'ru' ? 'Интерфейс: Русский' : 'Interface: Russian';
+    const postEnglish = language === 'ru' ? 'Публикации: Английский' : 'Post language: English';
+    const postRussian = language === 'ru' ? 'Публикации: Русский' : 'Post language: Russian';
     rows.push([
       { text: `${resolved.interfaceLanguage === 'en' ? '✅' : '▫️'} ${interfaceEnglish}`, callback_data: 'lang:interface:en' },
       { text: `${resolved.interfaceLanguage === 'ru' ? '✅' : '▫️'} ${interfaceRussian}`, callback_data: 'lang:interface:ru' }
