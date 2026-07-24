@@ -12,8 +12,8 @@ import {
 
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 
-assert.equal(CURRENT_SOURCE_STEP, 'STEP064B4C1');
-assert.equal(packageJson.version, '0.64.7');
+assert.ok(['STEP064B4C1', 'STEP064B4D1'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['0.64.7', '0.64.8'].includes(packageJson.version));
 
 const ruPreferences = {
   interfaceLanguage: 'ru',

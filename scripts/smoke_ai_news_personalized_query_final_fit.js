@@ -21,7 +21,7 @@ import { listGitHubReposForPreset, listRssSourcesForPreset } from '../src/lib/ne
 
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
-assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C', 'STEP064B4C1'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C', 'STEP064B4C1', 'STEP064B4D1'].includes(CURRENT_SOURCE_STEP), true);
 
 const profileContext = buildProfileAffinityContext({
   headline_user: 'AI-assisted product builder',

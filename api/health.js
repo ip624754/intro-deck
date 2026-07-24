@@ -127,6 +127,17 @@ export default async function handler(req, res) {
       existingAiNewsLanguageContractChanged: false,
       ordinaryProfileShareIntegration: 'users_default_post_language'
     },
+    profileShareEditorialPolicy: {
+      ordinaryProfileTemplate: 'hook_identity_summary_audience_permission_cta',
+      previewMatchesPublishedPost: true,
+      permissionPositioningIncluded: true,
+      publicProfileUrlIncluded: true,
+      userProvidedSummaryPreferred: true,
+      imageAttachmentIncluded: false,
+      callbackIdsChanged: false,
+      publisherChanged: false,
+      businessLogicChanged: false
+    },
     transactionCopyPolicy: {
       consentButtons: 'verb_plus_object_plus_consequence',
       paymentCopy: 'request_delivery_fee_no_approval_guarantee_no_auto_refund',
