@@ -126,7 +126,7 @@ export async function listDueAiNewsPresetsForClaim(client, { batchSize }) {
              )
          )
      )
-     select p.*, u.telegram_user_id, u.telegram_username
+     select p.*, u.telegram_user_id, u.telegram_username, coalesce(u.interface_language, 'en') as interface_language
      from ai_news_presets p
      join ranked_due r on r.id=p.id and r.user_due_rank=1
      join users u on u.id=p.user_id
@@ -166,7 +166,8 @@ export async function createScheduledAiNewsPresetRun(client, {
         audienceKey: preset.audience_key,
         angleKey: preset.angle_key,
         scheduleKind: preset.schedule_kind,
-        deliveryHourUtc: preset.delivery_hour_utc
+        deliveryHourUtc: preset.delivery_hour_utc,
+        interfaceLanguage: preset.interface_language || 'en'
       })
     ]
   );
@@ -184,15 +185,16 @@ export async function createRunNowAiNewsPresetRun(client, {
   presetId,
   userId,
   claimToken,
-  claimExpiresAt
+  claimExpiresAt,
+  interfaceLanguage = 'en'
 }) {
   const result = await client.query(
     `insert into ai_news_preset_runs (
        public_token, preset_id, user_id, trigger_kind, scheduled_for,
-       status, attempt_count, claim_token, claimed_at, claim_expires_at
-     ) values ($1::uuid,$2,$3,'run_now',now(),'claimed',1,$4::uuid,now(),$5)
+       status, attempt_count, claim_token, claimed_at, claim_expires_at, detail_json
+     ) values ($1::uuid,$2,$3,'run_now',now(),'claimed',1,$4::uuid,now(),$5,$6::jsonb)
      returning *`,
-    [publicToken, presetId, userId, claimToken, claimExpiresAt]
+    [publicToken, presetId, userId, claimToken, claimExpiresAt, JSON.stringify({ interfaceLanguage })]
   );
   await client.query(`update ai_news_presets set last_run_at=now(), updated_at=now() where id=$1`, [presetId]);
   return result.rows[0];
@@ -207,7 +209,7 @@ export async function getAiNewsPresetRunEnvelope(client, { runId, forUpdate = fa
        p.preset_key, p.custom_query, p.source_language, p.source_country, p.source_category,
        p.post_language, p.tone, p.audience_key, p.custom_audience, p.angle_key, p.profile_affinity_enabled,
        p.schedule_kind, p.delivery_hour_utc, p.status as preset_status,
-       u.telegram_user_id, u.telegram_username,
+       u.telegram_user_id, u.telegram_username, coalesce(u.interface_language, 'en') as interface_language,
        d.id as draft_id, d.public_token as draft_public_token, d.status as draft_status,
        d.post_text, d.source_id as draft_source_id,
        s.source_title, s.source_name, s.source_domain, s.source_url, s.published_at
@@ -249,7 +251,7 @@ export async function markAiNewsPresetRunStatus(client, {
          error_code=$3,
          next_attempt_at=$4,
          telegram_message_id=coalesce($5, telegram_message_id),
-         detail_json=coalesce($6::jsonb, detail_json),
+         detail_json=coalesce(detail_json, '{}'::jsonb) || coalesce($6::jsonb, '{}'::jsonb),
          delivered_at=case when $2='delivered' then now() else delivered_at end,
          claim_token=case when $7 then null else claim_token end,
          claimed_at=case when $7 then null else claimed_at end,

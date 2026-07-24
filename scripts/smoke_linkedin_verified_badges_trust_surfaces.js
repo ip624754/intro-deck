@@ -262,6 +262,6 @@ assert.equal(adminSurface.includes('Доверие LinkedIn: личность'),
 assert.equal(privacy.includes('fresh Lite snapshot'), true);
 assert.equal(terms.includes('Public verification badges may be shown only'), true);
 assert.equal(landing.includes('LinkedIn verification categories'), true);
-assert.equal(['STEP058B', 'STEP058B1', 'STEP059', 'STEP060', 'STEP061', 'STEP061H1', 'STEP061A', 'STEP063A', 'STEP063A-H1', 'STEP063A-H1A', 'STEP063B', 'STEP063B-H1', 'STEP063B-H1R1', 'STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['STEP058B', 'STEP058B1', 'STEP059', 'STEP060', 'STEP061', 'STEP061H1', 'STEP061A', 'STEP063A', 'STEP063A-H1', 'STEP063A-H1A', 'STEP063B', 'STEP063B-H1', 'STEP063B-H1R1', 'STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C'].includes(CURRENT_SOURCE_STEP), true);
 
 console.log('OK: STEP058B Verified badges and trust surfaces contract');

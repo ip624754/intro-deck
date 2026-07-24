@@ -9,7 +9,7 @@ import {
   decideContactUnlockRequestForTelegramUser
 } from '../../lib/storage/contactUnlockStore.js';
 import { formatContactUnlockDecisionReason, formatContactUnlockRequestReason, formatUserFacingError } from '../utils/notices.js';
-import { TRANSACTION_DISCLOSURES, paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
+import { getTransactionDisclosures, paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
 import { localizeMemberText } from '../../lib/telegram/memberLocalization.js';
 
 async function sendContactUnlockInvoice(ctx, invoice) {
@@ -20,7 +20,7 @@ async function sendContactUnlockInvoice(ctx, invoice) {
     payload: invoice.payload,
     provider_token: '',
     currency: 'XTR',
-    prices: [{ label: 'Request delivery', amount: invoice.amountStars }]
+    prices: [{ label: ctx.interfaceLanguage === 'ru' ? 'Доставка запроса' : 'Request delivery', amount: invoice.amountStars }]
   });
 }
 
@@ -58,7 +58,7 @@ export function createContactUnlockComposer({
 
     if (result.autoCovered && result.request?.contact_unlock_request_id) {
       await ctx.answerCallbackQuery({ text: formatContactUnlockRequestReason(result.reason, ctx.interfaceLanguage) });
-      const surface = await buildContactUnlockDetailSurface(ctx, result.request.contact_unlock_request_id, '✅ Request sent with Pro. The recipient now decides whether to share their Telegram contact.');
+      const surface = await buildContactUnlockDetailSurface(ctx, result.request.contact_unlock_request_id, ctx.interfaceLanguage === 'ru' ? '✅ Запрос отправлен за счёт Pro. Получатель теперь решает, открыть ли Telegram-контакт.' : '✅ Request sent with Pro. The recipient now decides whether to share their Telegram contact.');
       await safeEditOrReply(ctx, surface.text, { reply_markup: surface.reply_markup });
       return;
     }
@@ -81,7 +81,7 @@ export function createContactUnlockComposer({
 
     try {
       await sendContactUnlockInvoice(ctx, result.invoice);
-      await ctx.answerCallbackQuery({ text: paymentSheetOpenedNotice(result.invoice.amountStars) });
+      await ctx.answerCallbackQuery({ text: paymentSheetOpenedNotice(result.invoice.amountStars, ctx.interfaceLanguage) });
     } catch (error) {
       await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, 'Could not open the payment sheet right now.', ctx.interfaceLanguage) });
     }
@@ -115,13 +115,18 @@ export function createContactUnlockComposer({
       request: null
     }));
 
-    let notice = 'Telegram contact request updated.';
+    const russian = ctx.interfaceLanguage === 'ru';
+    let notice = russian ? 'Запрос Telegram-контакта обновлён.' : 'Telegram contact request updated.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
+      notice = russian ? '⚠️ Функция временно недоступна. Попробуйте позже.' : '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.changed && result.reason === 'contact_unlock_revealed') {
-      notice = `✅ Shared your Telegram contact with ${result.request?.display_name || 'this member'}. Your hidden username is now visible to this requester.`;
+      notice = russian
+        ? `✅ Вы открыли Telegram-контакт пользователю ${result.request?.display_name || 'этот участник'}. Скрытый username теперь доступен только этому отправителю.`
+        : `✅ Shared your Telegram contact with ${result.request?.display_name || 'this member'}. Your hidden username is now visible to this requester.`;
     } else if (result.changed && result.reason === 'contact_unlock_declined') {
-      notice = `✅ Declined the Telegram contact request from ${result.request?.display_name || 'this member'}. Your username was not shared.`;
+      notice = russian
+        ? `✅ Вы отклонили запрос Telegram-контакта от ${result.request?.display_name || 'этого участника'}. Username не был раскрыт.`
+        : `✅ Declined the Telegram contact request from ${result.request?.display_name || 'this member'}. Your username was not shared.`;
     } else if (result.duplicate) {
       notice = `ℹ️ ${formatContactUnlockDecisionReason(result.reason, ctx.interfaceLanguage)}`;
     } else if (result.blocked) {
@@ -183,11 +188,15 @@ export function createContactUnlockComposer({
     }));
 
     if (result.changed) {
-      await ctx.reply(`✅ Payment confirmed. Your Telegram contact request was delivered. ${TRANSACTION_DISCLOSURES.requestDeliveryPayment}`, {
+      const russian = ctx.interfaceLanguage === 'ru';
+      const disclosure = getTransactionDisclosures(ctx.interfaceLanguage).requestDeliveryPayment;
+      await ctx.reply(russian
+        ? `✅ Оплата подтверждена. Запрос Telegram-контакта доставлен. ${disclosure}`
+        : `✅ Payment confirmed. Your Telegram contact request was delivered. ${disclosure}`, {
         reply_markup: {
           inline_keyboard: [
-            [{ text: '📥 Inbox', callback_data: 'intro:inbox' }],
-            [{ text: '🧾 View request', callback_data: `cu:view:${parsed.requestId}` }]
+            [{ text: russian ? '📥 Входящие' : '📥 Inbox', callback_data: 'intro:inbox' }],
+            [{ text: russian ? '🧾 Открыть запрос' : '🧾 View request', callback_data: `cu:view:${parsed.requestId}` }]
           ]
         }
       });

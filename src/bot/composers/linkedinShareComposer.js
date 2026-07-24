@@ -56,6 +56,7 @@ export function createLinkedInShareComposer({
       telegramUserId: ctx.from.id,
       telegramUsername: ctx.from.username || null,
       botUsername,
+      postLanguage: ctx.defaultPostLanguage || 'en',
       visibility: shareConfig.visibility,
       ttlSeconds: shareConfig.intentTtlSeconds
     }).catch((error) => ({
@@ -74,6 +75,8 @@ export function createLinkedInShareComposer({
       telegramUserId: ctx.from.id,
       purpose: 'share_profile',
       shareIntentToken: draft.intent.public_token,
+      interfaceLanguage: ctx.interfaceLanguage || 'en',
+      postLanguage: ctx.defaultPostLanguage || 'en',
       ttlSeconds: Math.min(shareConfig.intentTtlSeconds, linkedinConfig.stateTtlSeconds),
       secret: linkedinConfig.stateSecret
     });
@@ -85,10 +88,11 @@ export function createLinkedInShareComposer({
       launchTicket
     });
 
-    await safeEditOrReply(ctx, renderLinkedInSharePreviewText({ intent: draft.intent }), {
+    await safeEditOrReply(ctx, renderLinkedInSharePreviewText({ intent: draft.intent, interfaceLanguage: ctx.interfaceLanguage }), {
       reply_markup: renderLinkedInSharePreviewKeyboard({
         publishUrl,
-        publicToken: draft.intent.public_token
+        publicToken: draft.intent.public_token,
+        interfaceLanguage: ctx.interfaceLanguage
       }),
       disable_web_page_preview: true
     });

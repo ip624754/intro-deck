@@ -1,3 +1,18 @@
+# Current canonical source step — STEP064B4C
+
+- Package: `0.64.6`
+- Baseline: STEP064B4B FULL SHA-256 `8839d3fd224c9bf52761f0869a05889306ad5b72b8a6e3d8abe157969111fec7`
+- Migration: none. New ENV: none.
+- Stored interface language now controls transaction copy, payment receipts, recipient notifications, OAuth HTML, and OAuth Telegram receipts.
+- Notification and scheduled-draft retries preserve an operation/run language snapshot in existing JSON evidence.
+- LinkedIn launch/state/transfer language evidence is HMAC-signed; unsigned query language is not trusted.
+- Ordinary profile-share post text now uses independent `users.default_post_language`.
+- AI/news preset/draft `post_language`, callback IDs, payment payloads/amounts, OAuth scopes, publisher authority/idempotency, rewards, and automatic publishing are unchanged.
+- Source QA: candidate 102/107 PASS versus baseline 101/106; baseline PASS regressions 0; five inherited NON_PASS remain.
+- Production deployment and live transaction/OAuth acceptance: not verified.
+
+---
+
 # Current canonical source step — STEP064B4B
 
 - Package: `0.64.5`

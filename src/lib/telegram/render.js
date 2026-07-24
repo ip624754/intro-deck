@@ -38,6 +38,8 @@ import {
 import {
   TRANSACTION_BUTTONS,
   TRANSACTION_DISCLOSURES,
+  getTransactionButtons,
+  getTransactionDisclosures,
   payPrivateChatDeliveryButton
 } from './transactionCopy.js';
 
@@ -527,69 +529,76 @@ function homeNextStepLine(profileSnapshot) {
   return `Next step: ${action.label}.`;
 }
 
-export function renderIntroNotificationText({ eventType = null, introRequest = null } = {}) {
-  const member = toDisplayValue(introRequest?.display_name, 'Unknown member');
-  const headline = notificationHeadline(introRequest?.headline_user);
+export function renderIntroNotificationText({ eventType = null, introRequest = null, interfaceLanguage = 'en' } = {}) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const ru = language === 'ru';
+  const disclosures = getTransactionDisclosures(language);
+  const member = toDisplayValue(introRequest?.display_name, ru ? 'Неизвестный участник' : 'Unknown member');
+  const headlineValue = notificationHeadline(introRequest?.headline_user);
+  const headline = ru && headlineValue === 'No headline' ? 'Заголовок не указан' : headlineValue;
 
   if (eventType === 'intro_request_created') {
     return [
-      '📬 New intro request',
+      ru ? '📬 Новый запрос на знакомство' : '📬 New intro request',
       '',
-      `${member} wants to connect.`,
+      ru ? `${member} хочет познакомиться.` : `${member} wants to connect.`,
       headline,
       '',
-      TRANSACTION_DISCLOSURES.introAcceptance
+      disclosures.introAcceptance
     ].join('\n');
   }
 
   if (eventType === 'intro_request_accepted') {
     return [
-      '✅ Intro accepted',
+      ru ? '✅ Знакомство принято' : '✅ Intro accepted',
       '',
-      `${member} accepted your intro request.`,
+      ru ? `${member} принял ваш запрос на знакомство.` : `${member} accepted your intro request.`,
       headline,
       '',
-      'Open the intro detail to see whether a public LinkedIn URL was shared.'
+      ru ? 'Откройте детали знакомства, чтобы увидеть, была ли передана публичная ссылка LinkedIn.' : 'Open the intro detail to see whether a public LinkedIn URL was shared.'
     ].join('\n');
   }
 
   if (eventType === 'intro_request_declined') {
     return [
-      '❌ Intro declined',
+      ru ? '❌ Знакомство отклонено' : '❌ Intro declined',
       '',
-      `${member} declined your intro request.`,
+      ru ? `${member} отклонил ваш запрос на знакомство.` : `${member} declined your intro request.`,
       headline,
       '',
-      'No contact details were shared through this intro.'
+      ru ? 'Контактные данные через это знакомство не передавались.' : 'No contact details were shared through this intro.'
     ].join('\n');
   }
 
   return [
-    '🧾 Intro receipt',
+    ru ? '🧾 Квитанция знакомства' : '🧾 Intro receipt',
     '',
     `${member}`,
     headline
   ].join('\n');
 }
 
-export function renderIntroNotificationKeyboard({ eventType = null, introRequestId = null } = {}) {
+export function renderIntroNotificationKeyboard({ eventType = null, introRequestId = null, interfaceLanguage = 'en' } = {}) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const ru = language === 'ru';
+  const buttons = getMemberButtons(language);
   const rows = [];
 
   if (introRequestId) {
-    rows.push([{ text: '🧾 View intro', callback_data: `intro:view:${introRequestId}` }]);
+    rows.push([{ text: ru ? '🧾 Открыть знакомство' : '🧾 View intro', callback_data: `intro:view:${introRequestId}` }]);
   }
 
   if (eventType === 'intro_request_created') {
-    rows.push([{ text: '📥 Open inbox', callback_data: 'intro:inbox' }]);
+    rows.push([{ text: ru ? '📥 Открыть входящие' : '📥 Open inbox', callback_data: 'intro:inbox' }]);
   }
 
-  rows.push([{ text: MEMBER_BUTTONS.home, callback_data: 'home:root' }]);
+  rows.push([{ text: buttons.home, callback_data: 'home:root' }]);
   return buildInlineKeyboard(rows);
 }
 
-function introStatusNote(item) {
+function introStatusNote(item, interfaceLanguage = 'en') {
   if (item?.role === 'received' && item?.status === 'pending') {
-    return TRANSACTION_DISCLOSURES.introAcceptance;
+    return getTransactionDisclosures(interfaceLanguage).introAcceptance;
   }
 
   if (item?.role === 'received' && item?.status === 'accepted') {
@@ -936,8 +945,8 @@ export function renderLanguageSettingsText({ preferences = null, persistenceEnab
       : 'Changing the interface language does not change post language or saved searches.',
     '',
     russian
-      ? 'Предпочтительный язык публикаций уже сохраняется. Обычная публикация профиля пока использует текущий English-шаблон; сохранённые поиски используют собственный язык.'
-      : 'The preferred post language is saved now. Ordinary profile sharing still uses the current English template; saved searches keep their own language.'
+      ? 'Обычная публикация профиля использует выбранный язык публикаций. Сохранённые поиски по-прежнему используют собственный язык каждого пресета.'
+      : 'Ordinary profile sharing uses the selected post language. Saved searches continue to use each preset’s own language.'
   ];
 
   if (!persistenceEnabled) {
@@ -1198,39 +1207,40 @@ export function renderProfilePreviewKeyboard({ profileSnapshot = null, persisten
   return buildInlineKeyboard(rows);
 }
 
-export function renderLinkedInSharePreviewText({ intent = null, notice = null } = {}) {
+export function renderLinkedInSharePreviewText({ intent = null, notice = null, interfaceLanguage = 'en' } = {}) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const ru = language === 'ru';
+  const disclosures = getTransactionDisclosures(language);
   const lines = [
-    '📣 Share profile on LinkedIn',
+    ru ? '📣 Публикация профиля в LinkedIn' : '📣 Share profile on LinkedIn',
     '',
-    'Review the exact post below. Nothing is published yet.',
+    ru ? 'Проверьте точный текст ниже. Пока ничего не опубликовано.' : 'Review the exact post below. Nothing is published yet.',
     '',
-    '——— LinkedIn post preview ———',
-    intent?.post_text || 'Share draft is unavailable.',
-    '——— End preview ———',
+    ru ? '——— Предпросмотр публикации LinkedIn ———' : '——— LinkedIn post preview ———',
+    intent?.post_text || (ru ? 'Черновик публикации недоступен.' : 'Share draft is unavailable.'),
+    ru ? '——— Конец предпросмотра ———' : '——— End preview ———',
     '',
-    `Visibility: ${intent?.visibility || 'PUBLIC'}`,
-    TRANSACTION_DISCLOSURES.linkedinAuthorization,
-    '• One approval can create at most one provider post.',
-    '• Intro Deck does not store the OAuth access token used for publishing.',
-    '• If LinkedIn returns an uncertain result, automatic retry is blocked to prevent duplicates.'
+    `${ru ? 'Видимость' : 'Visibility'}: ${intent?.visibility || 'PUBLIC'}`,
+    disclosures.linkedinAuthorization,
+    ru ? '• Одно подтверждение может создать не более одной публикации у провайдера.' : '• One approval can create at most one provider post.',
+    ru ? '• Intro Deck не хранит OAuth access token, использованный для публикации.' : '• Intro Deck does not store the OAuth access token used for publishing.',
+    ru ? '• Если LinkedIn вернёт неопределённый результат, автоматический повтор будет заблокирован для защиты от дубликата.' : '• If LinkedIn returns an uncertain result, automatic retry is blocked to prevent duplicates.'
   ];
-  if (notice) {
-    lines.push('', notice);
-  }
+  if (notice) lines.push('', notice);
   return lines.join('\n');
 }
 
-export function renderLinkedInSharePreviewKeyboard({ publishUrl = null, publicToken = null } = {}) {
+export function renderLinkedInSharePreviewKeyboard({ publishUrl = null, publicToken = null, interfaceLanguage = 'en' } = {}) {
+  const language = normalizeInterfaceLanguage(interfaceLanguage);
+  const ru = language === 'ru';
+  const buttons = getTransactionButtons(language);
+  const memberButtons = getMemberButtons(language);
   const rows = [];
-  if (publishUrl) {
-    rows.push([{ text: TRANSACTION_BUTTONS.authorizeAndPublishPost, url: publishUrl }]);
-  }
-  if (publicToken) {
-    rows.push([{ text: TRANSACTION_BUTTONS.cancelLinkedInShare, callback_data: `li:share:cancel:${publicToken}` }]);
-  }
+  if (publishUrl) rows.push([{ text: buttons.authorizeAndPublishPost, url: publishUrl }]);
+  if (publicToken) rows.push([{ text: buttons.cancelLinkedInShare, callback_data: `li:share:cancel:${publicToken}` }]);
   rows.push([
-    { text: '↩️ Profile preview', callback_data: 'p:prev' },
-    { text: MEMBER_BUTTONS.home, callback_data: 'home:root' }
+    { text: ru ? '↩️ Предпросмотр профиля' : '↩️ Profile preview', callback_data: 'p:prev' },
+    { text: memberButtons.home, callback_data: 'home:root' }
   ]);
   return buildInlineKeyboard(rows);
 }
@@ -1653,8 +1663,9 @@ export function renderIntroInboxText({ persistenceEnabled = false, inboxState = 
   return lines.join('\n');
 }
 
-export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox = null } = {}) {
+export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox = null, interfaceLanguage = 'en' } = {}) {
   const rows = [];
+  const transactionButtons = getTransactionButtons(interfaceLanguage);
   const receivedItems = Array.isArray(inboxState?.received) ? inboxState.received : [];
   const sentItems = Array.isArray(inboxState?.sent) ? inboxState.sent : [];
   const unlockReceivedItems = Array.isArray(contactUnlockInbox?.received) ? contactUnlockInbox.received : [];
@@ -1673,8 +1684,8 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
 
     if (item?.status === 'pending') {
       rows.push([
-        { text: TRANSACTION_BUTTONS.acceptIntro, callback_data: `intro:acc:${item?.intro_request_id || 0}` },
-        { text: TRANSACTION_BUTTONS.declineIntro, callback_data: `intro:dec:${item?.intro_request_id || 0}` }
+        { text: transactionButtons.acceptIntro, callback_data: `intro:acc:${item?.intro_request_id || 0}` },
+        { text: transactionButtons.declineIntro, callback_data: `intro:dec:${item?.intro_request_id || 0}` }
       ]);
     }
   }
@@ -1687,7 +1698,7 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
     ]);
 
     if (canOpenAcceptedTargetLinkedIn(item)) {
-      rows.push([{ text: TRANSACTION_BUTTONS.openSharedLinkedIn, url: item.linkedin_public_url.trim() }]);
+      rows.push([{ text: transactionButtons.openSharedLinkedIn, url: item.linkedin_public_url.trim() }]);
     }
   }
 
@@ -1697,8 +1708,8 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
     rows.push([{ text: `🔐 ${index + 1}. ${label}`, callback_data: `cu:view:${item?.contact_unlock_request_id || 0}` }]);
     if (item?.status === 'paid_pending_approval') {
       rows.push([
-        { text: TRANSACTION_BUTTONS.shareTelegramContact, callback_data: `cu:acc:${item?.contact_unlock_request_id || 0}` },
-        { text: TRANSACTION_BUTTONS.declineTelegramContact, callback_data: `cu:dec:${item?.contact_unlock_request_id || 0}` }
+        { text: transactionButtons.shareTelegramContact, callback_data: `cu:acc:${item?.contact_unlock_request_id || 0}` },
+        { text: transactionButtons.declineTelegramContact, callback_data: `cu:dec:${item?.contact_unlock_request_id || 0}` }
       ]);
     }
   }
@@ -1708,7 +1719,7 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
     rows.push([{ text: `⭐ ${index + 1}. ${label}`, callback_data: `cu:view:${item?.contact_unlock_request_id || 0}` }]);
     if (item?.status === 'revealed' && item?.revealed_contact_value) {
       const clean = String(item.revealed_contact_value).replace(/^@+/, '');
-      rows.push([{ text: TRANSACTION_BUTTONS.openTelegramContact, url: `https://t.me/${clean}` }]);
+      rows.push([{ text: transactionButtons.openTelegramContact, url: `https://t.me/${clean}` }]);
     }
   }
 
@@ -1720,7 +1731,7 @@ export function renderIntroInboxKeyboard({ inboxState = null, contactUnlockInbox
   return buildInlineKeyboard(rows);
 }
 
-export function renderIntroDetailText({ persistenceEnabled = false, introRequest = null, notice = null } = {}) {
+export function renderIntroDetailText({ persistenceEnabled = false, introRequest = null, notice = null, interfaceLanguage = 'en' } = {}) {
   const lines = [
     '🧾 Intro request',
     '',
@@ -1762,7 +1773,7 @@ export function renderIntroDetailText({ persistenceEnabled = false, introRequest
     }
 
     lines.push('');
-    lines.push(introStatusNote(introRequest));
+    lines.push(introStatusNote(introRequest, interfaceLanguage));
     if (introRequest.role === 'received' && introRequest.status === 'pending') {
       lines.push('Choose Accept intro only if you want to share the contact outcome described above.');
     }
@@ -1776,8 +1787,9 @@ export function renderIntroDetailText({ persistenceEnabled = false, introRequest
   return lines.join('\n');
 }
 
-export function renderIntroDetailKeyboard({ introRequest = null } = {}) {
+export function renderIntroDetailKeyboard({ introRequest = null, interfaceLanguage = 'en' } = {}) {
   const rows = [];
+  const transactionButtons = getTransactionButtons(interfaceLanguage);
 
   if (introRequest?.profile_id) {
     rows.push([{ text: '👤 Open profile', callback_data: `intro:open:${introRequest.profile_id}` }]);
@@ -1788,13 +1800,13 @@ export function renderIntroDetailKeyboard({ introRequest = null } = {}) {
   }
 
   if (canOpenAcceptedTargetLinkedIn(introRequest)) {
-    rows.push([{ text: TRANSACTION_BUTTONS.openSharedLinkedIn, url: introRequest.linkedin_public_url.trim() }]);
+    rows.push([{ text: transactionButtons.openSharedLinkedIn, url: introRequest.linkedin_public_url.trim() }]);
   }
 
   if (introRequest?.role === 'received' && introRequest?.status === 'pending') {
     rows.push([
-      { text: TRANSACTION_BUTTONS.acceptIntro, callback_data: `intro:acc:${introRequest.intro_request_id}` },
-      { text: TRANSACTION_BUTTONS.declineIntro, callback_data: `intro:dec:${introRequest.intro_request_id}` }
+      { text: transactionButtons.acceptIntro, callback_data: `intro:acc:${introRequest.intro_request_id}` },
+      { text: transactionButtons.declineIntro, callback_data: `intro:dec:${introRequest.intro_request_id}` }
     ]);
   }
 
@@ -1804,7 +1816,7 @@ export function renderIntroDetailKeyboard({ introRequest = null } = {}) {
   return buildInlineKeyboard(rows);
 }
 
-export function renderContactUnlockDetailText({ persistenceEnabled = false, request = null, notice = null } = {}) {
+export function renderContactUnlockDetailText({ persistenceEnabled = false, request = null, notice = null, interfaceLanguage = 'en' } = {}) {
   const lines = [
     '🔐 Telegram contact request',
     '',
@@ -1827,7 +1839,7 @@ export function renderContactUnlockDetailText({ persistenceEnabled = false, requ
     lines.push(request.pro_covered
       ? `Reference per-request price: ${Number.isFinite(Number(request.price_stars_snapshot)) ? `${request.price_stars_snapshot}⭐ • not charged` : '—'}`
       : `Request-delivery fee: ${Number.isFinite(Number(request.price_stars_snapshot)) ? `${request.price_stars_snapshot}⭐` : '—'}`);
-    lines.push(TRANSACTION_DISCLOSURES.requestDeliveryPayment);
+    lines.push(getTransactionDisclosures(interfaceLanguage).requestDeliveryPayment);
     lines.push(`Requested: ${formatDateShort(request.requested_at)}`);
     if (request.role === 'sent') {
       if (request.status === 'revealed' && request.revealed_contact_value) {
@@ -1839,7 +1851,7 @@ export function renderContactUnlockDetailText({ persistenceEnabled = false, requ
       }
     } else {
       lines.push(request.status === 'paid_pending_approval'
-        ? TRANSACTION_DISCLOSURES.telegramContactAcceptance
+        ? getTransactionDisclosures(interfaceLanguage).telegramContactAcceptance
         : request.status === 'revealed'
           ? 'You approved this request and your hidden Telegram username was revealed to the requester.'
           : 'This Telegram contact request is no longer actionable.');
@@ -1853,8 +1865,9 @@ export function renderContactUnlockDetailText({ persistenceEnabled = false, requ
   return lines.join('\n');
 }
 
-export function renderContactUnlockDetailKeyboard({ request = null } = {}) {
+export function renderContactUnlockDetailKeyboard({ request = null, interfaceLanguage = 'en' } = {}) {
   const rows = [];
+  const transactionButtons = getTransactionButtons(interfaceLanguage);
 
   if (request?.profile_id) {
     rows.push([{ text: '👤 Open profile', callback_data: `intro:open:${request.profile_id}` }]);
@@ -1862,14 +1875,14 @@ export function renderContactUnlockDetailKeyboard({ request = null } = {}) {
 
   if (request?.role === 'received' && request?.status === 'paid_pending_approval') {
     rows.push([
-      { text: TRANSACTION_BUTTONS.shareTelegramContact, callback_data: `cu:acc:${request.contact_unlock_request_id}` },
-      { text: TRANSACTION_BUTTONS.declineTelegramContact, callback_data: `cu:dec:${request.contact_unlock_request_id}` }
+      { text: transactionButtons.shareTelegramContact, callback_data: `cu:acc:${request.contact_unlock_request_id}` },
+      { text: transactionButtons.declineTelegramContact, callback_data: `cu:dec:${request.contact_unlock_request_id}` }
     ]);
   }
 
   if (request?.role === 'sent' && request?.status === 'revealed' && request?.revealed_contact_value) {
     const clean = String(request.revealed_contact_value).replace(/^@+/, '');
-    rows.push([{ text: TRANSACTION_BUTTONS.openTelegramContact, url: `https://t.me/${clean}` }]);
+    rows.push([{ text: transactionButtons.openTelegramContact, url: `https://t.me/${clean}` }]);
   }
 
   rows.push([{ text: '↩️ Back to inbox', callback_data: 'intro:inbox' }]);
@@ -1918,8 +1931,9 @@ export function renderDmInboxText({ persistenceEnabled = false, inboxState = nul
   return lines.join('\n');
 }
 
-export function renderDmInboxKeyboard({ inboxState = null } = {}) {
+export function renderDmInboxKeyboard({ inboxState = null, interfaceLanguage = 'en' } = {}) {
   const rows = [];
+  const transactionButtons = getTransactionButtons(interfaceLanguage);
   const receivedItems = Array.isArray(inboxState?.received) ? inboxState.received : [];
   const sentItems = Array.isArray(inboxState?.sent) ? inboxState.sent : [];
 
@@ -1928,8 +1942,8 @@ export function renderDmInboxKeyboard({ inboxState = null } = {}) {
     rows.push([{ text: `📨 ${index + 1}. ${label}`, callback_data: `dm:view:${item?.dm_thread_id || 0}` }]);
     if (item?.status === 'pending_recipient') {
       rows.push([
-        { text: TRANSACTION_BUTTONS.acceptPrivateChat, callback_data: `dm:acc:${item?.dm_thread_id || 0}` },
-        { text: TRANSACTION_BUTTONS.declinePrivateChat, callback_data: `dm:dec:${item?.dm_thread_id || 0}` }
+        { text: transactionButtons.acceptPrivateChat, callback_data: `dm:acc:${item?.dm_thread_id || 0}` },
+        { text: transactionButtons.declinePrivateChat, callback_data: `dm:dec:${item?.dm_thread_id || 0}` }
       ]);
     }
   }
@@ -1945,7 +1959,7 @@ export function renderDmInboxKeyboard({ inboxState = null } = {}) {
   return buildInlineKeyboard(rows);
 }
 
-export function renderDmThreadText({ persistenceEnabled = false, thread = null, viewerTelegramUserId = null, notice = null } = {}) {
+export function renderDmThreadText({ persistenceEnabled = false, thread = null, viewerTelegramUserId = null, notice = null, interfaceLanguage = 'en' } = {}) {
   const lines = [
     '🧾 Private chat',
     '',
@@ -1969,11 +1983,11 @@ export function renderDmThreadText({ persistenceEnabled = false, thread = null, 
       ? `Reference per-request price: ${Number.isFinite(Number(thread.price_stars_snapshot)) ? `${thread.price_stars_snapshot}⭐ • not charged` : '—'}`
       : `Request-delivery fee: ${Number.isFinite(Number(thread.price_stars_snapshot)) ? `${thread.price_stars_snapshot}⭐` : '—'}`);
     if (thread.status !== 'active') {
-      lines.push(TRANSACTION_DISCLOSURES.requestDeliveryPayment);
+      lines.push(getTransactionDisclosures(interfaceLanguage).requestDeliveryPayment);
     }
     lines.push(`Created: ${formatDateShort(thread.created_at)}`);
     if (thread.status === 'pending_recipient' && thread.role === 'received') {
-      lines.push(TRANSACTION_DISCLOSURES.privateChatAcceptance);
+      lines.push(getTransactionDisclosures(interfaceLanguage).privateChatAcceptance);
     }
     if (thread.first_message_text) {
       lines.push('', `First message: ${truncate(thread.first_message_text, 280)}`);
@@ -1992,22 +2006,23 @@ export function renderDmThreadText({ persistenceEnabled = false, thread = null, 
   return lines.join('\n');
 }
 
-export function renderDmThreadKeyboard({ thread = null } = {}) {
+export function renderDmThreadKeyboard({ thread = null, interfaceLanguage = 'en' } = {}) {
   const rows = [];
+  const transactionButtons = getTransactionButtons(interfaceLanguage);
 
   if (thread?.role === 'received' && thread?.status === 'pending_recipient') {
     rows.push([
-      { text: TRANSACTION_BUTTONS.acceptPrivateChat, callback_data: `dm:acc:${thread.dm_thread_id}` },
-      { text: TRANSACTION_BUTTONS.declinePrivateChat, callback_data: `dm:dec:${thread.dm_thread_id}` }
+      { text: transactionButtons.acceptPrivateChat, callback_data: `dm:acc:${thread.dm_thread_id}` },
+      { text: transactionButtons.declinePrivateChat, callback_data: `dm:dec:${thread.dm_thread_id}` }
     ]);
     rows.push([
-      { text: TRANSACTION_BUTTONS.blockRequester, callback_data: `dm:blk:${thread.dm_thread_id}` },
-      { text: TRANSACTION_BUTTONS.reportAndBlock, callback_data: `dm:rpt:${thread.dm_thread_id}` }
+      { text: transactionButtons.blockRequester, callback_data: `dm:blk:${thread.dm_thread_id}` },
+      { text: transactionButtons.reportAndBlock, callback_data: `dm:rpt:${thread.dm_thread_id}` }
     ]);
   }
 
   if (thread?.role === 'sent' && thread?.status === 'payment_pending') {
-    rows.push([{ text: payPrivateChatDeliveryButton(thread.price_stars_snapshot), callback_data: `dm:pay:${thread.dm_thread_id}` }]);
+    rows.push([{ text: payPrivateChatDeliveryButton(thread.price_stars_snapshot, interfaceLanguage), callback_data: `dm:pay:${thread.dm_thread_id}` }]);
   }
 
   if (thread?.status === 'active') {

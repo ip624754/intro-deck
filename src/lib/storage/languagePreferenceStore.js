@@ -103,3 +103,12 @@ export async function updateUserLanguagePreference({
     };
   });
 }
+
+export async function loadInterfaceLanguageForNotification(telegramUserId) {
+  if (!telegramUserId) return DEFAULT_INTERFACE_LANGUAGE;
+  const preferences = await loadUserLanguagePreferences({
+    telegramUserId,
+    touch: false
+  }).catch(() => null);
+  return preferences?.interfaceLanguage || DEFAULT_INTERFACE_LANGUAGE;
+}

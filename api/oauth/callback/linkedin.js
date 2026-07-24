@@ -20,40 +20,11 @@ import { persistLinkedInIdentity } from '../../../src/lib/storage/linkedinIdenti
 import { publishLinkedInShareForOAuthCallback } from '../../../src/lib/storage/linkedinShareStore.js';
 import { sendTelegramMessage } from '../../../src/lib/telegram/botApi.js';
 import { memberReasonText } from '../../../src/lib/telegram/memberCopy.js';
+import { loadInterfaceLanguageForNotification } from '../../../src/lib/storage/languagePreferenceStore.js';
+import { escapeOAuthHtml as escapeHtml, oauthText, renderLinkedInOAuthHtml } from '../../../src/lib/linkedin/oauthLanguage.js';
 
-function escapeHtml(input) {
-  return String(input)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
-function renderHtml({ title, body }) {
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${escapeHtml(title)}</title>
-    <style>
-      body { font-family: Arial, sans-serif; margin: 40px auto; max-width: 720px; padding: 0 16px; line-height: 1.5; }
-      .card { border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; }
-      code { background: #f3f4f6; padding: 2px 6px; border-radius: 6px; }
-      .meta { color: #6b7280; font-size: 14px; }
-      .actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
-      .button { display: inline-block; text-decoration: none; border-radius: 10px; padding: 12px 16px; font-weight: 600; }
-      .button-primary { background: #111827; color: #ffffff; }
-      .button-secondary { background: #f3f4f6; color: #111827; }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      ${body}
-    </div>
-  </body>
-</html>`;
+function renderHtml({ interfaceLanguage = 'en', title, body }) {
+  return renderLinkedInOAuthHtml({ interfaceLanguage, title, body });
 }
 
 function describeError(error) {
@@ -79,85 +50,112 @@ function describeError(error) {
   return summary;
 }
 
-function buildLinkedInShareResultMessage(result) {
+function buildLinkedInShareResultMessage(result, interfaceLanguage = 'en') {
+  const russian = interfaceLanguage === 'ru';
   const isNewsDraft = result?.intent?.source_kind === 'ai_news_draft';
-  const lines = [isNewsDraft ? '🧠 AI/news draft on LinkedIn' : '📣 Share profile on LinkedIn', ''];
+  const lines = [russian
+    ? (isNewsDraft ? '🧠 AI/news-черновик в LinkedIn' : '📣 Публикация профиля в LinkedIn')
+    : (isNewsDraft ? '🧠 AI/news draft on LinkedIn' : '📣 Share profile on LinkedIn'), ''];
   if (result?.published) {
-    lines.push('✅ Published once to your LinkedIn account.');
-    lines.push(`• Post ID: ${result.provider?.postId || result.intent?.provider_post_id || 'recorded'}`);
-    lines.push('• The OAuth access token was used for this request and was not stored by Intro Deck.');
+    lines.push(russian ? '✅ Опубликовано в вашем LinkedIn ровно один раз.' : '✅ Published once to your LinkedIn account.');
+    lines.push(`• Post ID: ${result.provider?.postId || result.intent?.provider_post_id || (russian ? 'сохранён' : 'recorded')}`);
+    lines.push(russian
+      ? '• OAuth access token использован только для этого запроса и не сохранён Intro Deck.'
+      : '• The OAuth access token was used for this request and was not stored by Intro Deck.');
     return lines.join('\n');
   }
   if (result?.alreadyPublished) {
-    lines.push('ℹ️ This approved share was already published. No duplicate post was created.');
+    lines.push(russian
+      ? 'ℹ️ Эта подтверждённая публикация уже выполнена. Дубликат не создавался.'
+      : 'ℹ️ This approved share was already published. No duplicate post was created.');
     if (result.intent?.provider_post_id) lines.push(`• Post ID: ${result.intent.provider_post_id}`);
     return lines.join('\n');
   }
   if (result?.inProgress) {
-    lines.push('⏳ Publishing is already in progress. Do not approve the same share again.');
+    lines.push(russian
+      ? '⏳ Публикация уже выполняется. Не подтверждайте тот же пост повторно.'
+      : '⏳ Publishing is already in progress. Do not approve the same share again.');
     return lines.join('\n');
   }
   if (result?.outcomeUnknown || result?.reason === 'share_outcome_unknown') {
     if (result?.provider?.postId) {
-      lines.push('⚠️ LinkedIn returned a post ID, but Intro Deck could not finalize the local publication receipt.');
+      lines.push(russian
+        ? '⚠️ LinkedIn вернул Post ID, но Intro Deck не смог завершить локальную фиксацию результата.'
+        : '⚠️ LinkedIn returned a post ID, but Intro Deck could not finalize the local publication receipt.');
       lines.push(`• Provider post ID: ${result.provider.postId}`);
     } else {
-      lines.push('⚠️ LinkedIn did not return a conclusive publication result.');
+      lines.push(russian
+        ? '⚠️ LinkedIn не вернул однозначный результат публикации.'
+        : '⚠️ LinkedIn did not return a conclusive publication result.');
     }
-    lines.push('• Automatic retry is blocked to prevent a duplicate post.');
-    lines.push('• Check your LinkedIn feed before creating another share.');
+    lines.push(russian
+      ? '• Автоматический повтор заблокирован, чтобы не создать дубликат.'
+      : '• Automatic retry is blocked to prevent a duplicate post.');
+    lines.push(russian
+      ? '• Проверьте ленту LinkedIn перед созданием новой публикации.'
+      : '• Check your LinkedIn feed before creating another share.');
     if (result.error?.requestId) lines.push(`• LinkedIn request ID: ${result.error.requestId}`);
     return lines.join('\n');
   }
-  lines.push('❌ The LinkedIn post was not published.');
-  lines.push(`• ${memberReasonText(result?.reason, 'LinkedIn rejected the publication request.')}`);
+  lines.push(russian ? '❌ Пост LinkedIn не опубликован.' : '❌ The LinkedIn post was not published.');
+  lines.push(`• ${russian ? 'LinkedIn отклонил запрос публикации.' : memberReasonText(result?.reason, 'LinkedIn rejected the publication request.')}`);
   if (result?.error?.status) lines.push(`• HTTP status: ${result.error.status}`);
   if (result?.error?.requestId) lines.push(`• LinkedIn request ID: ${result.error.requestId}`);
-  lines.push(isNewsDraft ? '• Your AI/news draft remains available for review when the outcome is confirmed failed.' : '• Your Intro Deck profile remains unchanged.');
+  lines.push(russian
+    ? (isNewsDraft ? '• AI/news-черновик остаётся доступен для проверки после подтверждённой ошибки.' : '• Профиль Intro Deck не изменён.')
+    : (isNewsDraft ? '• Your AI/news draft remains available for review when the outcome is confirmed failed.' : '• Your Intro Deck profile remains unchanged.'));
   return lines.join('\n');
 }
 
-async function notifyLinkedInShareResult({ telegramUserId, result }) {
+async function notifyLinkedInShareResult({ telegramUserId, result, interfaceLanguage = 'en' }) {
   const { botToken } = getTelegramConfig();
+  const russian = interfaceLanguage === 'ru';
   const isNewsDraft = result?.intent?.source_kind === 'ai_news_draft';
   await sendTelegramMessage({
     botToken,
     chatId: telegramUserId,
-    text: buildLinkedInShareResultMessage(result),
+    text: buildLinkedInShareResultMessage(result, interfaceLanguage),
     replyMarkup: {
       inline_keyboard: [
-        [{ text: isNewsDraft ? '🗞 Story finder' : '👁 Profile preview', callback_data: isNewsDraft ? 'news:home' : 'p:prev' }],
-        [{ text: '🏠 Home', callback_data: 'home:root' }]
+        [{ text: russian ? (isNewsDraft ? '🗞 Поиск историй' : '👁 Предпросмотр профиля') : (isNewsDraft ? '🗞 Story finder' : '👁 Profile preview'), callback_data: isNewsDraft ? 'news:home' : 'p:prev' }],
+        [{ text: russian ? '🏠 Главная' : '🏠 Home', callback_data: 'home:root' }]
       ]
     }
   });
 }
 
-function renderLinkedInShareResultPage(result) {
+function renderLinkedInShareResultPage(result, interfaceLanguage = 'en') {
+  const russian = interfaceLanguage === 'ru';
   const isNewsDraft = result?.intent?.source_kind === 'ai_news_draft';
   if (result?.published || result?.alreadyPublished) {
     const postId = result.provider?.postId || result.intent?.provider_post_id || null;
     return renderHtml({
-      title: 'LinkedIn post published',
-      body: `<h1>LinkedIn post published</h1><p>${isNewsDraft ? 'Your approved evidence-bound news draft' : 'Your approved Intro Deck profile share'} was published once.</p>${postId ? `<p class="meta">Post ID: <code>${escapeHtml(postId)}</code></p>` : ''}<p>Return to Telegram to continue.</p>`
+      interfaceLanguage,
+      title: oauthText(interfaceLanguage, 'LinkedIn post published', 'Пост LinkedIn опубликован'),
+      body: `<h1>${oauthText(interfaceLanguage, 'LinkedIn post published', 'Пост LinkedIn опубликован')}</h1><p>${russian ? (isNewsDraft ? 'Подтверждённый AI/news-черновик с источниками' : 'Подтверждённая публикация профиля Intro Deck') : (isNewsDraft ? 'Your approved evidence-bound news draft' : 'Your approved Intro Deck profile share')} ${russian ? 'опубликован ровно один раз.' : 'was published once.'}</p>${postId ? `<p class="meta">Post ID: <code>${escapeHtml(postId)}</code></p>` : ''}<p>${oauthText(interfaceLanguage, 'Return to Telegram to continue.', 'Вернитесь в Telegram, чтобы продолжить.')}</p>`
     });
   }
   if (result?.inProgress) {
     return renderHtml({
-      title: 'LinkedIn post is publishing',
-      body: '<h1>Publishing is already in progress</h1><p>Do not repeat the approval. Return to Telegram for the final receipt.</p>'
+      interfaceLanguage,
+      title: oauthText(interfaceLanguage, 'LinkedIn post is publishing', 'Пост LinkedIn публикуется'),
+      body: oauthText(interfaceLanguage,
+        '<h1>Publishing is already in progress</h1><p>Do not repeat the approval. Return to Telegram for the final receipt.</p>',
+        '<h1>Публикация уже выполняется</h1><p>Не подтверждайте действие повторно. Вернитесь в Telegram за итоговым результатом.</p>')
     });
   }
   if (result?.outcomeUnknown || result?.reason === 'share_outcome_unknown') {
     const providerPostId = result?.provider?.postId || null;
     return renderHtml({
-      title: 'LinkedIn publication needs review',
-      body: `<h1>Publication needs review</h1>${providerPostId ? `<p>LinkedIn returned post ID <code>${escapeHtml(providerPostId)}</code>, but Intro Deck could not finalize the local receipt.</p>` : '<p>LinkedIn did not return a conclusive publication result.</p>'}<p>Automatic retry is blocked to prevent a duplicate post. Check your LinkedIn feed before trying again.</p>`
+      interfaceLanguage,
+      title: oauthText(interfaceLanguage, 'LinkedIn publication needs review', 'Публикацию LinkedIn нужно проверить'),
+      body: `<h1>${oauthText(interfaceLanguage, 'Publication needs review', 'Публикацию нужно проверить')}</h1>${providerPostId ? `<p>${oauthText(interfaceLanguage, 'LinkedIn returned post ID', 'LinkedIn вернул Post ID')} <code>${escapeHtml(providerPostId)}</code>, ${oauthText(interfaceLanguage, 'but Intro Deck could not finalize the local receipt.', 'но Intro Deck не смог завершить локальную фиксацию результата.')}</p>` : `<p>${oauthText(interfaceLanguage, 'LinkedIn did not return a conclusive publication result.', 'LinkedIn не вернул однозначный результат публикации.')}</p>`}<p>${oauthText(interfaceLanguage, 'Automatic retry is blocked to prevent a duplicate post. Check your LinkedIn feed before trying again.', 'Автоматический повтор заблокирован, чтобы не создать дубликат. Проверьте ленту LinkedIn перед новой попыткой.')}</p>`
     });
   }
   return renderHtml({
-    title: 'LinkedIn post not published',
-    body: `<h1>LinkedIn post was not published</h1><p>${escapeHtml(memberReasonText(result?.reason, 'LinkedIn rejected the publication request.'))}</p><p>Return to Telegram to review the result.</p>`
+    interfaceLanguage,
+    title: oauthText(interfaceLanguage, 'LinkedIn post not published', 'Пост LinkedIn не опубликован'),
+    body: `<h1>${oauthText(interfaceLanguage, 'LinkedIn post was not published', 'Пост LinkedIn не опубликован')}</h1><p>${escapeHtml(russian ? 'LinkedIn отклонил запрос публикации.' : memberReasonText(result?.reason, 'LinkedIn rejected the publication request.'))}</p><p>${oauthText(interfaceLanguage, 'Return to Telegram to review the result.', 'Вернитесь в Telegram, чтобы проверить результат.')}</p>`
   });
 }
 
@@ -231,36 +229,71 @@ function safeVerificationUrl(value) {
   }
 }
 
-function buildVerificationMessageLines({ verificationSync, persistResult }) {
-  if (!verificationSync?.requested) {
-    return [];
-  }
+function buildRussianConnectedSummary(identity = {}) {
+  const parts = [];
+  if (identity.name) parts.push(`имя=${identity.name}`);
+  if (identity.pictureUrl) parts.push('фото=импортировано');
+  if (identity.locale) parts.push(`локаль=${identity.locale}`);
+  if (identity.email) parts.push(`email=${identity.email}`);
+  return parts.length ? parts.join(', ') : 'Базовая identity LinkedIn импортирована';
+}
 
-  const lines = ['🛡 Verified on LinkedIn'];
+function buildRussianIdentityImportSummary(identity = {}) {
+  const fields = [];
+  if (identity.linkedinSub) fields.push('привязка identity');
+  if (identity.name) fields.push('имя');
+  if (identity.givenName) fields.push('имя отдельно');
+  if (identity.familyName) fields.push('фамилия');
+  if (identity.pictureUrl) fields.push('фото');
+  if (identity.locale) fields.push('локаль');
+  if (identity.email) fields.push('email');
+  return fields.length
+    ? `Базовый импорт LinkedIn: ${fields.join(', ')}`
+    : 'Базовый импорт LinkedIn готов';
+}
+
+function buildRussianPersistenceSummary(persistResult) {
+  return persistResult?.persisted
+    ? 'Подключение LinkedIn сохранено.'
+    : 'LinkedIn подключён, но сохранение профиля временно недоступно.';
+}
+
+function buildRussianManualProfileFieldsReminder() {
+  return 'Заголовок, компания, город, отрасль, описание, навыки и публичная ссылка LinkedIn редактируются в Telegram.';
+}
+
+function buildRussianVerificationSnapshotSummary(snapshot) {
+  if (!snapshot) return 'Снимок проверки недоступен';
+  const categories = [];
+  if (snapshot.identityVerified) categories.push('личность');
+  if (snapshot.workplaceVerified) categories.push('место работы');
+  return categories.length
+    ? `Подтверждено LinkedIn: ${categories.join(' + ')}`
+    : `Подтверждено LinkedIn: завершённых категорий нет (код состояния: ${snapshot.verificationState || 'unknown'})`;
+}
+
+function buildVerificationMessageLines({ verificationSync, persistResult, interfaceLanguage = 'en' }) {
+  if (!verificationSync?.requested) return [];
+  const russian = interfaceLanguage === 'ru';
+  const lines = [russian ? '🛡 Проверка LinkedIn' : '🛡 Verified on LinkedIn'];
   if (verificationSync.status === 'success' && verificationSync.snapshot) {
-    lines.push(`• ${buildVerificationSnapshotSummary(verificationSync.snapshot)}`);
-    lines.push(`• Identity: ${verificationSync.snapshot.identityVerified ? 'confirmed by LinkedIn' : 'not present'}`);
-    lines.push(`• Workplace: ${verificationSync.snapshot.workplaceVerified ? 'confirmed by LinkedIn' : 'not present'}`);
+    lines.push(`• ${russian ? buildRussianVerificationSnapshotSummary(verificationSync.snapshot) : buildVerificationSnapshotSummary(verificationSync.snapshot)}`);
+    lines.push(`• ${russian ? 'Личность' : 'Identity'}: ${verificationSync.snapshot.identityVerified ? (russian ? 'подтверждена LinkedIn' : 'confirmed by LinkedIn') : (russian ? 'не подтверждена' : 'not present')}`);
+    lines.push(`• ${russian ? 'Место работы' : 'Workplace'}: ${verificationSync.snapshot.workplaceVerified ? (russian ? 'подтверждено LinkedIn' : 'confirmed by LinkedIn') : (russian ? 'не подтверждено' : 'not present')}`);
     if (persistResult?.verificationPersistence?.persisted) {
-      lines.push('• Category snapshot saved in Intro Deck.');
+      lines.push(russian ? '• Снимок категорий сохранён в Intro Deck.' : '• Category snapshot saved in Intro Deck.');
     } else if (persistResult?.verificationPersistence?.reason === 'migration_028_required') {
-      lines.push('• LinkedIn trust details could not be saved right now.');
+      lines.push(russian ? '• Не удалось сохранить детали доверия LinkedIn.' : '• LinkedIn trust details could not be saved right now.');
     }
   } else {
-    lines.push(`• ${describeLinkedInVerificationSyncReason(verificationSync.reason, verificationSync.error)}`);
-    if (verificationSync.error?.endpoint) {
-      lines.push(`• Failed API: ${verificationSync.error.endpoint}`);
-    }
-    if (verificationSync.error?.compatibilityFallbackAttempted) {
-      lines.push('• Compatibility retry without verification criteria also failed.');
-    }
-    if (verificationSync.error?.requestId) {
-      lines.push(`• LinkedIn request ID: ${verificationSync.error.requestId}`);
-    }
-    lines.push('• Your normal LinkedIn connection remains active.');
+    lines.push(`• ${russian ? 'Синхронизация проверки LinkedIn недоступна.' : describeLinkedInVerificationSyncReason(verificationSync.reason, verificationSync.error)}`);
+    if (verificationSync.error?.endpoint) lines.push(`• Failed API: ${verificationSync.error.endpoint}`);
+    if (verificationSync.error?.compatibilityFallbackAttempted) lines.push(russian ? '• Повтор совместимости без verification criteria также завершился ошибкой.' : '• Compatibility retry without verification criteria also failed.');
+    if (verificationSync.error?.requestId) lines.push(`• LinkedIn request ID: ${verificationSync.error.requestId}`);
+    lines.push(russian ? '• Обычное подключение LinkedIn остаётся активным.' : '• Your normal LinkedIn connection remains active.');
   }
-  lines.push('• Development mode is limited to LinkedIn developer-app administrators.');
-  lines.push('• Role, company, skills, bio, and experience remain member-provided.');
+  lines.push(russian ? '• Development mode доступен только администраторам LinkedIn developer app.' : '• Development mode is limited to LinkedIn developer-app administrators.');
+  lines.push(russian ? '• Должность, компания, навыки, bio и опыт по-прежнему заполняются пользователем.' : '• Role, company, skills, bio, and experience remain member-provided.');
   return lines;
 }
 
@@ -316,167 +349,138 @@ function verifySignedTransferToken(token, secret) {
   return payload;
 }
 
-function buildTransferConfirmationBody({ transferUrl, identity, previousTelegramUsername }) {
-  const currentName = escapeHtml(identity?.name || 'this LinkedIn account');
-  const previousOwner = previousTelegramUsername ? `@${escapeHtml(previousTelegramUsername)}` : 'another Telegram account';
+function buildTransferConfirmationBody({ transferUrl, identity, previousTelegramUsername, interfaceLanguage = 'en' }) {
+  const russian = interfaceLanguage === 'ru';
+  const currentName = escapeHtml(identity?.name || (russian ? 'этот аккаунт LinkedIn' : 'this LinkedIn account'));
+  const previousOwner = previousTelegramUsername ? `@${escapeHtml(previousTelegramUsername)}` : (russian ? 'другому Telegram-аккаунту' : 'another Telegram account');
   return `
-    <h1>Move LinkedIn connection?</h1>
-    <p><strong>${currentName}</strong> is already connected to ${previousOwner}.</p>
-    <p>You can move this LinkedIn connection here. The previous Telegram account will be disconnected, and any public listing on that account will be hidden.</p>
+    <h1>${russian ? 'Перенести подключение LinkedIn?' : 'Move LinkedIn connection?'}</h1>
+    <p><strong>${currentName}</strong> ${russian ? `уже подключён к ${previousOwner}.` : `is already connected to ${previousOwner}.`}</p>
+    <p>${russian ? 'Вы можете перенести подключение сюда. Предыдущий Telegram-аккаунт будет отключён, а его публичная карточка скрыта.' : 'You can move this LinkedIn connection here. The previous Telegram account will be disconnected, and any public listing on that account will be hidden.'}</p>
     <div class="actions">
-      <a class="button button-primary" href="${escapeHtml(transferUrl)}">Move connection here</a>
-      <a class="button button-secondary" href="/privacy/">Cancel</a>
+      <a class="button button-primary" href="${escapeHtml(transferUrl)}">${russian ? 'Перенести подключение сюда' : 'Move connection here'}</a>
+      <a class="button button-secondary" href="/privacy/">${russian ? 'Отмена' : 'Cancel'}</a>
     </div>
-    <p class="meta">Only one Telegram account can hold the same LinkedIn identity at a time.</p>
+    <p class="meta">${russian ? 'Одна и та же LinkedIn identity может быть подключена только к одному Telegram-аккаунту.' : 'Only one Telegram account can hold the same LinkedIn identity at a time.'}</p>
   `;
 }
 
-function buildTelegramConnectionMessage({ identity, persistResult, verificationSync }) {
+function buildTelegramConnectionMessage({ identity, persistResult, verificationSync, interfaceLanguage = 'en' }) {
+  const russian = interfaceLanguage === 'ru';
   const successText = persistResult?.transferred
-    ? '✅ LinkedIn connection moved to this Telegram account.'
-    : '✅ LinkedIn connected.';
-
+    ? (russian ? '✅ Подключение LinkedIn перенесено на этот Telegram-аккаунт.' : '✅ LinkedIn connection moved to this Telegram account.')
+    : (russian ? '✅ LinkedIn подключён.' : '✅ LinkedIn connected.');
   const lines = [successText, ''];
-
-  lines.push('🔗 LinkedIn import');
-  lines.push(`• ${buildConnectedSummary(identity) || 'Basic LinkedIn identity imported'}`);
-  lines.push(`• ${buildIdentityImportSummary(identity)}`);
+  lines.push(russian ? '🔗 Импорт из LinkedIn' : '🔗 LinkedIn import');
+  lines.push(`• ${russian ? buildRussianConnectedSummary(identity) : (buildConnectedSummary(identity) || 'Basic LinkedIn identity imported')}`);
+  lines.push(`• ${russian ? buildRussianIdentityImportSummary(identity) : buildIdentityImportSummary(identity)}`);
   lines.push('');
-
-  lines.push('💾 Saved in Intro Deck');
-  lines.push(`• ${buildPersistenceSummary(persistResult)}`);
+  lines.push(russian ? '💾 Сохранено в Intro Deck' : '💾 Saved in Intro Deck');
+  lines.push(`• ${russian ? buildRussianPersistenceSummary(persistResult) : buildPersistenceSummary(persistResult)}`);
   lines.push(`• ${persistResult?.profileSeed?.displayNameSeeded
-    ? 'Display name was seeded because your card name was still empty.'
-    : 'Existing manual card fields were kept as-is.'}`);
+    ? (russian ? 'Имя карточки заполнено из LinkedIn, потому что поле было пустым.' : 'Display name was seeded because your card name was still empty.')
+    : (russian ? 'Существующие поля карточки сохранены без изменений.' : 'Existing manual card fields were kept as-is.')}`);
   lines.push('');
-
-  lines.push('✍️ Still editable in Telegram');
-  lines.push(`• ${buildManualProfileFieldsReminder()}`);
-
-  const verificationLines = buildVerificationMessageLines({ verificationSync, persistResult });
-  if (verificationLines.length) {
-    lines.push('');
-    lines.push(...verificationLines);
-  }
+  lines.push(russian ? '✍️ Можно изменить в Telegram' : '✍️ Still editable in Telegram');
+  lines.push(`• ${russian ? buildRussianManualProfileFieldsReminder() : buildManualProfileFieldsReminder()}`);
+  const verificationLines = buildVerificationMessageLines({ verificationSync, persistResult, interfaceLanguage });
+  if (verificationLines.length) { lines.push(''); lines.push(...verificationLines); }
   lines.push('');
-
-  lines.push('➡️ Next');
+  lines.push(russian ? '➡️ Дальше' : '➡️ Next');
   lines.push(persistResult?.transferred
-    ? '• The previous Telegram account was disconnected, and its public listing was hidden.'
-    : '• Open the profile editor in Telegram to review and finish your card.');
-
+    ? (russian ? '• Предыдущий Telegram-аккаунт отключён, его публичная карточка скрыта.' : '• The previous Telegram account was disconnected, and its public listing was hidden.')
+    : (russian ? '• Откройте редактор профиля в Telegram, проверьте и завершите карточку.' : '• Open the profile editor in Telegram to review and finish your card.'));
   return lines.join('\n');
 }
 
 async function notifyTelegramConnectionResult({ statePayload, identity, persistResult, verificationSync }) {
   const { botToken } = getTelegramConfig();
+  const interfaceLanguage = statePayload.interfaceLanguage || 'en';
+  const russian = interfaceLanguage === 'ru';
   const rows = [];
   const verificationUrl = safeVerificationUrl(verificationSync?.verificationUrl);
-  if (verificationUrl) {
-    rows.push([{ text: '🛡 Complete LinkedIn verification', url: verificationUrl }]);
-  }
-  rows.push([{ text: '🧩 Complete profile', callback_data: 'p:menu' }, { text: '🏠 Home', callback_data: 'home:root' }]);
-
+  if (verificationUrl) rows.push([{ text: russian ? '🛡 Завершить проверку LinkedIn' : '🛡 Complete LinkedIn verification', url: verificationUrl }]);
+  rows.push([{ text: russian ? '🧩 Завершить профиль' : '🧩 Complete profile', callback_data: 'p:menu' }, { text: russian ? '🏠 Главная' : '🏠 Home', callback_data: 'home:root' }]);
   await sendTelegramMessage({
     botToken,
     chatId: statePayload.telegramUserId,
-    text: buildTelegramConnectionMessage({ identity, persistResult, verificationSync }),
+    text: buildTelegramConnectionMessage({ identity, persistResult, verificationSync, interfaceLanguage }),
     replyMarkup: { inline_keyboard: rows }
   });
 }
 
-function buildPreviousOwnerMessage() {
-  return [
-    '⚠️ LinkedIn connection moved',
-    '',
-    'Your LinkedIn connection was moved to another Telegram account.',
-    'Your directory listing on this Telegram account was hidden.'
-  ].join('\n');
+function buildPreviousOwnerMessage(interfaceLanguage = 'en') {
+  return interfaceLanguage === 'ru'
+    ? ['⚠️ Подключение LinkedIn перенесено', '', 'Ваше подключение LinkedIn перенесено на другой Telegram-аккаунт.', 'Публичная карточка этого Telegram-аккаунта скрыта.'].join('\n')
+    : ['⚠️ LinkedIn connection moved', '', 'Your LinkedIn connection was moved to another Telegram account.', 'Your directory listing on this Telegram account was hidden.'].join('\n');
 }
 
 async function notifyPreviousOwnerIfTransferred({ persistResult }) {
-  if (!persistResult?.transferred || !persistResult?.previousOwner?.telegramUserId) {
-    return;
-  }
-
+  if (!persistResult?.transferred || !persistResult?.previousOwner?.telegramUserId) return;
   const { botToken } = getTelegramConfig();
+  const interfaceLanguage = await loadInterfaceLanguageForNotification(persistResult.previousOwner.telegramUserId);
   await sendTelegramMessage({
     botToken,
     chatId: persistResult.previousOwner.telegramUserId,
-    text: buildPreviousOwnerMessage(),
-    replyMarkup: {
-      inline_keyboard: [
-        [{ text: '🏠 Home', callback_data: 'home:root' }]
-      ]
-    }
+    text: buildPreviousOwnerMessage(interfaceLanguage),
+    replyMarkup: { inline_keyboard: [[{ text: interfaceLanguage === 'ru' ? '🏠 Главная' : '🏠 Home', callback_data: 'home:root' }]] }
   });
 }
 
-function renderPersistenceSuccessPage({ identity, persistResult, verificationSync }) {
+function renderPersistenceSuccessPage({ identity, persistResult, verificationSync, interfaceLanguage = 'en' }) {
   const { botUsername } = getTelegramConfig();
-  const title = persistResult?.transferred ? 'LinkedIn connection moved' : 'LinkedIn connected';
+  const russian = interfaceLanguage === 'ru';
+  const title = persistResult?.transferred
+    ? (russian ? 'Подключение LinkedIn перенесено' : 'LinkedIn connection moved')
+    : (russian ? 'LinkedIn подключён' : 'LinkedIn connected');
   const linkedInItems = [
-    identity?.name ? `Name: ${identity.name}` : null,
-    identity?.givenName ? `Given name: ${identity.givenName}` : null,
-    identity?.familyName ? `Family name: ${identity.familyName}` : null,
-    identity?.pictureUrl ? 'Photo: imported' : null,
+    identity?.name ? `${russian ? 'Имя' : 'Name'}: ${identity.name}` : null,
+    identity?.givenName ? `${russian ? 'Имя' : 'Given name'}: ${identity.givenName}` : null,
+    identity?.familyName ? `${russian ? 'Фамилия' : 'Family name'}: ${identity.familyName}` : null,
+    identity?.pictureUrl ? (russian ? 'Фото: импортировано' : 'Photo: imported') : null,
     identity?.locale ? `Locale: ${identity.locale}` : null,
     identity?.email ? `Email: ${identity.email}` : null
   ].filter(Boolean).map((item) => `<li>${escapeHtml(item)}</li>`).join('');
   const savedItems = [
-    'Identity binding: saved',
-    Array.isArray(persistResult?.identityImportedFields) ? `Imported fields: ${persistResult.identityImportedFields.length}` : null,
-    persistResult?.profileDraft?.profile_state ? `Profile state: ${persistResult.profileDraft.profile_state}` : null,
-    persistResult?.profileDraft?.visibility_status ? `Visibility: ${persistResult.profileDraft.visibility_status}` : null,
-    persistResult?.profileSeed?.displayNameSeeded
-      ? 'Display name: seeded from LinkedIn'
-      : 'Manual card fields: kept as-is'
+    russian ? 'Identity binding: сохранён' : 'Identity binding: saved',
+    Array.isArray(persistResult?.identityImportedFields) ? `${russian ? 'Импортировано полей' : 'Imported fields'}: ${persistResult.identityImportedFields.length}` : null,
+    persistResult?.profileDraft?.profile_state ? `${russian ? 'Состояние профиля' : 'Profile state'}: ${persistResult.profileDraft.profile_state}` : null,
+    persistResult?.profileDraft?.visibility_status ? `${russian ? 'Видимость' : 'Visibility'}: ${persistResult.profileDraft.visibility_status}` : null,
+    persistResult?.profileSeed?.displayNameSeeded ? (russian ? 'Имя карточки: заполнено из LinkedIn' : 'Display name: seeded from LinkedIn') : (russian ? 'Ручные поля карточки: сохранены' : 'Manual card fields: kept as-is')
   ].filter(Boolean).map((item) => `<li>${escapeHtml(item)}</li>`).join('');
-  const editableItems = [
-    'Headline',
-    'Company',
-    'City',
-    'Industry',
-    'About',
-    'Skills',
-    'Public LinkedIn URL'
-  ].map((item) => `<li>${escapeHtml(item)}</li>`).join('');
+  const editableItems = (russian
+    ? ['Заголовок', 'Компания', 'Город', 'Отрасль', 'О себе', 'Навыки', 'Публичная ссылка LinkedIn']
+    : ['Headline', 'Company', 'City', 'Industry', 'About', 'Skills', 'Public LinkedIn URL'])
+    .map((item) => `<li>${escapeHtml(item)}</li>`).join('');
   const nextItems = [
     persistResult?.transferred
-      ? 'The previous Telegram account was disconnected and hidden from the directory.'
-      : 'Your LinkedIn identity is connected. Review and finish your card in Telegram.',
-    'Return to Telegram when you are ready.'
+      ? (russian ? 'Предыдущий Telegram-аккаунт отключён и скрыт из каталога.' : 'The previous Telegram account was disconnected and hidden from the directory.')
+      : (russian ? 'LinkedIn identity подключена. Проверьте и завершите карточку в Telegram.' : 'Your LinkedIn identity is connected. Review and finish your card in Telegram.'),
+    russian ? 'Вернитесь в Telegram, когда будете готовы.' : 'Return to Telegram when you are ready.'
   ].map((item) => `<li>${escapeHtml(item)}</li>`).join('');
-  const verificationLines = buildVerificationMessageLines({ verificationSync, persistResult });
+  const verificationLines = buildVerificationMessageLines({ verificationSync, persistResult, interfaceLanguage });
   const verificationItems = verificationLines.slice(1).map((item) => `<li>${escapeHtml(item.replace(/^•\s*/, ''))}</li>`).join('');
   const verificationUrl = safeVerificationUrl(verificationSync?.verificationUrl);
   const botUrl = botUsername ? `https://t.me/${encodeURIComponent(botUsername.replace(/^@+/, ''))}` : null;
-
   return renderHtml({
+    interfaceLanguage,
     title,
     body: `
       <h1>${escapeHtml(title)}</h1>
-
-      <h2>LinkedIn import</h2>
-      <ul>${linkedInItems || '<li>Basic LinkedIn identity imported</li>'}</ul>
-
-      <h2>Saved in Intro Deck</h2>
+      <h2>${russian ? 'Импорт из LinkedIn' : 'LinkedIn import'}</h2>
+      <ul>${linkedInItems || `<li>${russian ? 'Базовая identity LinkedIn импортирована' : 'Basic LinkedIn identity imported'}</li>`}</ul>
+      <h2>${russian ? 'Сохранено в Intro Deck' : 'Saved in Intro Deck'}</h2>
       <ul>${savedItems}</ul>
-
-      <h2>Still editable in Telegram</h2>
+      <h2>${russian ? 'Можно изменить в Telegram' : 'Still editable in Telegram'}</h2>
       <ul>${editableItems}</ul>
-
-      ${verificationSync?.requested ? `<h2>Verified on LinkedIn</h2><ul>${verificationItems || '<li>Verification sync was not available.</li>'}</ul>` : ''}
-
-      <h2>Next</h2>
+      ${verificationSync?.requested ? `<h2>${russian ? 'Проверка LinkedIn' : 'Verified on LinkedIn'}</h2><ul>${verificationItems || `<li>${russian ? 'Синхронизация проверки недоступна.' : 'Verification sync was not available.'}</li>`}</ul>` : ''}
+      <h2>${russian ? 'Дальше' : 'Next'}</h2>
       <ul>${nextItems}</ul>
-
       <div class="actions">
-        ${verificationUrl ? `<a class="button button-primary" href="${escapeHtml(verificationUrl)}">Complete LinkedIn verification</a>` : ''}
-        ${botUrl ? `<a class="button ${verificationUrl ? 'button-secondary' : 'button-primary'}" href="${escapeHtml(botUrl)}">Open @${escapeHtml(botUsername.replace(/^@+/, ''))}</a>` : ''}
-        <a class="button button-secondary" href="/privacy/">Privacy</a>
-      </div>
-    `
+        ${verificationUrl ? `<a class="button button-primary" href="${escapeHtml(verificationUrl)}">${russian ? 'Завершить проверку LinkedIn' : 'Complete LinkedIn verification'}</a>` : ''}
+        ${botUrl ? `<a class="button ${verificationUrl ? 'button-secondary' : 'button-primary'}" href="${escapeHtml(botUrl)}">${russian ? 'Открыть' : 'Open'} @${escapeHtml(botUsername.replace(/^@+/, ''))}</a>` : ''}
+        <a class="button button-secondary" href="/privacy/">${russian ? 'Конфиденциальность' : 'Privacy'}</a>
+      </div>`
   });
 }
 
@@ -517,18 +521,27 @@ export default async function handler(req, res) {
   const state = url.searchParams.get('state');
   const transferToken = url.searchParams.get('transfer_token');
 
-  if (error) {
-    return res.status(400).send(renderHtml({
-      title: 'LinkedIn sign-in canceled',
-      body: `<h1>LinkedIn sign-in was canceled</h1><p><code>${escapeHtml(error)}</code></p>`
-    }));
-  }
-
   let stage = 'config';
   let statePayload = null;
 
   try {
     const linkedinConfig = getLinkedInConfig();
+
+    if (error) {
+      let interfaceLanguage = 'en';
+      if (state) {
+        try {
+          interfaceLanguage = verifySignedState(state, linkedinConfig.stateSecret).interfaceLanguage || 'en';
+        } catch {
+          interfaceLanguage = 'en';
+        }
+      }
+      return res.status(400).send(renderHtml({
+        interfaceLanguage,
+        title: oauthText(interfaceLanguage, 'LinkedIn sign-in canceled', 'Вход через LinkedIn отменён'),
+        body: `<h1>${oauthText(interfaceLanguage, 'LinkedIn sign-in was canceled', 'Вход через LinkedIn отменён')}</h1><p><code>${escapeHtml(error)}</code></p>`
+      }));
+    }
 
     if (transferToken) {
       stage = 'verify_transfer_token';
@@ -536,7 +549,9 @@ export default async function handler(req, res) {
       statePayload = {
         telegramUserId: transferPayload.telegramUserId,
         telegramUsername: transferPayload.telegramUsername || null,
-        returnTo: transferPayload.returnTo || '/menu'
+        returnTo: transferPayload.returnTo || '/menu',
+        interfaceLanguage: transferPayload.interfaceLanguage || 'en',
+        postLanguage: transferPayload.postLanguage || 'en'
       };
 
       stage = 'confirm_transfer';
@@ -574,7 +589,8 @@ export default async function handler(req, res) {
       return res.status(200).send(renderPersistenceSuccessPage({
         identity: transferPayload.identity,
         persistResult,
-        verificationSync: transferPayload.verificationSync
+        verificationSync: transferPayload.verificationSync,
+        interfaceLanguage: statePayload.interfaceLanguage
       }));
     }
 
@@ -650,7 +666,8 @@ export default async function handler(req, res) {
         stage = 'notify_linkedin_share_result';
         await notifyLinkedInShareResult({
           telegramUserId: statePayload.telegramUserId,
-          result: shareResult
+          result: shareResult,
+          interfaceLanguage: statePayload.interfaceLanguage || 'en'
         });
       } catch (notifyError) {
         console.warn('[linkedin share callback] telegram notify skipped', {
@@ -660,7 +677,7 @@ export default async function handler(req, res) {
       }
 
       const statusCode = shareResult?.published || shareResult?.alreadyPublished ? 200 : 409;
-      return res.status(statusCode).send(renderLinkedInShareResultPage(shareResult));
+      return res.status(statusCode).send(renderLinkedInShareResultPage(shareResult, statePayload.interfaceLanguage || 'en'));
     }
 
     let verificationSync = {
@@ -707,6 +724,8 @@ export default async function handler(req, res) {
           telegramUserId: statePayload.telegramUserId,
           telegramUsername: statePayload.telegramUsername || null,
           returnTo: statePayload.returnTo || '/menu',
+          interfaceLanguage: statePayload.interfaceLanguage || 'en',
+          postLanguage: statePayload.postLanguage || 'en',
           identity,
           verificationSync: safeVerificationTransferPayload(verificationSync),
           previousUserId: persistResult.conflict.previousUserId,
@@ -718,12 +737,15 @@ export default async function handler(req, res) {
       transferUrl.search = '';
       transferUrl.searchParams.set('transfer_token', token);
 
+      const interfaceLanguage = statePayload.interfaceLanguage || 'en';
       return res.status(409).send(renderHtml({
-        title: 'LinkedIn already connected',
+        interfaceLanguage,
+        title: oauthText(interfaceLanguage, 'LinkedIn already connected', 'LinkedIn уже подключён'),
         body: buildTransferConfirmationBody({
           transferUrl: transferUrl.pathname + transferUrl.search,
           identity,
-          previousTelegramUsername: persistResult.conflict.previousTelegramUsername
+          previousTelegramUsername: persistResult.conflict.previousTelegramUsername,
+          interfaceLanguage
         })
       }));
     }
@@ -742,7 +764,8 @@ export default async function handler(req, res) {
     return res.status(200).send(renderPersistenceSuccessPage({
       identity,
       persistResult,
-      verificationSync
+      verificationSync,
+      interfaceLanguage: statePayload.interfaceLanguage || 'en'
     }));
   } catch (callbackError) {
     console.error('[linkedin callback] failed', {
@@ -754,12 +777,14 @@ export default async function handler(req, res) {
       error: describeError(callbackError)
     });
 
+    const interfaceLanguage = statePayload?.interfaceLanguage || 'en';
     return res.status(500).send(renderHtml({
-      title: 'LinkedIn callback failed',
+      interfaceLanguage,
+      title: oauthText(interfaceLanguage, 'LinkedIn callback failed', 'Callback LinkedIn завершился ошибкой'),
       body: `
-        <h1>LinkedIn callback failed</h1>
-        <p>Please return to Telegram and try the connection again.</p>
-        <p class="meta">Failure stage: <code>${escapeHtml(stage)}</code>. Check the server logs for the detailed reason.</p>
+        <h1>${oauthText(interfaceLanguage, 'LinkedIn callback failed', 'Callback LinkedIn завершился ошибкой')}</h1>
+        <p>${oauthText(interfaceLanguage, 'Please return to Telegram and try the connection again.', 'Вернитесь в Telegram и повторите подключение.')}</p>
+        <p class="meta">${oauthText(interfaceLanguage, 'Failure stage', 'Этап ошибки')}: <code>${escapeHtml(stage)}</code>. ${oauthText(interfaceLanguage, 'Check the server logs for the detailed reason.', 'Подробная причина доступна в server logs.')}</p>
       `
     }));
   }

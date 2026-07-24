@@ -107,7 +107,7 @@ export default async function handler(req, res) {
       renderingBoundary: 'stored_interface_language_per_telegram_update',
       userProvidedContentTranslation: false,
       publicInviteCardLanguage: 'canonical_english_deferred',
-      transactionAndOAuthRendering: 'deferred_to_step064b4c',
+      transactionAndOAuthRendering: 'stored_interface_language_plus_signed_oauth_snapshot',
       existingCallbackIdsChanged: false,
       businessLogicChanged: false
     },
@@ -118,17 +118,29 @@ export default async function handler(req, res) {
       independentFromInterfaceLanguage: true,
       aiNewsPresetOverridePreserved: true,
       existingAiNewsLanguageContractChanged: false,
-      ordinaryProfileShareIntegration: 'deferred_to_step064b4c'
+      ordinaryProfileShareIntegration: 'users_default_post_language'
     },
     transactionCopyPolicy: {
       consentButtons: 'verb_plus_object_plus_consequence',
       paymentCopy: 'request_delivery_fee_no_approval_guarantee_no_auto_refund',
       linkedinPublishCta: 'authorize_and_publish_exactly_one_post',
       staleActionCopy: 'latest_state_no_repeat_side_effect',
+      interfaceLanguageSource: 'stored_user_preference',
+      notificationRecipientLanguage: 'recipient_preference_with_retry_snapshot',
       callbackIdsChanged: false,
       moneyLogicChanged: false,
       consentStateMachinesChanged: false,
       publisherChanged: false
+    },
+    oauthLanguagePolicy: {
+      launchLanguageSource: 'stored_preference_or_signed_launch_ticket',
+      stateSnapshotSigned: true,
+      transferSnapshotSigned: true,
+      htmlLanguageMatchesSignedSnapshot: true,
+      telegramReceiptLanguageMatchesSignedSnapshot: true,
+      accessTokenPersistence: 'none',
+      oauthScopesChanged: false,
+      replayAndIdempotencyChanged: false
     },
     inviteSharePolicy: {
       publicCardCta: 'single_open_intro_deck',

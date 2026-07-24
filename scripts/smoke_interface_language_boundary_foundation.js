@@ -21,7 +21,7 @@ import {
 import { setUserLanguagePreference, upsertTelegramUser } from '../src/db/usersRepo.js';
 import { CURRENT_SOURCE_STEP } from '../src/config/release.js';
 
-assert.ok(['STEP064B4A', 'STEP064B4B'].includes(CURRENT_SOURCE_STEP));
+assert.ok(['STEP064B4A', 'STEP064B4B', 'STEP064B4C'].includes(CURRENT_SOURCE_STEP));
 assert.equal(inferInterfaceLanguageFromTelegramLocale('ru'), 'ru');
 assert.equal(inferInterfaceLanguageFromTelegramLocale('ru-RU'), 'ru');
 assert.equal(inferInterfaceLanguageFromTelegramLocale('en-GB'), 'en');
@@ -109,7 +109,7 @@ const settings = renderLanguageSettingsText({
 });
 assert.match(settings, /Язык интерфейса: Русский/);
 assert.match(settings, /Язык публикаций: English/);
-assert.match(settings, /Обычная публикация профиля пока использует текущий English-шаблон/);
+assert.match(settings, /Обычная публикация профиля использует выбранный язык публикаций/);
 const settingsKeyboard = JSON.stringify(renderLanguageSettingsKeyboard({
   preferences: { interfaceLanguage: 'ru', defaultPostLanguage: 'en', schemaReady: true },
   persistenceEnabled: true,

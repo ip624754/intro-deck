@@ -97,10 +97,15 @@ export async function getProSubscriptionInvoiceForTelegramUser({ telegramUserId,
       invoice: {
         payload: buildProInvoicePayload('pro_monthly'),
         amountStars: pricing.proMonthlyPriceStars,
-        title: 'Intro Deck Pro',
-        description: aiNewsConfig.mode === 'pro'
-          ? `Pro for ${subscriptionConfig.proMonthlyDurationDays} days: ${contactPolicy.proOutreachDailyLimit} contact-request deliveries/24h plus ${aiNewsConfig.dailyLimit} AI/news draft attempts/24h and up to ${aiNewsConfig.presetLimit} saved presets. Every contact and LinkedIn post still needs approval.`
-          : `Unlock Pro for ${subscriptionConfig.proMonthlyDurationDays} days. Includes up to ${contactPolicy.proOutreachDailyLimit} contact-request deliveries across private-chat and Telegram-contact options per rolling 24 hours. Recipient approval is still required.`
+        title: user.interface_language === 'ru' ? 'Intro Deck Pro' : 'Intro Deck Pro',
+        description: user.interface_language === 'ru'
+          ? (aiNewsConfig.mode === 'pro'
+              ? `Pro на ${subscriptionConfig.proMonthlyDurationDays} дней: до ${contactPolicy.proOutreachDailyLimit} доставок запросов на контакт за 24 часа, ${aiNewsConfig.dailyLimit} попыток AI/news-черновиков за 24 часа и до ${aiNewsConfig.presetLimit} сохранённых пресетов. Каждый контакт и публикация LinkedIn по-прежнему требуют отдельного подтверждения.`
+              : `Pro на ${subscriptionConfig.proMonthlyDurationDays} дней: до ${contactPolicy.proOutreachDailyLimit} доставок запросов через приватный чат и Telegram-контакт за скользящие 24 часа. Решение всегда принимает получатель.`)
+          : (aiNewsConfig.mode === 'pro'
+              ? `Pro for ${subscriptionConfig.proMonthlyDurationDays} days: ${contactPolicy.proOutreachDailyLimit} contact-request deliveries/24h plus ${aiNewsConfig.dailyLimit} AI/news draft attempts/24h and up to ${aiNewsConfig.presetLimit} saved presets. Every contact and LinkedIn post still needs approval.`
+              : `Unlock Pro for ${subscriptionConfig.proMonthlyDurationDays} days. Includes up to ${contactPolicy.proOutreachDailyLimit} contact-request deliveries across private-chat and Telegram-contact options per rolling 24 hours. Recipient approval is still required.`),
+        interfaceLanguage: user.interface_language
       }
     };
   });

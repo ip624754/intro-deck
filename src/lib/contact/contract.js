@@ -33,21 +33,32 @@ export function canOpenPaidContactRail(profileSnapshot = null) {
 export function buildRequestFeeDisclosure({
   amountStars = 0,
   actionLabel = 'request',
-  recipientName = 'this member'
+  recipientName = 'this member',
+  interfaceLanguage = 'en'
 } = {}) {
   const amount = Number.isFinite(Number(amountStars)) ? Number(amountStars) : 0;
   const safeAction = String(actionLabel || 'request').trim().slice(0, 48) || 'request';
   const safeRecipient = String(recipientName || 'this member').trim().slice(0, 32) || 'this member';
-  const disclosure = [
-    `${amount}⭐ pays to deliver this ${safeAction} to ${safeRecipient}.`,
-    'Approval or reply is not guaranteed.',
-    'The recipient may decline.',
-    'No automatic refund is issued only because the request is declined or unanswered.'
-  ].join(' ');
+  const russian = String(interfaceLanguage || '').trim().toLowerCase() === 'ru';
+  const disclosure = russian
+    ? [
+        `${amount}⭐ оплачивают доставку запроса «${safeAction}» пользователю ${safeRecipient}.`,
+        'Одобрение или ответ не гарантируются.',
+        'Получатель может отказать.',
+        'Отказ или отсутствие ответа сами по себе не запускают автоматический возврат.'
+      ].join(' ')
+    : [
+        `${amount}⭐ pays to deliver this ${safeAction} to ${safeRecipient}.`,
+        'Approval or reply is not guaranteed.',
+        'The recipient may decline.',
+        'No automatic refund is issued only because the request is declined or unanswered.'
+      ].join(' ');
   if (disclosure.length <= 255) {
     return disclosure;
   }
-  return `${amount}⭐ pays to deliver this permission request. Approval or reply is not guaranteed. The recipient may decline. No automatic refund is issued only because the request is declined or unanswered.`;
+  return russian
+    ? `${amount}⭐ оплачивают доставку запроса на согласие. Одобрение или ответ не гарантируются. Получатель может отказать. Отказ или отсутствие ответа сами по себе не запускают автоматический возврат.`
+    : `${amount}⭐ pays to deliver this permission request. Approval or reply is not guaranteed. The recipient may decline. No automatic refund is issued only because the request is declined or unanswered.`;
 }
 
 export function getTelegramStarsPaymentMismatchReason({

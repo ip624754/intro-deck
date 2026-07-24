@@ -320,6 +320,8 @@ export function createSurfaceBuilders({ appBaseUrl, invitePhotoFileId = null }) 
       ? buildSignedLinkedInLaunchTicket({
           telegramUserId: ctx.from.id,
           purpose: 'verification_refresh',
+          interfaceLanguage: state.languagePreferences?.interfaceLanguage || 'en',
+          postLanguage: state.languagePreferences?.defaultPostLanguage || 'en',
           secret: getLinkedInConfig().stateSecret
         })
       : null;
@@ -575,10 +577,12 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
       text: renderIntroDetailText({
         persistenceEnabled: state.persistenceEnabled,
         introRequest: state.introRequest,
-        notice
+        notice,
+        interfaceLanguage: ctx.interfaceLanguage
       }),
       reply_markup: renderIntroDetailKeyboard({
-        introRequest: state.introRequest
+        introRequest: state.introRequest,
+        interfaceLanguage: ctx.interfaceLanguage
       })
     };
   }
@@ -603,10 +607,12 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
       text: renderContactUnlockDetailText({
         persistenceEnabled: state.persistenceEnabled,
         request: state.request,
-        notice
+        notice,
+        interfaceLanguage: ctx.interfaceLanguage
       }),
       reply_markup: renderContactUnlockDetailKeyboard({
-        request: state.request
+        request: state.request,
+        interfaceLanguage: ctx.interfaceLanguage
       })
     };
   }
@@ -837,10 +843,12 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
       text: renderDmInboxText({
         persistenceEnabled: state.persistenceEnabled,
         inboxState: state.inbox,
-        notice
+        notice,
+        interfaceLanguage: ctx.interfaceLanguage
       }),
       reply_markup: renderDmInboxKeyboard({
-        inboxState: state.inbox
+        inboxState: state.inbox,
+        interfaceLanguage: ctx.interfaceLanguage
       })
     };
   }
@@ -864,10 +872,12 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
         persistenceEnabled: state.persistenceEnabled,
         thread: state.thread,
         viewerTelegramUserId: ctx.from.id,
-        notice
+        notice,
+        interfaceLanguage: ctx.interfaceLanguage
       }),
       reply_markup: renderDmThreadKeyboard({
-        thread: state.thread
+        thread: state.thread,
+        interfaceLanguage: ctx.interfaceLanguage
       })
     };
   }
@@ -952,7 +962,8 @@ async function buildDirectoryCardSurface(ctx, profileId, page = 0, notice = null
       }),
       reply_markup: renderIntroInboxKeyboard({
         inboxState: state.inbox,
-        contactUnlockInbox: contactState.inbox
+        contactUnlockInbox: contactState.inbox,
+        interfaceLanguage: ctx.interfaceLanguage
       })
     };
   }

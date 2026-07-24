@@ -1,3 +1,6 @@
+import { getSchemaCompat } from './schemaCompat.js';
+import { normalizeInterfaceLanguage } from '../lib/i18n/language.js';
+
 function normalizeNotificationEventType(eventType) {
   if (eventType === 'intro_request_created') {
     return eventType;
@@ -31,7 +34,8 @@ function normalizeNotificationEnvelope(row) {
     counterpartDisplayName: row.counterpart_display_name,
     counterpartHeadline: row.counterpart_headline_user,
     status: row.status,
-    role: row.role
+    role: row.role,
+    interfaceLanguage: normalizeInterfaceLanguage(row.recipient_interface_language)
   };
 }
 
@@ -135,6 +139,8 @@ function normalizeIntroNotificationReceiptSummary(row) {
 }
 
 export async function loadIntroNotificationEnvelope(client, { eventType, introRequestId }) {
+  const compat = await getSchemaCompat(client);
+  const recipientLanguageSql = compat.userLanguageContractReady ? 'ru.interface_language' : "'en'::text";
   const normalizedEventType = normalizeNotificationEventType(eventType);
   if (!normalizedEventType) {
     return null;
@@ -148,6 +154,7 @@ export async function loadIntroNotificationEnvelope(client, { eventType, introRe
           ir.id as intro_request_id,
           ir.target_user_id as recipient_user_id,
           ru.telegram_user_id as recipient_telegram_user_id,
+          ${recipientLanguageSql} as recipient_interface_language,
           coalesce(nullif(rmp.display_name, ''), rla.full_name, ir.requester_display_name, 'Unknown member') as counterpart_display_name,
           coalesce(rmp.headline_user, ir.requester_headline_user) as counterpart_headline_user,
           ir.status,
@@ -172,6 +179,7 @@ export async function loadIntroNotificationEnvelope(client, { eventType, introRe
         ir.id as intro_request_id,
         ir.requester_user_id as recipient_user_id,
         ru.telegram_user_id as recipient_telegram_user_id,
+        ${recipientLanguageSql} as recipient_interface_language,
         coalesce(nullif(tmp.display_name, ''), tla.full_name, ir.target_display_name, 'Unknown member') as counterpart_display_name,
         coalesce(tmp.headline_user, ir.target_headline_user) as counterpart_headline_user,
         ir.status,

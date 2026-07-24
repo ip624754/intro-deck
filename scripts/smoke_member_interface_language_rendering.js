@@ -37,7 +37,7 @@ import {
 } from '../src/lib/telegram/memberLocalization.js';
 import { TRANSACTION_DISCLOSURES } from '../src/lib/telegram/transactionCopy.js';
 
-assert.equal(CURRENT_SOURCE_STEP, 'STEP064B4B');
+assert.ok(['STEP064B4B', 'STEP064B4C'].includes(CURRENT_SOURCE_STEP));
 
 function callbackContract(replyMarkup) {
   return (replyMarkup?.inline_keyboard || []).flat().map((button) => ({

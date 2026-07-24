@@ -1,3 +1,13 @@
+# Current roadmap position — STEP064B4C
+
+1. Deploy and production-accept STEP064B4C using `doc/103_STEP064B4C_OPERATOR_ROLLOUT.md`.
+2. Collect live EN/RU evidence for payments, recipient notifications/retries, OAuth connect/transfer/replay, and the four-way interface/post-language profile-share matrix.
+3. Make the next roadmap decision only after that evidence; do not automatically expand languages, publisher authority, payments, or public-card localization.
+
+Rollback target is the exact STEP064B4B FULL artifact. Migration 037 and stored preferences remain compatible and should not be removed.
+
+---
+
 # Current roadmap position — STEP064B4B
 
 1. Deploy and production-accept STEP064B4B using `doc/102_STEP064B4B_OPERATOR_ROLLOUT.md`.

@@ -11,7 +11,7 @@ import {
   parseDmInvoicePayload
 } from '../../lib/storage/dmStore.js';
 import { formatDmDecisionReason, formatDmRequestReason, formatUserFacingError } from '../utils/notices.js';
-import { TRANSACTION_DISCLOSURES, paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
+import { getTransactionDisclosures, paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
 import { localizeMemberText } from '../../lib/telegram/memberLocalization.js';
 
 async function sendDmInvoice(ctx, invoice) {
@@ -22,7 +22,7 @@ async function sendDmInvoice(ctx, invoice) {
     payload: invoice.payload,
     provider_token: '',
     currency: 'XTR',
-    prices: [{ label: 'Request delivery', amount: invoice.amountStars }]
+    prices: [{ label: ctx.interfaceLanguage === 'ru' ? 'Доставка запроса' : 'Request delivery', amount: invoice.amountStars }]
   });
 }
 
@@ -85,7 +85,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       'Reply with the first message now.',
       'The conversation opens only if the recipient accepts.',
       'After you send the message, you can pay to deliver this permission request.',
-      TRANSACTION_DISCLOSURES.requestDeliveryPayment
+      getTransactionDisclosures(ctx.interfaceLanguage).requestDeliveryPayment
     ].join('\n'), ctx.interfaceLanguage));
   });
 
@@ -159,7 +159,7 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
 
     try {
       await sendDmInvoice(ctx, result.invoice);
-      await ctx.answerCallbackQuery({ text: paymentSheetOpenedNotice(result.invoice.amountStars) });
+      await ctx.answerCallbackQuery({ text: paymentSheetOpenedNotice(result.invoice.amountStars, ctx.interfaceLanguage) });
     } catch (error) {
       await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, 'Could not open the DM payment sheet right now.', ctx.interfaceLanguage) });
     }
@@ -185,17 +185,22 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
       thread: null
     }));
 
-    let notice = 'Private chat updated.';
+    const russian = ctx.interfaceLanguage === 'ru';
+    let notice = russian ? 'Приватный чат обновлён.' : 'Private chat updated.';
     if (!result.persistenceEnabled) {
-      notice = '⚠️ This feature is temporarily unavailable. Try again later.';
+      notice = russian ? '⚠️ Функция временно недоступна. Попробуйте позже.' : '⚠️ This feature is temporarily unavailable. Try again later.';
     } else if (result.changed && result.reason === 'dm_thread_accepted') {
-      notice = `✅ Accepted the chat request from ${result.thread?.display_name || 'this member'}. The private conversation is now active.`;
+      notice = russian
+        ? `✅ Вы приняли запрос в чат от ${result.thread?.display_name || 'этого участника'}. Приватный диалог открыт.`
+        : `✅ Accepted the chat request from ${result.thread?.display_name || 'this member'}. The private conversation is now active.`;
     } else if (result.changed && result.reason === 'dm_thread_declined') {
-      notice = `✅ Declined the chat request from ${result.thread?.display_name || 'this member'}. No conversation was opened.`;
+      notice = russian
+        ? `✅ Вы отклонили запрос в чат от ${result.thread?.display_name || 'этого участника'}. Диалог не был открыт.`
+        : `✅ Declined the chat request from ${result.thread?.display_name || 'this member'}. No conversation was opened.`;
     } else if (result.changed && result.reason === 'dm_thread_reported') {
-      notice = '✅ Reported the request and blocked this member from this chat path.';
+      notice = russian ? '✅ Жалоба отправлена, участник заблокирован для этого чата.' : '✅ Reported the request and blocked this member from this chat path.';
     } else if (result.changed && result.reason === 'dm_thread_blocked') {
-      notice = '✅ Blocked this member from this chat path.';
+      notice = russian ? '✅ Участник заблокирован для этого чата.' : '✅ Blocked this member from this chat path.';
     } else if (result.duplicate) {
       notice = `ℹ️ ${formatDmDecisionReason(result.reason, ctx.interfaceLanguage)}`;
     } else if (result.blocked) {
@@ -257,11 +262,15 @@ export function createDmComposer({ clearAllPendingInputs, buildDmInboxSurface, b
     }));
 
     if (result.changed) {
-      await ctx.reply(`✅ Payment confirmed. Your private-chat request was delivered. ${TRANSACTION_DISCLOSURES.requestDeliveryPayment}`, {
+      const russian = ctx.interfaceLanguage === 'ru';
+      const disclosure = getTransactionDisclosures(ctx.interfaceLanguage).requestDeliveryPayment;
+      await ctx.reply(russian
+        ? `✅ Оплата подтверждена. Запрос в приватный чат доставлен. ${disclosure}`
+        : `✅ Payment confirmed. Your private-chat request was delivered. ${disclosure}`, {
         reply_markup: {
           inline_keyboard: [
-            [{ text: '💬 Private chats', callback_data: 'dm:inbox' }],
-            [{ text: '🧾 View thread', callback_data: `dm:view:${parsed.threadId}` }]
+            [{ text: russian ? '💬 Приватные чаты' : '💬 Private chats', callback_data: 'dm:inbox' }],
+            [{ text: russian ? '🧾 Открыть диалог' : '🧾 View thread', callback_data: `dm:view:${parsed.threadId}` }]
           ]
         }
       });

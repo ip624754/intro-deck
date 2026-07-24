@@ -22,7 +22,12 @@ import { sendTelegramMessage } from '../telegram/botApi.js';
 import { acquirePaymentChargeLock, createConfirmedPurchaseReceipt, findPurchaseReceiptByPaymentCharge, getProOutreachAllowance, getUserEntitlements } from '../../db/monetizationRepo.js';
 import { buildRequestFeeDisclosure, CONTACT_POLICY_SNAPSHOT, PAID_CONTACT_MODE, REQUEST_DELIVERY_FEE_POLICY } from '../contact/contract.js';
 import { normalizeProfileFieldValue } from '../profile/contract.js';
-import { TRANSACTION_BUTTONS, TRANSACTION_DISCLOSURES } from '../telegram/transactionCopy.js';
+import { loadInterfaceLanguageForNotification } from './languagePreferenceStore.js';
+import {
+  buildDmDecisionNotification,
+  buildDmMessageNotification,
+  buildDmRequestNotification
+} from '../telegram/transactionNotificationCopy.js';
 
 const DM_COMPOSE_TTL_MINUTES = 20;
 
@@ -48,83 +53,13 @@ function validateDmMessageText(text, { firstMessage = false } = {}) {
   return normalized;
 }
 
-function buildDmRequestNotification(envelope) {
-  return {
-    text: [
-      '💬 New private-chat request',
-      '',
-      `${envelope.initiator_display_name || 'A member'} wants to message you through Intro Deck.`,
-      envelope.initiator_headline_user ? `Headline: ${envelope.initiator_headline_user}` : null,
-      '',
-      `Message: ${envelope.first_message_text}`,
-      '',
-      TRANSACTION_DISCLOSURES.privateChatAcceptance
-    ].filter(Boolean).join('\n'),
-    replyMarkup: {
-      inline_keyboard: [
-        [
-          { text: TRANSACTION_BUTTONS.acceptPrivateChat, callback_data: `dm:acc:${envelope.dm_thread_id}` },
-          { text: TRANSACTION_BUTTONS.declinePrivateChat, callback_data: `dm:dec:${envelope.dm_thread_id}` }
-        ],
-        [
-          { text: TRANSACTION_BUTTONS.blockRequester, callback_data: `dm:blk:${envelope.dm_thread_id}` },
-          { text: TRANSACTION_BUTTONS.reportAndBlock, callback_data: `dm:rpt:${envelope.dm_thread_id}` }
-        ],
-        [{ text: '🧾 Open request', callback_data: `dm:view:${envelope.dm_thread_id}` }]
-      ]
-    }
-  };
-}
-
-function buildDmDecisionNotification(thread, reason) {
-  const lines = ['💬 Private-chat request update', ''];
-  if (reason === 'dm_thread_accepted') {
-    lines.push(`${thread.display_name || 'This member'} accepted your chat request.`);
-    lines.push('The conversation is now active inside the bot.');
-  } else if (reason === 'dm_thread_declined') {
-    lines.push(`${thread.display_name || 'This member'} declined your chat request.`);
-    lines.push('No active conversation was opened. A decline does not trigger an automatic refund of the request-delivery fee.');
-  } else if (reason === 'dm_thread_reported') {
-    lines.push('Your private-chat request was reported and blocked.');
-  } else {
-    lines.push('Your private-chat request was blocked.');
-  }
-
-  return {
-    text: lines.join('\n'),
-    replyMarkup: {
-      inline_keyboard: [
-        [{ text: '🧾 View thread', callback_data: `dm:view:${thread.dm_thread_id}` }],
-        [{ text: '💬 Private chats', callback_data: 'dm:inbox' }]
-      ]
-    }
-  };
-}
-
-function buildDmMessageNotification({ thread, messageText }) {
-  return {
-    text: [
-      '💬 New DM message',
-      '',
-      `${thread.display_name || 'A member'} sent a new message:`,
-      '',
-      messageText
-    ].join('\n'),
-    replyMarkup: {
-      inline_keyboard: [
-        [{ text: '🧾 Open thread', callback_data: `dm:view:${thread.dm_thread_id}` }],
-        [{ text: '💬 Private chats', callback_data: 'dm:inbox' }]
-      ]
-    }
-  };
-}
-
 async function notifyDmRecipientOfPaidRequest(envelope) {
   const { botToken } = getTelegramConfig();
   if (!envelope?.recipient_telegram_user_id) {
     return { sent: false, skipped: true, reason: 'recipient_telegram_user_id_missing' };
   }
-  const message = buildDmRequestNotification(envelope);
+  const interfaceLanguage = await loadInterfaceLanguageForNotification(envelope.recipient_telegram_user_id);
+  const message = buildDmRequestNotification(envelope, interfaceLanguage);
   await sendTelegramMessage({
     botToken,
     chatId: envelope.recipient_telegram_user_id,
@@ -140,7 +75,8 @@ async function notifyRequesterOfDecision({ requesterTelegramUserId, requesterThr
   if (!requesterTelegramUserId || !requesterThread?.dm_thread_id) {
     return { sent: false, skipped: true, reason: 'requester_telegram_user_id_missing' };
   }
-  const message = buildDmDecisionNotification(requesterThread, reason);
+  const interfaceLanguage = await loadInterfaceLanguageForNotification(requesterTelegramUserId);
+  const message = buildDmDecisionNotification(requesterThread, reason, interfaceLanguage);
   await sendTelegramMessage({
     botToken,
     chatId: requesterTelegramUserId,
@@ -156,7 +92,8 @@ async function notifyDmRecipientOfNewMessage({ recipientTelegramUserId, thread, 
   if (!recipientTelegramUserId) {
     return { sent: false, skipped: true, reason: 'recipient_telegram_user_id_missing' };
   }
-  const message = buildDmMessageNotification({ thread, messageText });
+  const interfaceLanguage = await loadInterfaceLanguageForNotification(recipientTelegramUserId);
+  const message = buildDmMessageNotification({ thread, messageText, interfaceLanguage });
   await sendTelegramMessage({
     botToken,
     chatId: recipientTelegramUserId,
@@ -565,11 +502,12 @@ export async function getDmThreadInvoiceForTelegramUser({ telegramUserId, telegr
     const invoice = {
       payload: buildDmInvoicePayload(threadId),
       amountStars: envelope.price_stars_snapshot,
-      title: 'Private-chat permission request',
+      title: user.interface_language === 'ru' ? 'Запрос на приватный чат' : 'Private-chat permission request',
       description: buildRequestFeeDisclosure({
         amountStars: envelope.price_stars_snapshot,
-        actionLabel: 'private-chat request',
-        recipientName: envelope.recipient_display_name || 'this member'
+        actionLabel: user.interface_language === 'ru' ? 'приватный чат' : 'private-chat request',
+        recipientName: envelope.recipient_display_name || (user.interface_language === 'ru' ? 'этому участнику' : 'this member'),
+        interfaceLanguage: user.interface_language
       })
     };
     return {

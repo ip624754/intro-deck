@@ -24,7 +24,7 @@ if (!source.includes("console.error('[linkedin callback] failed', {")) {
   throw new Error('Structured linkedin callback failure logging missing');
 }
 
-if (!source.includes('Failure stage: <code>${escapeHtml(stage)}</code>')) {
+if (!source.includes("oauthText(interfaceLanguage, 'Failure stage', 'Этап ошибки')") || !source.includes('<code>${escapeHtml(stage)}</code>')) {
   throw new Error('Failure stage hint missing from callback failure page');
 }
 

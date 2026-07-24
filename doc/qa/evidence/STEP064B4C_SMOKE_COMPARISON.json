@@ -1,0 +1,30 @@
+{
+  "baseline": {
+    "total": 106,
+    "pass": 101,
+    "non_pass": 5,
+    "node_version": "v22.16.0",
+    "duration_seconds": 12.063
+  },
+  "candidate": {
+    "total": 107,
+    "pass": 102,
+    "non_pass": 5,
+    "node_version": "v22.16.0",
+    "duration_seconds": 11.894
+  },
+  "baseline_pass_regressions": [],
+  "new_scripts": [
+    {
+      "name": "smoke:transaction-language-boundary",
+      "status": "PASS"
+    }
+  ],
+  "inherited_non_pass": [
+    "smoke:code-split",
+    "smoke:profile-session-schema",
+    "smoke:broadcast-idempotency",
+    "smoke:step053a-pack",
+    "smoke:step061-profile-preview-hotfix"
+  ]
+}

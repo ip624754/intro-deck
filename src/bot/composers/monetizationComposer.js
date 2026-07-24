@@ -7,6 +7,7 @@ import {
   parseProInvoicePayload
 } from '../../lib/storage/monetizationStore.js';
 import { formatUserFacingError } from '../utils/notices.js';
+import { paymentSheetOpenedNotice } from '../../lib/telegram/transactionCopy.js';
 
 async function sendSubscriptionInvoice(ctx, invoice) {
   return ctx.api.raw.sendInvoice({
@@ -16,7 +17,7 @@ async function sendSubscriptionInvoice(ctx, invoice) {
     payload: invoice.payload,
     provider_token: '',
     currency: 'XTR',
-    prices: [{ label: 'Intro Deck Pro', amount: invoice.amountStars }]
+    prices: [{ label: ctx.interfaceLanguage === 'ru' ? 'Intro Deck Pro' : 'Intro Deck Pro', amount: invoice.amountStars }]
   });
 }
 
@@ -56,23 +57,23 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
     }));
 
     if (!result.persistenceEnabled) {
-      await ctx.answerCallbackQuery({ text: 'This feature is temporarily unavailable. Try again later.' });
+      await ctx.answerCallbackQuery({ text: ctx.interfaceLanguage === 'ru' ? 'Функция временно недоступна. Попробуйте позже.' : 'This feature is temporarily unavailable. Try again later.' });
       return;
     }
 
     if (result.blocked || !result.invoice) {
       const text = result.reason === 'pro_subscription_already_active'
-        ? 'Pro is already active on this account.'
-        : formatUserFacingError(result.reason, 'Could not open the Pro payment sheet right now.');
+        ? (ctx.interfaceLanguage === 'ru' ? 'Pro уже активен для этого аккаунта.' : 'Pro is already active on this account.')
+        : formatUserFacingError(result.reason, ctx.interfaceLanguage === 'ru' ? 'Не удалось открыть оплату Pro.' : 'Could not open the Pro payment sheet right now.', ctx.interfaceLanguage);
       await ctx.answerCallbackQuery({ text });
       return;
     }
 
     try {
       await sendSubscriptionInvoice(ctx, result.invoice);
-      await ctx.answerCallbackQuery({ text: `Payment sheet opened · ${result.invoice.amountStars}⭐` });
+      await ctx.answerCallbackQuery({ text: paymentSheetOpenedNotice(result.invoice.amountStars, ctx.interfaceLanguage) });
     } catch (error) {
-      await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, 'Could not open the Pro payment sheet right now.') });
+      await ctx.answerCallbackQuery({ text: formatUserFacingError(error?.message || error, ctx.interfaceLanguage === 'ru' ? 'Не удалось открыть оплату Pro.' : 'Could not open the Pro payment sheet right now.', ctx.interfaceLanguage) });
     }
   });
 
@@ -93,7 +94,7 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
     await ctx.api.raw.answerPreCheckoutQuery({
       pre_checkout_query_id: ctx.preCheckoutQuery.id,
       ok,
-      ...(ok ? {} : { error_message: formatUserFacingError(authorization.reason, 'This Pro payment request expired or changed. Reopen Pro and start a new payment.') })
+      ...(ok ? {} : { error_message: formatUserFacingError(authorization.reason, ctx.interfaceLanguage === 'ru' ? 'Запрос оплаты Pro устарел или изменился. Откройте Pro и начните новую оплату.' : 'This Pro payment request expired or changed. Reopen Pro and start a new payment.', ctx.interfaceLanguage) })
     });
   });
 
@@ -121,12 +122,15 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
       reason: String(error?.message || error)
     }));
 
+    const russian = ctx.interfaceLanguage === 'ru';
     if (result.changed) {
-      await ctx.reply('✅ Payment confirmed. Intro Deck Pro is active. Pro covers a bounded fair-use allowance for delivering contact permission requests; each recipient still decides whether to accept.', {
+      await ctx.reply(russian
+        ? '✅ Оплата подтверждена. Intro Deck Pro активирован. Pro покрывает ограниченный fair-use лимит доставки запросов на контакт; решение по каждому запросу всё равно принимает получатель.'
+        : '✅ Payment confirmed. Intro Deck Pro is active. Pro covers a bounded fair-use allowance for delivering contact permission requests; each recipient still decides whether to accept.', {
         reply_markup: {
           inline_keyboard: [
-            [{ text: '⭐ View Pro status', callback_data: 'plans:root' }],
-            [{ text: '🏠 Home', callback_data: 'home:root' }]
+            [{ text: russian ? '⭐ Статус Pro' : '⭐ View Pro status', callback_data: 'plans:root' }],
+            [{ text: russian ? '🏠 Главная' : '🏠 Home', callback_data: 'home:root' }]
           ]
         }
       });
@@ -134,16 +138,20 @@ export function createMonetizationComposer({ clearAllPendingInputs, buildPricing
     }
 
     if (result.duplicate) {
-      await ctx.reply('ℹ️ This Pro purchase was already confirmed. No second subscription was created.');
+      await ctx.reply(russian
+        ? 'ℹ️ Эта покупка Pro уже подтверждена. Вторая подписка не создавалась.'
+        : 'ℹ️ This Pro purchase was already confirmed. No second subscription was created.');
       return;
     }
 
     if (result.reason === 'payment_charge_replay_detected') {
-      await ctx.reply('⚠️ This payment is already linked to another purchase. Do not pay again. Contact support.');
+      await ctx.reply(russian
+        ? '⚠️ Этот платёж уже связан с другой покупкой. Не платите повторно — обратитесь в поддержку.'
+        : '⚠️ This payment is already linked to another purchase. Do not pay again. Contact support.');
       return;
     }
 
-    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, 'The Pro payment was received, but activation could not be finalized. Do not pay again. Contact support.')}`);
+    await ctx.reply(`⚠️ ${formatUserFacingError(result.reason, russian ? 'Платёж Pro получен, но активацию не удалось завершить. Не платите повторно — обратитесь в поддержку.' : 'The Pro payment was received, but activation could not be finalized. Do not pay again. Contact support.', ctx.interfaceLanguage)}`);
   });
 
   return composer;

@@ -39,6 +39,7 @@ import {
 } from '../ai/newsPresetSchedule.js';
 import { audienceLabel, angleLabel } from '../ai/newsDiscoveryContract.js';
 import { sendTelegramMessage } from '../telegram/botApi.js';
+import { buildScheduledNewsDraftNotification } from '../telegram/transactionNotificationCopy.js';
 import {
   findAiNewsSourcesForTelegramUser,
   generateAiNewsDraftForTelegramUser
@@ -293,7 +294,8 @@ async function createRunNowClaim({ telegramUserId, telegramUsername, publicToken
       presetId: preset.id,
       userId: context.user.id,
       claimToken: crypto.randomUUID(),
-      claimExpiresAt: new Date(Date.now() + config.schedule.claimTimeoutSeconds * 1000)
+      claimExpiresAt: new Date(Date.now() + config.schedule.claimTimeoutSeconds * 1000),
+      interfaceLanguage: context.user.interface_language || 'en'
     });
     return { ok: true, preset, run, context };
   });
@@ -323,28 +325,16 @@ async function deliverPresetDraft({ runId, config }) {
   if (!envelope?.draft_public_token || !envelope.telegram_user_id) {
     return finalizeRunFailure({ runId, presetId: envelope?.preset_id, status: 'failed', reason: 'ai_news_preset_delivery_envelope_missing', retry: false, config });
   }
-  const text = [
-    '🧠 Scheduled news draft ready',
-    '',
-    `Preset: ${envelope.preset_name}`,
-    `Source: ${envelope.source_title || 'Fresh news source'}`,
-    envelope.source_name || envelope.source_domain || '',
-    '',
-    'Nothing was published. Open the draft to review, edit, or explicitly approve one LinkedIn post.'
-  ].filter(Boolean).join('\n');
+  const interfaceLanguage = envelope.detail_json?.interfaceLanguage || envelope.interface_language || 'en';
+  const message = buildScheduledNewsDraftNotification(envelope, interfaceLanguage);
   try {
     const { botToken } = getTelegramConfig();
     const response = await sendTelegramMessage({
       botToken,
       chatId: envelope.telegram_user_id,
-      text,
+      text: message.text,
       parseMode: null,
-      replyMarkup: {
-        inline_keyboard: [
-          [{ text: '📝 Review draft', callback_data: `news:draft:${envelope.draft_public_token}` }],
-          [{ text: '⚙️ Preset settings', callback_data: `news:ps:${envelope.preset_public_token}` }]
-        ]
-      }
+      replyMarkup: message.replyMarkup
     });
     await withDbTransaction(async (client) => {
       await markAiNewsPresetRunStatus(client, {

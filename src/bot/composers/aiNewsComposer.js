@@ -111,8 +111,8 @@ export async function buildAiNewsDraftSurface(ctx, publicToken = null, notice = 
     publicToken
   }).catch((error) => ({ draft: null, reason: error?.message || String(error) }));
   return localizeMemberSurface({
-    text: result.draft ? renderAiNewsDraftText({ draft: result.draft, notice }) : `⚠️ ${aiNewsReasonText(result.reason)}`,
-    reply_markup: result.draft ? renderAiNewsDraftKeyboard({ draft: result.draft }) : { inline_keyboard: [[{ text: '← Back to story finder', callback_data: 'news:home' }]] }
+    text: result.draft ? renderAiNewsDraftText({ draft: result.draft, notice, interfaceLanguage: ctx.interfaceLanguage }) : `⚠️ ${aiNewsReasonText(result.reason)}`,
+    reply_markup: result.draft ? renderAiNewsDraftKeyboard({ draft: result.draft, interfaceLanguage: ctx.interfaceLanguage }) : { inline_keyboard: [[{ text: '← Back to story finder', callback_data: 'news:home' }]] }
   }, ctx.interfaceLanguage);
 }
 
@@ -358,6 +358,8 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
       telegramUserId: ctx.from.id,
       purpose: 'share_profile',
       shareIntentToken: shareIntent.public_token,
+      interfaceLanguage: ctx.interfaceLanguage || 'en',
+      postLanguage: draft?.post_language || ctx.defaultPostLanguage || 'en',
       ttlSeconds: Math.min(shareConfig.intentTtlSeconds, linkedinConfig.stateTtlSeconds),
       secret: linkedinConfig.stateSecret
     });
@@ -368,8 +370,12 @@ export function createAiNewsComposer({ clearAllPendingInputs, appBaseUrl }) {
       purpose: 'share_profile',
       launchTicket
     });
-    await safeEditOrReply(ctx, renderAiNewsPublishAuthorizationText({ draft, shareIntent }), {
-      reply_markup: renderAiNewsPublishAuthorizationKeyboard({ publishUrl, draftToken }),
+    const authorizationSurface = localizeMemberSurface({
+      text: renderAiNewsPublishAuthorizationText({ draft, shareIntent, interfaceLanguage: ctx.interfaceLanguage }),
+      reply_markup: renderAiNewsPublishAuthorizationKeyboard({ publishUrl, draftToken, interfaceLanguage: ctx.interfaceLanguage })
+    }, ctx.interfaceLanguage);
+    await safeEditOrReply(ctx, authorizationSurface.text, {
+      reply_markup: authorizationSurface.reply_markup,
       disable_web_page_preview: true
     });
   });

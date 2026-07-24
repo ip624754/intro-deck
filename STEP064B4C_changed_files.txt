@@ -1,0 +1,79 @@
+# STEP064B4C Changed Files
+
+- Baseline: STEP064B4B FULL SHA-256 `8839d3fd224c9bf52761f0869a05889306ad5b72b8a6e3d8abe157969111fec7`
+- Added: 16
+- Modified: 46
+- Deleted: 0
+- Total delta paths: 62
+
+## Added
+
+- `STEP064B4C_ARTIFACT_VERIFICATION.json`
+- `STEP064B4C_HANDOFF.md`
+- `STEP064B4C_PATCH_README.md`
+- `STEP064B4C_QA_REPORT.md`
+- `STEP064B4C_QA_checklist.md`
+- `STEP064B4C_changed_files.txt`
+- `doc/103_STEP064B4C_OPERATOR_ROLLOUT.md`
+- `doc/qa/STEP064B4C_QA_REPORT.md`
+- `doc/qa/evidence/STEP064B4B_BASELINE_SMOKE_INVENTORY.json`
+- `doc/qa/evidence/STEP064B4C_ARTIFACT_VERIFICATION.json`
+- `doc/qa/evidence/STEP064B4C_CANDIDATE_SMOKE_INVENTORY.json`
+- `doc/qa/evidence/STEP064B4C_SMOKE_COMPARISON.json`
+- `doc/spec/STEP064B4C_TRANSACTION_NOTIFICATION_OAUTH_LANGUAGE_BOUNDARY.md`
+- `scripts/smoke_transaction_notification_oauth_language_boundary.js`
+- `src/lib/linkedin/oauthLanguage.js`
+- `src/lib/telegram/transactionNotificationCopy.js`
+
+## Modified
+
+- `00_CURRENT_STATE.md`
+- `README.md`
+- `api/health.js`
+- `api/oauth/callback/linkedin.js`
+- `api/oauth/start/linkedin.js`
+- `doc/00_CURRENT_STATE.md`
+- `doc/02_HANDOFF_STANDARD.md`
+- `doc/15_NEW_CHAT_HANDOFF.md`
+- `doc/36_NEXT_STEPS_ROADMAP.md`
+- `package-lock.json`
+- `package.json`
+- `scripts/smoke_ai_news_audience_discovery_presets.js`
+- `scripts/smoke_ai_news_migration_claim_recovery.js`
+- `scripts/smoke_ai_news_personalized_query_final_fit.js`
+- `scripts/smoke_ai_news_presets_subscription.js`
+- `scripts/smoke_ai_news_search_progress_recovery.js`
+- `scripts/smoke_critical_transaction_copy_semantics.js`
+- `scripts/smoke_interface_language_boundary_foundation.js`
+- `scripts/smoke_linkedin_callback_diagnostics_contract.js`
+- `scripts/smoke_linkedin_verification_compat_fail_safe.js`
+- `scripts/smoke_linkedin_verified_badges_trust_surfaces.js`
+- `scripts/smoke_linkedin_verified_development_integration.js`
+- `scripts/smoke_member_copy_navigation_consistency.js`
+- `scripts/smoke_member_interface_language_rendering.js`
+- `src/bot/composers/aiNewsComposer.js`
+- `src/bot/composers/contactUnlockComposer.js`
+- `src/bot/composers/dmComposer.js`
+- `src/bot/composers/linkedinShareComposer.js`
+- `src/bot/composers/monetizationComposer.js`
+- `src/bot/surfaces/appSurfaces.js`
+- `src/config/release.js`
+- `src/db/aiNewsPresetRepo.js`
+- `src/db/notificationRepo.js`
+- `src/lib/contact/contract.js`
+- `src/lib/linkedin/oidc.js`
+- `src/lib/linkedin/share.js`
+- `src/lib/storage/aiNewsPresetStore.js`
+- `src/lib/storage/contactUnlockStore.js`
+- `src/lib/storage/dmStore.js`
+- `src/lib/storage/languagePreferenceStore.js`
+- `src/lib/storage/linkedinShareStore.js`
+- `src/lib/storage/monetizationStore.js`
+- `src/lib/storage/notificationStore.js`
+- `src/lib/telegram/aiNewsRender.js`
+- `src/lib/telegram/render.js`
+- `src/lib/telegram/transactionCopy.js`
+
+## Deleted
+
+- None

@@ -153,6 +153,7 @@ export async function createProfileShareDraftForTelegramUser({
   telegramUserId,
   telegramUsername = null,
   botUsername,
+  postLanguage = 'en',
   visibility,
   ttlSeconds
 }) {
@@ -160,7 +161,7 @@ export async function createProfileShareDraftForTelegramUser({
   if (unavailable) return unavailable;
   const profileResult = await withDbClient(async (client) => getProfileSnapshotByTelegramUserId(client, telegramUserId));
   if (!profileResult?.linkedin_sub) return { persistenceEnabled: true, created: false, reason: 'linkedin_not_connected' };
-  const postText = buildProfileSharePostText({ profileSnapshot: profileResult, botUsername });
+  const postText = buildProfileSharePostText({ profileSnapshot: profileResult, botUsername, postLanguage });
   return createLinkedInTextShareIntentForTelegramUser({
     telegramUserId,
     telegramUsername,

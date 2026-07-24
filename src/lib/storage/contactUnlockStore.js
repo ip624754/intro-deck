@@ -15,7 +15,13 @@ import { upsertTelegramUser } from '../../db/usersRepo.js';
 import { sendTelegramMessage } from '../telegram/botApi.js';
 import { acquirePaymentChargeLock, createConfirmedPurchaseReceipt, findPurchaseReceiptByPaymentCharge, getProOutreachAllowance, getUserEntitlements } from '../../db/monetizationRepo.js';
 import { buildRequestFeeDisclosure, REQUEST_DELIVERY_FEE_POLICY } from '../contact/contract.js';
-import { TRANSACTION_BUTTONS, TRANSACTION_DISCLOSURES } from '../telegram/transactionCopy.js';
+import { loadInterfaceLanguageForNotification } from './languagePreferenceStore.js';
+import {
+  buildContactUnlockOwnerNotification,
+  buildContactUnlockRequesterDeclineNotification,
+  buildContactUnlockRequesterPaidNotification,
+  buildContactUnlockRequesterRevealNotification
+} from '../telegram/transactionNotificationCopy.js';
 
 export function buildContactUnlockInvoicePayload(requestId) {
   return `cu:${requestId}`;
@@ -31,91 +37,13 @@ export function parseContactUnlockInvoicePayload(payload) {
   return Number.isFinite(requestId) && requestId > 0 ? { requestId } : null;
 }
 
-function buildOwnerNotification(request) {
-  return {
-    text: [
-      '🔐 New Telegram contact request',
-      '',
-      request.pro_covered
-        ? `${request.requester_display_name || 'A member'} used Pro to send a direct Telegram contact request.`
-        : `${request.requester_display_name || 'A member'} paid to deliver a direct Telegram contact request.`,
-      request.requester_headline_user ? `Headline: ${request.requester_headline_user}` : null,
-      '',
-      TRANSACTION_DISCLOSURES.telegramContactAcceptance
-    ].filter(Boolean).join('\n'),
-    replyMarkup: {
-      inline_keyboard: [
-        [
-          { text: TRANSACTION_BUTTONS.shareTelegramContact, callback_data: `cu:acc:${request.contact_unlock_request_id}` },
-          { text: TRANSACTION_BUTTONS.declineTelegramContact, callback_data: `cu:dec:${request.contact_unlock_request_id}` }
-        ],
-        [{ text: '🧾 Open request', callback_data: `cu:view:${request.contact_unlock_request_id}` }]
-      ]
-    }
-  };
-}
-
-function buildRequesterPaidNotification(request) {
-  return {
-    text: [
-      request.pro_covered ? '⭐ Telegram contact request sent via Pro' : '⭐ Telegram contact request delivered',
-      '',
-      `Your request for ${request.target_display_name || 'this member'} is now waiting for approval.`,
-      request.pro_covered
-        ? 'Your Pro allowance covers request delivery only. The recipient still decides whether to reveal contact. Approval is not guaranteed.'
-        : 'The fee pays for request delivery only. The recipient still decides whether to reveal contact. Approval is not guaranteed, and decline alone does not trigger an automatic refund.'
-    ].join('\n'),
-    replyMarkup: {
-      inline_keyboard: [
-        [{ text: '🧾 View request', callback_data: `cu:view:${request.contact_unlock_request_id}` }],
-        [{ text: '📥 Inbox', callback_data: 'intro:inbox' }]
-      ]
-    }
-  };
-}
-
-function buildRequesterRevealNotification(request) {
-  const username = String(request.revealed_contact_value || '').trim();
-  const clean = username.replace(/^@+/, '');
-  return {
-    text: [
-      '✅ Telegram contact approved',
-      '',
-      `Telegram username: @${clean}`,
-      'Open Telegram contact below. This approval does not open a chat inside Intro Deck.'
-    ].join('\n'),
-    replyMarkup: {
-      inline_keyboard: [
-        [{ text: TRANSACTION_BUTTONS.openTelegramContact, url: `https://t.me/${clean}` }],
-        [{ text: '🧾 View request', callback_data: `cu:view:${request.contact_unlock_request_id}` }]
-      ]
-    }
-  };
-}
-
-function buildRequesterDeclineNotification(request) {
-  return {
-    text: [
-      'ℹ️ Telegram contact request declined',
-      '',
-      `${request.display_name || 'This member'} declined your Telegram contact request.`,
-      'No Telegram username was revealed. A decline does not trigger an automatic refund of the request-delivery fee.'
-    ].join('\n'),
-    replyMarkup: {
-      inline_keyboard: [
-        [{ text: '🧾 View request', callback_data: `cu:view:${request.contact_unlock_request_id}` }],
-        [{ text: '📥 Inbox', callback_data: 'intro:inbox' }]
-      ]
-    }
-  };
-}
-
 async function notifyOwnerOfPaidRequest(request) {
   const { botToken } = getTelegramConfig();
   if (!request?.target_telegram_user_id) {
     return { sent: false, skipped: true, reason: 'target_telegram_user_id_missing' };
   }
-  const message = buildOwnerNotification(request);
+  const interfaceLanguage = await loadInterfaceLanguageForNotification(request.target_telegram_user_id);
+  const message = buildContactUnlockOwnerNotification(request, interfaceLanguage);
   await sendTelegramMessage({
     botToken,
     chatId: request.target_telegram_user_id,
@@ -131,7 +59,8 @@ async function notifyRequesterOfPaidRequest(request) {
   if (!request?.requester_telegram_user_id) {
     return { sent: false, skipped: true, reason: 'requester_telegram_user_id_missing' };
   }
-  const message = buildRequesterPaidNotification(request);
+  const interfaceLanguage = await loadInterfaceLanguageForNotification(request.requester_telegram_user_id);
+  const message = buildContactUnlockRequesterPaidNotification(request, interfaceLanguage);
   await sendTelegramMessage({
     botToken,
     chatId: request.requester_telegram_user_id,
@@ -149,9 +78,10 @@ async function notifyRequesterOfDecision(decisionResult) {
     return { sent: false, skipped: true, reason: 'requester_telegram_user_id_missing' };
   }
   const { botToken } = getTelegramConfig();
+  const interfaceLanguage = await loadInterfaceLanguageForNotification(requesterTelegramUserId);
   const message = request?.status === 'revealed'
-    ? buildRequesterRevealNotification(request)
-    : buildRequesterDeclineNotification(request);
+    ? buildContactUnlockRequesterRevealNotification(request, interfaceLanguage)
+    : buildContactUnlockRequesterDeclineNotification(request, interfaceLanguage);
   await sendTelegramMessage({
     botToken,
     chatId: requesterTelegramUserId,
@@ -298,11 +228,12 @@ export async function beginContactUnlockPaymentForTelegramUser({ telegramUserId,
       ? {
         payload: buildContactUnlockInvoicePayload(request.contact_unlock_request_id),
         amountStars: request.price_stars_snapshot,
-        title: 'Telegram contact permission request',
+        title: user.interface_language === 'ru' ? 'Запрос на открытие Telegram-контакта' : 'Telegram contact permission request',
         description: buildRequestFeeDisclosure({
           amountStars: request.price_stars_snapshot,
-          actionLabel: 'Telegram contact request',
-          recipientName: target?.display_name || 'this member'
+          actionLabel: user.interface_language === 'ru' ? 'Telegram-контакт' : 'Telegram contact request',
+          recipientName: target?.display_name || (user.interface_language === 'ru' ? 'этому участнику' : 'this member'),
+          interfaceLanguage: user.interface_language
         })
       }
       : null;

@@ -119,6 +119,7 @@ async function deliverClaimedNotificationReceipt({ receiptAttempt, retryDelaySec
   }
 
   const { botToken } = getTelegramConfig();
+  const interfaceLanguage = receiptAttempt.payloadJson?.interfaceLanguage || envelope.interfaceLanguage || 'en';
   const text = renderIntroNotificationText({
     eventType: receiptAttempt.eventType,
     introRequest: {
@@ -127,11 +128,13 @@ async function deliverClaimedNotificationReceipt({ receiptAttempt, retryDelaySec
       headline_user: envelope.counterpartHeadline,
       status: envelope.status,
       role: envelope.role
-    }
+    },
+    interfaceLanguage
   });
   const replyMarkup = renderIntroNotificationKeyboard({
     eventType: receiptAttempt.eventType,
-    introRequestId: envelope.introRequestId
+    introRequestId: envelope.introRequestId,
+    interfaceLanguage
   });
 
   try {
@@ -230,7 +233,8 @@ export async function deliverIntroNotificationReceipt({ eventType, introRequestI
         role: envelope.role,
         status: envelope.status,
         counterpartDisplayName: envelope.counterpartDisplayName,
-        counterpartHeadline: envelope.counterpartHeadline
+        counterpartHeadline: envelope.counterpartHeadline,
+        interfaceLanguage: envelope.interfaceLanguage || 'en'
       }
     });
 

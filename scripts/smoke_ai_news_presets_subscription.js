@@ -22,8 +22,8 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const packageJson = JSON.parse(read('package.json'));
 const vercel = JSON.parse(read('vercel.json'));
 
-assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B'].includes(CURRENT_SOURCE_STEP), true);
-assert.equal(['0.63.6', '0.64.0', '0.64.1', '0.64.2', '0.64.3', '0.64.4', '0.64.5'].includes(packageJson.version), true);
+assert.equal(['STEP063B-H2', 'STEP064A', 'STEP064B1', 'STEP064B2', 'STEP064B3', 'STEP064B4A', 'STEP064B4B', 'STEP064B4C'].includes(CURRENT_SOURCE_STEP), true);
+assert.equal(['0.63.6', '0.64.0', '0.64.1', '0.64.2', '0.64.3', '0.64.4', '0.64.5', '0.64.6'].includes(packageJson.version), true);
 assert.equal(packageJson.scripts['smoke:ai-news-productization'], 'node scripts/smoke_ai_news_presets_subscription.js');
 
 const migration = read('migrations/031_ai_news_presets_subscription.sql');
@@ -48,7 +48,10 @@ const presetStore = read('src/lib/storage/aiNewsPresetStore.js');
 assert.match(presetStore, /findAiNewsSourcesForTelegramUser/);
 assert.match(presetStore, /generateAiNewsDraftForTelegramUser/);
 assert.match(presetStore, /ignoreCooldown: envelope\.trigger_kind === 'scheduled'/);
-assert.match(presetStore, /Nothing was published/);
+assert.match(presetStore, /buildScheduledNewsDraftNotification/);
+const transactionNotificationCopy = read('src/lib/telegram/transactionNotificationCopy.js');
+assert.match(transactionNotificationCopy, /Nothing was published/);
+assert.match(transactionNotificationCopy, /Ничего не опубликовано/);
 assert.match(presetStore, /automaticPublishing: false/);
 assert.doesNotMatch(presetStore, /publishLinkedIn|createLinkedInPost|postLinkedInShare/i);
 assert.match(presetStore, /acquireAiNewsUserLock/);

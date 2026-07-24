@@ -1,3 +1,5 @@
+import { normalizeDefaultPostLanguage } from '../i18n/language.js';
+
 const DEFAULT_MAX_POST_LENGTH = 3000;
 
 function text(value) {
@@ -8,13 +10,15 @@ function compactLines(lines) {
   return lines.map((line) => text(line)).filter(Boolean);
 }
 
-export function buildProfileSharePostText({ profileSnapshot = null, botUsername = 'introdeckbot' } = {}) {
+export function buildProfileSharePostText({ profileSnapshot = null, botUsername = 'introdeckbot', postLanguage = 'en' } = {}) {
   if (!profileSnapshot) {
     throw new Error('profile_snapshot_required');
   }
 
+  const language = normalizeDefaultPostLanguage(postLanguage);
+  const russian = language === 'ru';
   const username = String(botUsername || 'introdeckbot').trim().replace(/^@+/, '') || 'introdeckbot';
-  const displayName = text(profileSnapshot.display_name) || text(profileSnapshot.linkedin_name) || 'Intro Deck member';
+  const displayName = text(profileSnapshot.display_name) || text(profileSnapshot.linkedin_name) || (russian ? 'Участник Intro Deck' : 'Intro Deck member');
   const headline = text(profileSnapshot.headline_user);
   const company = text(profileSnapshot.company_user);
   const industry = text(profileSnapshot.industry_user);
@@ -25,9 +29,9 @@ export function buildProfileSharePostText({ profileSnapshot = null, botUsername 
   const identityLines = compactLines([
     displayName,
     headline,
-    company ? `Company: ${company}` : null,
-    industry ? `Industry: ${industry}` : null,
-    skills.length ? `Focus: ${skills.join(', ')}` : null
+    company ? `${russian ? 'Компания' : 'Company'}: ${company}` : null,
+    industry ? `${russian ? 'Индустрия' : 'Industry'}: ${industry}` : null,
+    skills.length ? `${russian ? 'Фокус' : 'Focus'}: ${skills.join(', ')}` : null
   ]);
 
   const profileId = profileSnapshot.profile_id != null ? String(profileSnapshot.profile_id).trim() : '';
@@ -36,13 +40,15 @@ export function buildProfileSharePostText({ profileSnapshot = null, botUsername 
     : `https://t.me/${username}`;
 
   const post = [
-    'I’ve published my professional profile on Intro Deck.',
+    russian ? 'Я опубликовал свой профессиональный профиль в Intro Deck.' : 'I’ve published my professional profile on Intro Deck.',
     '',
     ...identityLines,
     '',
-    'Intro Deck is a permission-based professional directory inside Telegram. Profile details are member-provided, and private contact details stay hidden until the profile owner approves a contact request.',
+    russian
+      ? 'Intro Deck — профессиональный каталог внутри Telegram, где связь происходит только с разрешения владельца профиля. Данные профиля указывает сам участник, а приватные контакты остаются скрытыми до одобрения запроса.'
+      : 'Intro Deck is a permission-based professional directory inside Telegram. Profile details are member-provided, and private contact details stay hidden until the profile owner approves a contact request.',
     '',
-    `View my profile and request contact: ${shareUrl}`
+    `${russian ? 'Открыть мой профиль и запросить связь' : 'View my profile and request contact'}: ${shareUrl}`
   ].join('\n');
 
   if (post.length > DEFAULT_MAX_POST_LENGTH) {

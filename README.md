@@ -1,3 +1,9 @@
+# Current release: STEP064B4C / 0.64.6
+
+The current source candidate completes the EN/RU transaction, recipient-notification/retry, LinkedIn OAuth, and ordinary profile-share language boundary. Stored `interface_language` drives critical Telegram/OAuth presentation; signed launch/state/transfer snapshots make OAuth rendering replay-consistent; `default_post_language` drives ordinary profile-share text while AI/news retains per-preset/per-draft language. Payment payloads/amounts, callbacks, scopes, publisher authority/idempotency, rewards, and automatic-publishing policy are unchanged. No migration or new ENV. See `doc/spec/STEP064B4C_TRANSACTION_NOTIFICATION_OAUTH_LANGUAGE_BOUNDARY.md` and `doc/103_STEP064B4C_OPERATOR_ROLLOUT.md`.
+
+---
+
 # Current release: STEP064B4B / 0.64.5
 
 The current source candidate completes the stored-language RU/EN presentation boundary for member Telegram surfaces: Profile editors, Directory, Requests, contact unlock, private chats, Pro, Invite owner surfaces, and Story Finder. Callback IDs, URLs, state machines, payments, OAuth, publisher behavior, rewards accounting, and AI/news language persistence remain unchanged. Transaction/notification/OAuth/publication rendering and the external public invite card are explicitly deferred to STEP064B4C. No migration or new ENV. See `doc/spec/STEP064B4B_MEMBER_INTERFACE_RENDERING.md` and `doc/102_STEP064B4B_OPERATOR_ROLLOUT.md`.

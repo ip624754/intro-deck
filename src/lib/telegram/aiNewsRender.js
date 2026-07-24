@@ -15,7 +15,7 @@ import {
   sourceMatchLabel,
   sourceQualityLabel
 } from './memberCopy.js';
-import { TRANSACTION_BUTTONS, TRANSACTION_DISCLOSURES } from './transactionCopy.js';
+import { TRANSACTION_BUTTONS, TRANSACTION_DISCLOSURES, getTransactionButtons, getTransactionDisclosures } from './transactionCopy.js';
 
 function value(value, fallback = '—') {
   const text = String(value ?? '').trim();
@@ -308,7 +308,7 @@ export function renderAiNewsSourcesKeyboard({ result }) {
   return { inline_keyboard: rows };
 }
 
-export function renderAiNewsDraftText({ draft, notice = null }) {
+export function renderAiNewsDraftText({ draft, notice = null, interfaceLanguage = 'en' }) {
   if (!draft) return '⚠️ Draft not found.';
   const lines = [
     '📝 LinkedIn draft',
@@ -326,32 +326,33 @@ export function renderAiNewsDraftText({ draft, notice = null }) {
     `Edited by member: ${draft.edited_by_user ? 'yes' : 'no'}`,
     '',
     'Review every claim.',
-    TRANSACTION_DISCLOSURES.draftApproval
+    getTransactionDisclosures(interfaceLanguage).draftApproval
   ];
   if (notice) lines.push('', notice);
   return lines.join('\n');
 }
 
-export function renderAiNewsDraftKeyboard({ draft }) {
+export function renderAiNewsDraftKeyboard({ draft, interfaceLanguage = 'en' }) {
   const rows = [];
+  const transactionButtons = getTransactionButtons(interfaceLanguage);
   if (draft?.status === 'draft') {
     rows.push([
       { text: '✏️ Edit text', callback_data: `news:edit:${draft.public_token}` },
-      { text: TRANSACTION_BUTTONS.approveDraftForLinkedIn, callback_data: `news:approve:${draft.public_token}` }
+      { text: transactionButtons.approveDraftForLinkedIn, callback_data: `news:approve:${draft.public_token}` }
     ]);
-    rows.push([{ text: TRANSACTION_BUTTONS.cancelDraft, callback_data: `news:cancel:${draft.public_token}` }]);
+    rows.push([{ text: transactionButtons.cancelDraft, callback_data: `news:cancel:${draft.public_token}` }]);
   }
   if (draft?.status === 'share_ready') rows.push([{ text: 'Continue to LinkedIn authorization', callback_data: `news:approve:${draft.public_token}` }]);
   rows.push([{ text: '← Back to story finder', callback_data: 'news:home' }]);
   return { inline_keyboard: rows };
 }
 
-export function renderAiNewsPublishAuthorizationText({ draft, shareIntent }) {
+export function renderAiNewsPublishAuthorizationText({ draft, shareIntent, interfaceLanguage = 'en' }) {
   return [
     '✅ Draft approved for LinkedIn authorization',
     '',
     'This is still not published.',
-    TRANSACTION_DISCLOSURES.linkedinAuthorization,
+    getTransactionDisclosures(interfaceLanguage).linkedinAuthorization,
     '',
     `Source: ${value(draft?.source_title)}`,
     `Visibility: ${value(shareIntent?.visibility, 'PUBLIC')}`,
@@ -360,10 +361,11 @@ export function renderAiNewsPublishAuthorizationText({ draft, shareIntent }) {
   ].join('\n');
 }
 
-export function renderAiNewsPublishAuthorizationKeyboard({ publishUrl, draftToken }) {
+export function renderAiNewsPublishAuthorizationKeyboard({ publishUrl, draftToken, interfaceLanguage = 'en' }) {
+  const transactionButtons = getTransactionButtons(interfaceLanguage);
   return {
     inline_keyboard: [
-      [{ text: TRANSACTION_BUTTONS.authorizeAndPublishPost, url: publishUrl }],
+      [{ text: transactionButtons.authorizeAndPublishPost, url: publishUrl }],
       [{ text: '← Back to draft', callback_data: `news:draft:${draftToken}` }]
     ]
   };

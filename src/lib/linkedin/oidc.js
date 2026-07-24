@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { normalizeDefaultPostLanguage, normalizeInterfaceLanguage } from '../i18n/language.js';
 
 function base64UrlJson(input) {
   return Buffer.from(JSON.stringify(input), 'utf8').toString('base64url');
@@ -17,6 +18,8 @@ export function buildSignedLinkedInLaunchTicket({
   telegramUserId,
   purpose = 'verification_refresh',
   shareIntentToken = null,
+  interfaceLanguage = 'en',
+  postLanguage = 'en',
   ttlSeconds = 300,
   secret
 }) {
@@ -26,6 +29,8 @@ export function buildSignedLinkedInLaunchTicket({
     telegramUserId: String(telegramUserId),
     purpose,
     shareIntentToken: shareIntentToken ? String(shareIntentToken) : null,
+    interfaceLanguage: normalizeInterfaceLanguage(interfaceLanguage),
+    postLanguage: normalizeDefaultPostLanguage(postLanguage),
     iat: now,
     exp: now + ttlSeconds,
     nonce: crypto.randomBytes(12).toString('hex')
@@ -76,6 +81,8 @@ export function buildSignedState({
   verificationMode = 'off',
   shareRequested = false,
   shareIntentToken = null,
+  interfaceLanguage = 'en',
+  postLanguage = 'en',
   ttlSeconds,
   secret
 }) {
@@ -93,6 +100,8 @@ export function buildSignedState({
     verificationMode: normalizedVerificationMode,
     shareRequested: Boolean(shareRequested),
     shareIntentToken: shareIntentToken ? String(shareIntentToken) : null,
+    interfaceLanguage: normalizeInterfaceLanguage(interfaceLanguage),
+    postLanguage: normalizeDefaultPostLanguage(postLanguage),
     iat: now,
     exp: now + ttlSeconds,
     nonce: crypto.randomBytes(12).toString('hex')
